@@ -100,7 +100,6 @@ class _WelcomePageState extends State<WelcomePage> {
             ),
             SizedBox(height: 16),
 
-
             TextButton(
               onPressed: () {
                 Navigator.of(context).push(
@@ -115,7 +114,6 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
               child: const Text('메인 화면 테스트', style: TextStyle(fontSize: 12)),
             ),
-
 
             SizedBox(height: 16),
             // 로그인 버튼
