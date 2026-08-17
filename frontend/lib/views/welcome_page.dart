@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../features/main_navigation/pages/main_navigation_page.dart';
+
 class WelcomePage extends StatefulWidget {
   const new({super.key});
 
@@ -27,16 +29,12 @@ class _WelcomePageState extends State<WelcomePage> {
               width: 100,
               height: 100,
             ),
-            SizedBox(
-              height: 16,
-            ),
+            SizedBox(height: 16),
             Text(
               "당신 근처의 당근",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(
-              height: 16,
-            ),
+            SizedBox(height: 16),
             Text("동네라서 가능한 모든 것"),
             Text("지금 내 동네를 선택하고 시작해보세요!"),
 
@@ -44,10 +42,7 @@ class _WelcomePageState extends State<WelcomePage> {
             DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedCountry,
-                icon: Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.black54,
-                ),
+                icon: Icon(Icons.keyboard_arrow_down, color: Colors.black54),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -72,9 +67,7 @@ class _WelcomePageState extends State<WelcomePage> {
                               country['flag']!,
                               style: TextStyle(fontSize: 18),
                             ),
-                            SizedBox(
-                              width: 8,
-                            ),
+                            SizedBox(width: 8),
                             Text(
                               country['name']!,
                               style: TextStyle(
@@ -102,15 +95,29 @@ class _WelcomePageState extends State<WelcomePage> {
                   ),
                 ),
 
-                child: Text(
-                  '시작하기',
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: Text('시작하기', style: TextStyle(color: Colors.white)),
               ),
             ),
-            SizedBox(
-              height: 16,
+            SizedBox(height: 16),
+
+
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MainNavigationPage()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.grey,
+                minimumSize: Size.zero,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('메인 화면 테스트', style: TextStyle(fontSize: 12)),
             ),
+
+
+            SizedBox(height: 16),
             // 로그인 버튼
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
