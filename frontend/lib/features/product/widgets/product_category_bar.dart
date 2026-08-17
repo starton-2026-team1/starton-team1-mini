@@ -34,8 +34,16 @@ class ProductCategoryBar extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
-            backgroundColor: const Color(0xFFF5F5F6),
-            selectedColor: const Color(0xFF222D33),
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const Color(0xFF222D33);
+              }
+              return const Color(0xFFF5F5F6);
+            }),
+            pressElevation: 0,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            selectedShadowColor: Colors.transparent,
             side: BorderSide.none,
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

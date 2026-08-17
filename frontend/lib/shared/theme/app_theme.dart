@@ -7,6 +7,9 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: Colors.white,
       canvasColor: Colors.white,
       splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      focusColor: Colors.transparent,
       colorScheme: const ColorScheme.light(
         primary: Color(0xFFFF6F0F),
         onPrimary: Colors.white,
