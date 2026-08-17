@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
+import '../../auction/pages/auction_list_page.dart';
 import '../models/product_preview.dart';
 import '../widgets/product_category_bar.dart';
 import '../widgets/product_create_menu.dart';
@@ -46,15 +47,7 @@ class _ProductListPageState extends State<ProductListPage> {
               Expanded(
                 child: NotificationListener<UserScrollNotification>(
                   onNotification: _handleScrollDirection,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: mockProducts.length,
-                    separatorBuilder: (_, _) =>
-                        const Divider(height: 1, color: Color(0xFFF0F1F3)),
-                    itemBuilder: (context, index) {
-                      return ProductListItem(product: mockProducts[index]);
-                    },
-                  ),
+                  child: _buildSelectedCategory(),
                 ),
               ),
             ],
@@ -119,6 +112,22 @@ class _ProductListPageState extends State<ProductListPage> {
 
   void _closeCreateMenu() {
     setState(() => _isCreateMenuOpen = false);
+  }
+
+  Widget _buildSelectedCategory() {
+    if (_selectedCategoryIndex == 1) {
+      return const AuctionListPage();
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: mockProducts.length,
+      separatorBuilder: (_, _) =>
+          const Divider(height: 1, color: Color(0xFFF0F1F3)),
+      itemBuilder: (context, index) {
+        return ProductListItem(product: mockProducts[index]);
+      },
+    );
   }
 
   bool _handleScrollDirection(UserScrollNotification notification) {
