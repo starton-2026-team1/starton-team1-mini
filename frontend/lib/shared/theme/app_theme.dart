@@ -5,9 +5,17 @@ abstract final class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.white,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFFF6F0F),
+      canvasColor: Colors.white,
+      splashColor: Colors.transparent,
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFFFF6F0F),
+        onPrimary: Colors.white,
         surface: Colors.white,
+        onSurface: Color(0xFF202124),
+      ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
       ),
     );
   }
