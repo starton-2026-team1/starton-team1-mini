@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/product_preview.dart';
 import '../widgets/product_category_bar.dart';
+import '../widgets/product_create_menu.dart';
 import '../widgets/product_list_header.dart';
 import '../widgets/product_list_item.dart';
 
@@ -42,7 +43,7 @@ class _ProductListPageState extends State<ProductListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => ProductCreateMenu.show(context),
         backgroundColor: const Color(0xFFFF6F0F),
         foregroundColor: Colors.white,
         elevation: 3,
