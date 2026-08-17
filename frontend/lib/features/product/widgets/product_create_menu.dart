@@ -1,109 +1,70 @@
 import 'package:flutter/material.dart';
 
 class ProductCreateMenu extends StatelessWidget {
-  const ProductCreateMenu({super.key});
+  const ProductCreateMenu({required this.onSelected, super.key});
 
-  static Future<void> show(BuildContext context) {
-    return showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: '상품 등록 메뉴 닫기',
-      barrierColor: Colors.black.withValues(alpha: 0.48),
-      transitionDuration: const Duration(milliseconds: 180),
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(animation),
-            alignment: Alignment.bottomRight,
-            child: child,
-          ),
-        );
-      },
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return const ProductCreateMenu();
-      },
-    );
-  }
+  final ValueChanged<String> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Material(
-        type: MaterialType.transparency,
-        child: Align(
-          alignment: Alignment.bottomRight,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 17, 88),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _MenuCard(
-                  items: const [
-                    _MenuItem(
-                      label: '알바/과외/레슨',
-                      icon: Icons.person_search,
-                      color: Color(0xFFFF6F0F),
-                    ),
-                    _MenuItem(
-                      label: '부동산',
-                      icon: Icons.house_rounded,
-                      color: Color(0xFFD946B8),
-                    ),
-                    _MenuItem(
-                      label: '중고차',
-                      icon: Icons.directions_car_rounded,
-                      color: Color(0xFF2F7DF4),
-                    ),
-                    _MenuItem(
-                      label: '동네생활',
-                      icon: Icons.article_rounded,
-                      color: Color(0xFF42B8E9),
-                    ),
-                    _MenuItem(
-                      label: '스토리',
-                      icon: Icons.play_circle_fill_rounded,
-                      color: Color(0xFFFF4164),
-                    ),
-                  ],
-                  onSelected: (_) {},
-                ),
-                const SizedBox(height: 12),
-                _MenuCard(
-                  items: const [
-                    _MenuItem(
-                      label: '여러 물건 팔기',
-                      icon: Icons.shopping_bag_rounded,
-                      color: Color(0xFFFFA000),
-                    ),
-                    _MenuItem(
-                      label: '경매 등록',
-                      icon: Icons.gavel_rounded,
-                      color: Color(0xFF8B5CF6),
-                    ),
-                    _MenuItem(
-                      label: '내 물건 팔기',
-                      icon: Icons.shopping_bag_rounded,
-                      color: Color(0xFFFF6F0F),
-                    ),
-                  ],
-                  onSelected: (_) {},
-                ),
-                const SizedBox(height: 12),
-                FloatingActionButton(
-                  heroTag: 'closeProductCreateMenu',
-                  onPressed: () => Navigator.of(context).pop(),
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF202124),
-                  elevation: 2,
-                  shape: const CircleBorder(),
-                  child: const Icon(Icons.close, size: 31),
-                ),
-              ],
-            ),
+    return Material(
+      type: MaterialType.transparency,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _MenuCard(
+            items: const [
+              _MenuItem(
+                label: '알바/과외/레슨',
+                icon: Icons.person_search,
+                color: Color(0xFFFF6F0F),
+              ),
+              _MenuItem(
+                label: '부동산',
+                icon: Icons.house_rounded,
+                color: Color(0xFFD946B8),
+              ),
+              _MenuItem(
+                label: '중고차',
+                icon: Icons.directions_car_rounded,
+                color: Color(0xFF2F7DF4),
+              ),
+              _MenuItem(
+                label: '동네생활',
+                icon: Icons.article_rounded,
+                color: Color(0xFF42B8E9),
+              ),
+              _MenuItem(
+                label: '스토리',
+                icon: Icons.play_circle_fill_rounded,
+                color: Color(0xFFFF4164),
+              ),
+            ],
+            onSelected: (item) => onSelected(item.label),
           ),
-        ),
+          const SizedBox(height: 12),
+          _MenuCard(
+            items: const [
+              _MenuItem(
+                label: '여러 물건 팔기',
+                icon: Icons.shopping_bag_rounded,
+                color: Color(0xFFFFA000),
+              ),
+              _MenuItem(
+                label: '경매 등록',
+                icon: Icons.gavel_rounded,
+                color: Color(0xFF8B5CF6),
+              ),
+              _MenuItem(
+                label: '내 물건 팔기',
+                icon: Icons.shopping_bag_rounded,
+                color: Color(0xFFFF6F0F),
+              ),
+            ],
+            onSelected: (item) => onSelected(item.label),
+          ),
+        ],
       ),
     );
   }
@@ -135,10 +96,7 @@ class _MenuCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: items.map((item) {
           return InkWell(
-            onTap: () {
-              Navigator.of(context).pop();
-              onSelected(item);
-            },
+            onTap: () => onSelected(item),
             borderRadius: BorderRadius.circular(14),
             child: SizedBox(
               height: 45,
