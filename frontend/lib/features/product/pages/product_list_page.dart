@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../models/product_preview.dart';
 import '../widgets/product_category_bar.dart';
@@ -16,6 +17,7 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   int _selectedCategoryIndex = 0;
   bool _isCreateMenuOpen = false;
+  bool _isTopMenuVisible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -26,21 +28,33 @@ class _ProductListPageState extends State<ProductListPage> {
           Column(
             children: [
               const ProductListHeader(),
-              ProductCategoryBar(
-                selectedIndex: _selectedCategoryIndex,
-                onSelected: (index) {
-                  setState(() => _selectedCategoryIndex = index);
-                },
+              ClipRect(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  alignment: Alignment.topCenter,
+                  child: _isTopMenuVisible
+                      ? ProductCategoryBar(
+                          selectedIndex: _selectedCategoryIndex,
+                          onSelected: (index) {
+                            setState(() => _selectedCategoryIndex = index);
+                          },
+                        )
+                      : const SizedBox(width: double.infinity),
+                ),
               ),
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: mockProducts.length,
-                  separatorBuilder: (_, _) =>
-                      const Divider(height: 1, color: Color(0xFFF0F1F3)),
-                  itemBuilder: (context, index) {
-                    return ProductListItem(product: mockProducts[index]);
-                  },
+                child: NotificationListener<UserScrollNotification>(
+                  onNotification: _handleScrollDirection,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: mockProducts.length,
+                    separatorBuilder: (_, _) =>
+                        const Divider(height: 1, color: Color(0xFFF0F1F3)),
+                    itemBuilder: (context, index) {
+                      return ProductListItem(product: mockProducts[index]);
+                    },
+                  ),
                 ),
               ),
             ],
@@ -105,5 +119,17 @@ class _ProductListPageState extends State<ProductListPage> {
 
   void _closeCreateMenu() {
     setState(() => _isCreateMenuOpen = false);
+  }
+
+  bool _handleScrollDirection(UserScrollNotification notification) {
+    if (notification.direction == ScrollDirection.reverse &&
+        _isTopMenuVisible) {
+      setState(() => _isTopMenuVisible = false);
+    } else if (notification.direction == ScrollDirection.forward &&
+        !_isTopMenuVisible) {
+      setState(() => _isTopMenuVisible = true);
+    }
+
+    return false;
   }
 }
