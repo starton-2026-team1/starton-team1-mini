@@ -48,7 +48,7 @@ const mockProducts = [
     location: '',
     time: '43분 전',
     price: '3,000원',
-    imageAsset: 'lib/assets/image/burger.jpeg',
+    imageAsset: 'assets/image/burger.jpeg',
     isNeighborhoodBusiness: true,
   ),
   ProductPreview(
@@ -85,7 +85,7 @@ const mockProducts = [
     location: '',
     time: '43분 전',
     price: '3,000원',
-    imageAsset: 'lib/assets/image/burger.jpeg',
+    imageAsset: 'assets/image/burger.jpeg',
     isNeighborhoodBusiness: true,
   ),
   ProductPreview(
@@ -94,7 +94,7 @@ const mockProducts = [
     location: '',
     time: '43분 전',
     price: '3,000원',
-    imageAsset: 'lib/assets/image/burger.jpeg',
+    imageAsset: 'assets/image/burger.jpeg',
     isNeighborhoodBusiness: true,
   ),
 ];

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/views/phone_auth_page.dart';
 
-import '../features/main_navigation/pages/main_navigation_page.dart';
+import '../../main_navigation/pages/main_navigation_page.dart';
+import 'phone_auth_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const new({super.key});
@@ -27,7 +27,7 @@ class _WelcomePageState extends State<WelcomePage> {
             Spacer(),
             // 당근 이미지 로고
             Image(
-              image: AssetImage('lib/assets/image/logo.png'),
+              image: AssetImage('assets/image/logo.png'),
               width: 100,
               height: 100,
             ),
