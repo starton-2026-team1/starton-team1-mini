@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:frontend/main.dart';
+import 'package:frontend/app/carrot_market_app.dart';
+import 'package:frontend/features/main_navigation/widgets/main_bottom_navigation_bar.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('메인 페이지에 하단 내비게이션을 표시한다', (tester) async {
+    await tester.pumpWidget(const CarrotMarketApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.byType(MainBottomNavigationBar), findsOneWidget);
+    expect(find.text('홈'), findsOneWidget);
+    expect(find.text('커뮤니티'), findsOneWidget);
+    expect(find.text('동네지도'), findsOneWidget);
+    expect(find.text('채팅'), findsOneWidget);
+    expect(find.text('나의 당근'), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('하단 메뉴를 선택하면 선택 상태가 변경된다', (tester) async {
+    await tester.pumpWidget(const CarrotMarketApp());
+
+    await tester.tap(find.text('채팅'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    final navigationBar = tester.widget<MainBottomNavigationBar>(
+      find.byType(MainBottomNavigationBar),
+    );
+    expect(navigationBar.currentIndex, 3);
   });
 }
