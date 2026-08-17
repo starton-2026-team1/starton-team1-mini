@@ -19,59 +19,68 @@ class AuctionListItem extends StatelessWidget {
             _AuctionImage(imageAsset: auction.imageAsset),
             const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          auction.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+              child: SizedBox(
+                height: 120,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            auction.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.more_vert,
+                          color: Color(0xFF969A9F),
+                          size: 22,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      auction.currentPrice,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        _AuctionBadge(status: auction.status),
+                        const SizedBox(width: 8),
+                        Text(
+                          auction.remainingTimeLabel,
                           style: const TextStyle(
-                            fontSize: 14,
+                            color: Color(0xFF969A9F),
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                      ),
-                      const Icon(
-                        Icons.more_vert,
-                        color: Color(0xFF969A9F),
-                        size: 22,
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '${auction.location} · ${auction.remainingTimeLabel}',
-                    style: const TextStyle(
-                      color: Color(0xFF969A9F),
-                      fontSize: 12,
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    auction.currentPrice,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  _AuctionBadge(status: auction.status),
-                  const Spacer(),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Text(
-                      '입찰 ${auction.bidCount}  ·  관심 ${auction.favoriteCount}',
-                      style: const TextStyle(
-                        color: Color(0xFF969A9F),
-                        fontSize: 11,
+                    const Spacer(),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(
+                        '입찰 ${auction.bidCount}  ·  관심 ${auction.favoriteCount}',
+                        style: const TextStyle(
+                          color: Color(0xFF969A9F),
+                          fontSize: 11,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
