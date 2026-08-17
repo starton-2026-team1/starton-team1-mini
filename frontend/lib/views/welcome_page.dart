@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/views/phone_auth_page.dart';
 
 import '../features/main_navigation/pages/main_navigation_page.dart';
 
@@ -88,7 +89,12 @@ class _WelcomePageState extends State<WelcomePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PhoneAuthPage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xffFF6F0F),
                   shape: RoundedRectangleBorder(
