@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../models/product_category.dart';
+
 class ProductCategoryBar extends StatelessWidget {
   const ProductCategoryBar({
-    required this.selectedIndex,
+    required this.selectedCategory,
     required this.onSelected,
     super.key,
   });
 
-  static const categories = ['전체', '경매', '중고거래', '방금 전', '가까운 동네', '부동산'];
+  static const categories = ProductCategory.values;
 
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
+  final ProductCategory selectedCategory;
+  final ValueChanged<ProductCategory> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +24,14 @@ class ProductCategoryBar extends StatelessWidget {
         itemCount: categories.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final isSelected = index == selectedIndex;
+          final category = categories[index];
+          final isSelected = category == selectedCategory;
 
           return ChoiceChip(
             selected: isSelected,
-            onSelected: (_) => onSelected(index),
+            onSelected: (_) => onSelected(category),
             showCheckmark: false,
-            label: Text(categories[index]),
+            label: Text(category.label),
             labelStyle: TextStyle(
               color: isSelected ? Colors.white : const Color(0xFF44464A),
               fontSize: 13,

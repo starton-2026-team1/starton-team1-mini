@@ -1,5 +1,8 @@
+import 'product_category.dart';
+
 class ProductPreview {
   const ProductPreview({
+    required this.category,
     required this.title,
     required this.location,
     required this.time,
@@ -12,6 +15,7 @@ class ProductPreview {
     this.imageAsset,
   });
 
+  final ProductCategory category;
   final String title;
   final String location;
   final String time;
@@ -26,6 +30,7 @@ class ProductPreview {
 
 const mockProducts = [
   ProductPreview(
+    category: ProductCategory.partTimeJob,
     title: '학원마케팅 제작및 데스크업무',
     location: '송도동',
     time: '6km · 알바',
@@ -34,6 +39,7 @@ const mockProducts = [
     isPartTimeJob: true,
   ),
   ProductPreview(
+    category: ProductCategory.partTimeJob,
     title: '노션 잘 다루시는 분',
     location: '송도동',
     time: '6km · 알바',
@@ -43,6 +49,7 @@ const mockProducts = [
     isPartTimeJob: true,
   ),
   ProductPreview(
+    category: ProductCategory.used,
     title: '버거킹',
     description: '콰치와퍼+불고기와퍼+와주+프라이L+너겟...',
     location: '',
@@ -52,6 +59,7 @@ const mockProducts = [
     isNeighborhoodBusiness: true,
   ),
   ProductPreview(
+    category: ProductCategory.used,
     title: '갤럭시 버즈4',
     location: '구월3동',
     time: '4km · 12시간 전',
@@ -59,6 +67,7 @@ const mockProducts = [
     favoriteCount: 2,
   ),
   ProductPreview(
+    category: ProductCategory.used,
     title: '갤럭시 버즈4',
     location: '구월3동',
     time: '4km · 12시간 전',
@@ -66,6 +75,7 @@ const mockProducts = [
     favoriteCount: 2,
   ),
   ProductPreview(
+    category: ProductCategory.realEstate,
     title: '갤럭시 버즈4',
     location: '구월3동',
     time: '4km · 12시간 전',
@@ -73,6 +83,7 @@ const mockProducts = [
     favoriteCount: 2,
   ),
   ProductPreview(
+    category: ProductCategory.realEstate,
     title: '갤럭시 버즈4',
     location: '구월3동',
     time: '4km · 12시간 전',
@@ -80,6 +91,7 @@ const mockProducts = [
     favoriteCount: 2,
   ),
   ProductPreview(
+    category: ProductCategory.used,
     title: '버거킹',
     description: '콰치와퍼+불고기와퍼+와주+프라이L+너겟...',
     location: '',
@@ -89,6 +101,7 @@ const mockProducts = [
     isNeighborhoodBusiness: true,
   ),
   ProductPreview(
+    category: ProductCategory.used,
     title: '버거킹',
     description: '콰치와퍼+불고기와퍼+와주+프라이L+너겟...',
     location: '',

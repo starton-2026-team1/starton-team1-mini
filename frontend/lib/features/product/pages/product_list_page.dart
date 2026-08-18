@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
+import '../data/combined_product_feed.dart';
+import '../models/product_category.dart';
 import '../models/product_preview.dart';
+import '../widgets/combined_product_list.dart';
 import '../widgets/product_category_bar.dart';
 import '../widgets/product_create_menu.dart';
 import '../widgets/product_list_header.dart';
@@ -16,7 +19,7 @@ class ProductListPage extends StatefulWidget {
 }
 
 class _ProductListPageState extends State<ProductListPage> {
-  int _selectedCategoryIndex = 0;
+  ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
 
@@ -36,9 +39,9 @@ class _ProductListPageState extends State<ProductListPage> {
                   alignment: Alignment.topCenter,
                   child: _isTopMenuVisible
                       ? ProductCategoryBar(
-                          selectedIndex: _selectedCategoryIndex,
-                          onSelected: (index) {
-                            setState(() => _selectedCategoryIndex = index);
+                          selectedCategory: _selectedCategory,
+                          onSelected: (category) {
+                            setState(() => _selectedCategory = category);
                           },
                         )
                       : const SizedBox(width: double.infinity),
@@ -115,17 +118,25 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Widget _buildSelectedCategory() {
-    if (_selectedCategoryIndex == 1) {
+    if (_selectedCategory == ProductCategory.all) {
+      return CombinedProductList(items: buildCombinedProductFeed());
+    }
+
+    if (_selectedCategory == ProductCategory.auction) {
       return const AuctionListPage();
     }
 
+    final products = mockProducts
+        .where((product) => product.category == _selectedCategory)
+        .toList();
+
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: mockProducts.length,
+      itemCount: products.length,
       separatorBuilder: (_, _) =>
           const Divider(height: 1, color: Color(0xFFF0F1F3)),
       itemBuilder: (context, index) {
-        return ProductListItem(product: mockProducts[index]);
+        return ProductListItem(product: products[index]);
       },
     );
   }
