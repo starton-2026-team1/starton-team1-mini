@@ -1,0 +1,334 @@
+import 'package:flutter/material.dart';
+
+import '../controllers/auction_create_controller.dart';
+import '../models/auction_create_form.dart';
+import '../widgets/auction_date_time_field.dart';
+import '../widgets/auction_form_section.dart';
+
+class AuctionCreatePage extends StatefulWidget {
+  const AuctionCreatePage({this.onSubmitted, super.key});
+
+  final ValueChanged<AuctionCreateForm>? onSubmitted;
+
+  @override
+  State<AuctionCreatePage> createState() => _AuctionCreatePageState();
+}
+
+class _AuctionCreatePageState extends State<AuctionCreatePage> {
+  final _controller = AuctionCreateController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        leading: IconButton(
+          onPressed: () => Navigator.maybePop(context),
+          icon: const Icon(Icons.close, size: 30),
+        ),
+        title: const Text(
+          '전국에 경매 올리기',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => _showMessage('임시저장했어요.'),
+            child: const Text(
+              '임시저장',
+              style: TextStyle(color: Color(0xFF868B94), fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                children: [
+                  _ImagePicker(onTap: () => _showMessage('사진 선택.')),
+                  const SizedBox(height: 30),
+                  AuctionFormSection(
+                    title: '제목',
+                    child: AuctionTextField(
+                      controller: _controller.titleController,
+                      hintText: '제목을 입력해 주세요.',
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  AuctionFormSection(
+                    title: '자세한 설명',
+                    child: AuctionTextField(
+                      controller: _controller.descriptionController,
+                      hintText:
+                          '전국에 올릴 게시글 내용을 작성해 주세요. '
+                          '(판매 금지 물품은 게시가 제한될 수 있어요.)\n\n'
+                          '신뢰할 수 있는 거래를 위해 자세히 적어주세요. '
+                          '과학기술정보통신부, 한국인터넷진흥원과 함께 해요.',
+                      maxLines: 7,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  AuctionFormSection(
+                    title: '거래 희망 장소',
+                    child: AuctionTextField(
+                      controller: _controller.placeController,
+                      hintText: '거래 희망 장소를 입력해 주세요.',
+                      suffixIcon: const Icon(
+                        Icons.place_outlined,
+                        color: Color(0xFF868B94),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 36),
+                  _buildAuctionSettings(),
+                ],
+              ),
+            ),
+            _SubmitButton(onPressed: _submit),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuctionSettings() {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AuctionFormSection(
+              title: '시작 가격',
+              child: AuctionTextField(
+                controller: _controller.startingPriceController,
+                hintText: '시작 가격을 입력해 주세요.',
+                prefixText: '₩ ',
+                keyboardType: TextInputType.number,
+                inputFormatters: [AuctionCreateController.priceFormatter],
+              ),
+            ),
+            const SizedBox(height: 24),
+            AuctionFormSection(
+              title: '최소 입찰 단위',
+              child: AuctionTextField(
+                controller: _controller.bidIncrementController,
+                hintText: '최소 입찰 단위를 입력해 주세요.',
+                prefixText: '₩ ',
+                keyboardType: TextInputType.number,
+                inputFormatters: [AuctionCreateController.priceFormatter],
+              ),
+            ),
+            const SizedBox(height: 24),
+            AuctionFormSection(
+              title: '바로 입찰 가격',
+              child: AuctionTextField(
+                controller: _controller.buyNowPriceController,
+                hintText: '선택 입력',
+                prefixText: '₩ ',
+                keyboardType: TextInputType.number,
+                inputFormatters: [AuctionCreateController.priceFormatter],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '입력한 가격으로 즉시 낙찰할 수 있어요.',
+              style: TextStyle(color: Color(0xFF868B94), fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            AuctionFormSection(
+              title: '경매 시간',
+              child: Row(
+                children: [
+                  Expanded(
+                    child: AuctionDateTimeField(
+                      label: '시작 시간',
+                      value: _controller.startsAt,
+                      onTap: () => _pickDateTime(true),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: AuctionDateTimeField(
+                      label: '끝나는 시간',
+                      value: _controller.endsAt,
+                      onTap: () => _pickDateTime(false),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            AuctionFormSection(
+              title: '자동 연장 횟수',
+              child: DropdownButtonFormField<int>(
+                initialValue: _controller.extensionCount,
+                decoration: _inputDecoration(),
+                items: List.generate(
+                  6,
+                  (index) => DropdownMenuItem(
+                    value: index,
+                    child: Text(index == 0 ? '자동 연장 안 함' : '$index회'),
+                  ),
+                ),
+                onChanged: (value) => _controller.setExtensionCount(value ?? 0),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '마감 직전 입찰이 들어오면 종료 시간을 연장해요.',
+              style: TextStyle(color: Color(0xFF868B94), fontSize: 14),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFD1D3D8)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF868B94)),
+      ),
+    );
+  }
+
+  Future<void> _pickDateTime(bool isStart) async {
+    final now = DateTime.now();
+    final initial = isStart
+        ? (_controller.startsAt ?? now)
+        : (_controller.endsAt ?? now.add(const Duration(days: 1)));
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (time == null) return;
+    final value = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (isStart) {
+      _controller.setStartsAt(value);
+    } else {
+      _controller.setEndsAt(value);
+    }
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    final error = _controller.validate();
+    if (error != null) {
+      _showMessage(error);
+      return;
+    }
+    widget.onSubmitted?.call(_controller.toForm());
+    _showMessage('경매 글 작성이 완료됐어요.');
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _ImagePicker extends StatelessWidget {
+  const _ImagePicker({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFD1D3D8)),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.camera_alt, color: Color(0xFF868B94), size: 27),
+              SizedBox(height: 2),
+              Text(
+                '0/10',
+                style: TextStyle(color: Color(0xFF868B94), fontSize: 15),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubmitButton extends StatelessWidget {
+  const _SubmitButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFF2F3F5))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6F0F),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              '작성 완료',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

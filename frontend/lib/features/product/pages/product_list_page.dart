@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
+import '../../auction/pages/auction_create_page.dart';
 import '../data/combined_product_feed.dart';
 import '../models/product_category.dart';
 import '../models/product_preview.dart';
@@ -83,7 +84,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   opacity: _isCreateMenuOpen ? 1 : 0,
                   duration: const Duration(milliseconds: 180),
                   child: ProductCreateMenu(
-                    onSelected: (_) => _closeCreateMenu(),
+                    onSelected: _handleCreateMenuSelected,
                   ),
                 ),
               ),
@@ -115,6 +116,15 @@ class _ProductListPageState extends State<ProductListPage> {
 
   void _closeCreateMenu() {
     setState(() => _isCreateMenuOpen = false);
+  }
+
+  void _handleCreateMenuSelected(String label) {
+    _closeCreateMenu();
+    if (label == '경매 등록') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => const AuctionCreatePage()),
+      );
+    }
   }
 
   Widget _buildSelectedCategory() {
