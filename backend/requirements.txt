@@ -10,6 +10,7 @@ python-dotenv>=1.2,<2.0
 # Database and migrations
 sqlalchemy[asyncio]>=2.0,<3.0
 aiosqlite>=0.22,<1.0
+asyncmy>=0.2,<1.0
 alembic>=1.18,<2.0
 
 # Authentication and forms
