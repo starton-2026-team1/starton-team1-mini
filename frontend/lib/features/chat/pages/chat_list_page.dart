@@ -33,6 +33,7 @@ class _ChatListPageState extends State<ChatListPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: AppColors.white,
         surfaceTintColor: AppColors.transparent,
         titleSpacing: 20,
