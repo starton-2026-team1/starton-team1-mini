@@ -41,7 +41,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => _showMessage('임시저장했어요.'),
+            onPressed: () => _showMessage('게시글을 저장했어요.'),
             child: const Text(
               '임시저장',
               style: TextStyle(color: Color(0xFF868B94), fontSize: 16),
@@ -255,8 +255,25 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        backgroundColor: const Color(0xFF292D32),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 112),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 }
 
