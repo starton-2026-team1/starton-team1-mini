@@ -304,13 +304,19 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+
     final error = _controller.validate();
     if (error != null) {
       return;
     }
+
     widget.onSubmitted?.call(_controller.toForm());
+    await _draftStorage.clear();
+
+    if (!mounted) return;
+    _controller.markSaved();
     _showMessage('경매 글 작성이 완료됐어요.');
   }
 
