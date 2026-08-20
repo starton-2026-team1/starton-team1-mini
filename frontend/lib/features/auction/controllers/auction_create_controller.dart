@@ -28,6 +28,8 @@ class AuctionCreateController extends ChangeNotifier {
   final bidIncrementController = TextEditingController();
   final buyNowPriceController = TextEditingController();
 
+  final now = DateTime.now();
+
   DateTime? startsAt;
   DateTime? endsAt;
   int extensionCount = 0;
@@ -113,6 +115,8 @@ class AuctionCreateController extends ChangeNotifier {
     }
     if (startsAt == null) {
       errors[AuctionCreateField.startsAt] = '시작 시간을 선택해 주세요.';
+    } else if (!startsAt!.isAfter(now)) {
+      errors[AuctionCreateField.startsAt] = '시작 시간은 현재 시간보다 늦어야 해요.';
     }
     if (endsAt == null) {
       errors[AuctionCreateField.endsAt] = '끝나는 시간을 선택해 주세요.';
