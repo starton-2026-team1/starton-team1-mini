@@ -3,6 +3,17 @@ import 'package:flutter/services.dart';
 
 import '../models/auction_create_form.dart';
 
+enum AuctionCreateField {
+  title,
+  description,
+  place,
+  startingPrice,
+  bidIncrement,
+  buyNowPrice,
+  startsAt,
+  endsAt,
+}
+
 class AuctionCreateController extends ChangeNotifier {
   AuctionCreateController() {
     for (final controller in _textControllers) {
@@ -22,6 +33,7 @@ class AuctionCreateController extends ChangeNotifier {
   int extensionCount = 0;
   bool acceptPriceOffers = false;
   bool isDirty = false;
+  final Map<AuctionCreateField, String> errors = {};
 
   List<TextEditingController> get _textControllers => [
     titleController,
@@ -39,22 +51,33 @@ class AuctionCreateController extends ChangeNotifier {
     if (endsAt != null && !endsAt!.isAfter(value)) {
       endsAt = value.add(const Duration(hours: 1));
     }
-    _markDirty();
+    errors.remove(AuctionCreateField.startsAt);
+    errors.remove(AuctionCreateField.endsAt);
+    isDirty = true;
+    notifyListeners();
   }
 
   void setEndsAt(DateTime value) {
     endsAt = value;
-    _markDirty();
+    errors.remove(AuctionCreateField.endsAt);
+    isDirty = true;
+    notifyListeners();
   }
 
   void setExtensionCount(int value) {
     extensionCount = value;
-    _markDirty();
+    isDirty = true;
+    notifyListeners();
   }
 
   void setAcceptPriceOffers(bool value) {
     acceptPriceOffers = value;
-    _markDirty();
+    isDirty = true;
+    notifyListeners();
+  }
+
+  void clearError(AuctionCreateField field) {
+    if (errors.remove(field) != null) notifyListeners();
   }
 
   void markSaved() {
@@ -70,23 +93,42 @@ class AuctionCreateController extends ChangeNotifier {
   }
 
   String? validate() {
-    if (titleController.text.trim().isEmpty) return '제목을 입력해 주세요.';
-    if (descriptionController.text.trim().isEmpty) return '자세한 설명을 입력해 주세요.';
-    if (placeController.text.trim().isEmpty) return '거래 희망 장소를 입력해 주세요.';
+    errors.clear();
+    if (titleController.text.trim().isEmpty) {
+      errors[AuctionCreateField.title] = '제목을 입력해 주세요.';
+    }
+    if (descriptionController.text.trim().isEmpty) {
+      errors[AuctionCreateField.description] = '상세 내용을 입력해 주세요.';
+    }
+    if (placeController.text.trim().isEmpty) {
+      errors[AuctionCreateField.place] = '거래 희망 장소를 입력해 주세요.';
+    }
     final startingPrice = int.tryParse(startingPriceController.text);
-    if (startingPrice == null || startingPrice <= 0) return '시작 가격을 입력해 주세요.';
+    if (startingPrice == null || startingPrice <= 0) {
+      errors[AuctionCreateField.startingPrice] = '시작 가격을 입력해 주세요.';
+    }
     final bidIncrement = int.tryParse(bidIncrementController.text);
-    if (bidIncrement == null || bidIncrement <= 0) return '최소 입찰 단위를 입력해 주세요.';
-    if (startsAt == null) return '경매 시작 시간을 선택해 주세요.';
-    if (endsAt == null) return '경매 종료 시간을 선택해 주세요.';
-    if (!endsAt!.isAfter(startsAt!)) return '종료 시간은 시작 시간보다 늦어야 해요.';
+    if (bidIncrement == null || bidIncrement <= 0) {
+      errors[AuctionCreateField.bidIncrement] = '최소 입찰 단위를 입력해 주세요.';
+    }
+    if (startsAt == null) {
+      errors[AuctionCreateField.startsAt] = '시작 시간을 선택해 주세요.';
+    }
+    if (endsAt == null) {
+      errors[AuctionCreateField.endsAt] = '끝나는 시간을 선택해 주세요.';
+    } else if (startsAt != null && !endsAt!.isAfter(startsAt!)) {
+      errors[AuctionCreateField.endsAt] = '종료 시간은 시작 시간보다 늦어야 해요.';
+    }
     final buyNowText = buyNowPriceController.text;
     final buyNowPrice = int.tryParse(buyNowText);
     if (buyNowText.isNotEmpty &&
-        (buyNowPrice == null || buyNowPrice <= startingPrice)) {
-      return '바로 입찰 가격은 시작 가격보다 높아야 해요.';
+        (buyNowPrice == null ||
+            startingPrice == null ||
+            buyNowPrice <= startingPrice)) {
+      errors[AuctionCreateField.buyNowPrice] = '바로 입찰 가격은 시작 가격보다 높아야 해요.';
     }
-    return null;
+    notifyListeners();
+    return errors.isEmpty ? null : errors.values.first;
   }
 
   AuctionCreateForm toForm() {

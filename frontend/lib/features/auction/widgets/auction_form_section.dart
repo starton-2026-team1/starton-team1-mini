@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class AuctionFormSection extends StatelessWidget {
   const AuctionFormSection({
@@ -35,6 +36,8 @@ class AuctionTextField extends StatelessWidget {
     this.inputFormatters,
     this.prefixText,
     this.suffixIcon,
+    this.errorText,
+    this.onChanged,
     super.key,
   });
 
@@ -42,9 +45,11 @@ class AuctionTextField extends StatelessWidget {
   final String hintText;
   final int maxLines;
   final TextInputType? keyboardType;
-  final List<dynamic>? inputFormatters;
+  final List<TextInputFormatter>? inputFormatters;
   final String? prefixText;
   final Widget? suffixIcon;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +57,8 @@ class AuctionTextField extends StatelessWidget {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      inputFormatters: inputFormatters?.cast(),
+      inputFormatters: inputFormatters,
+      onChanged: onChanged,
       style: const TextStyle(fontSize: 17, color: Color(0xFF212124)),
       decoration: InputDecoration(
         hintText: hintText,
@@ -63,6 +69,7 @@ class AuctionTextField extends StatelessWidget {
         prefixText: prefixText,
         prefixStyle: const TextStyle(fontSize: 17, color: Color(0xFF868B94)),
         suffixIcon: suffixIcon,
+        error: errorText == null ? null : _FieldError(message: errorText!),
         contentPadding: EdgeInsets.symmetric(
           horizontal: 16,
           vertical: maxLines > 1 ? 18 : 16,
@@ -75,7 +82,37 @@ class AuctionTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFF868B94)),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFFF3B30), width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFFF3B30), width: 1.5),
+        ),
       ),
+    );
+  }
+}
+
+class _FieldError extends StatelessWidget {
+  const _FieldError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Icon(Icons.error, color: Color(0xFFFF3B30), size: 18),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(color: Color(0xFFFF3B30), fontSize: 14),
+          ),
+        ),
+      ],
     );
   }
 }

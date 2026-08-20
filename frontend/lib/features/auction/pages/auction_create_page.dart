@@ -76,46 +76,62 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
           child: Column(
             children: [
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-                  children: [
-                    _ImagePicker(onTap: () => _showMessage('사진 선택.')),
-                    const SizedBox(height: 30),
-                    AuctionFormSection(
-                      title: '제목',
-                      child: AuctionTextField(
-                        controller: _controller.titleController,
-                        hintText: '제목을 입력해 주세요.',
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    AuctionFormSection(
-                      title: '자세한 설명',
-                      child: AuctionTextField(
-                        controller: _controller.descriptionController,
-                        hintText:
-                            '전국에 올릴 게시글 내용을 작성해 주세요. '
-                            '(판매 금지 물품은 게시가 제한될 수 있어요.)\n\n'
-                            '신뢰할 수 있는 거래를 위해 자세히 적어주세요. '
-                            '과학기술정보통신부, 한국인터넷진흥원과 함께 해요.',
-                        maxLines: 7,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    AuctionFormSection(
-                      title: '거래 희망 장소',
-                      child: AuctionTextField(
-                        controller: _controller.placeController,
-                        hintText: '거래 희망 장소를 입력해 주세요.',
-                        suffixIcon: const Icon(
-                          Icons.place_outlined,
-                          color: Color(0xFF868B94),
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                    children: [
+                      _ImagePicker(onTap: () => _showMessage('사진 선택.')),
+                      const SizedBox(height: 30),
+                      AuctionFormSection(
+                        title: '제목',
+                        child: AuctionTextField(
+                          controller: _controller.titleController,
+                          hintText: '제목을 입력해 주세요.',
+                          errorText:
+                              _controller.errors[AuctionCreateField.title],
+                          onChanged: (_) =>
+                              _controller.clearError(AuctionCreateField.title),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 36),
-                    _buildAuctionSettings(),
-                  ],
+                      const SizedBox(height: 28),
+                      AuctionFormSection(
+                        title: '자세한 설명',
+                        child: AuctionTextField(
+                          controller: _controller.descriptionController,
+                          hintText:
+                              '전국에 올릴 게시글 내용을 작성해 주세요. '
+                              '(판매 금지 물품은 게시가 제한될 수 있어요.)\n\n'
+                              '신뢰할 수 있는 거래를 위해 자세히 적어주세요. '
+                              '과학기술정보통신부, 한국인터넷진흥원과 함께 해요.',
+                          maxLines: 7,
+                          errorText: _controller
+                              .errors[AuctionCreateField.description],
+                          onChanged: (_) => _controller.clearError(
+                            AuctionCreateField.description,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      AuctionFormSection(
+                        title: '거래 희망 장소',
+                        child: AuctionTextField(
+                          controller: _controller.placeController,
+                          hintText: '거래 희망 장소를 입력해 주세요.',
+                          suffixIcon: const Icon(
+                            Icons.place_outlined,
+                            color: Color(0xFF868B94),
+                          ),
+                          errorText:
+                              _controller.errors[AuctionCreateField.place],
+                          onChanged: (_) =>
+                              _controller.clearError(AuctionCreateField.place),
+                        ),
+                      ),
+                      const SizedBox(height: 36),
+                      _buildAuctionSettings(),
+                    ],
+                  ),
                 ),
               ),
               _SubmitButton(onPressed: _submit),
@@ -141,6 +157,9 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                 prefixText: '₩ ',
                 keyboardType: TextInputType.number,
                 inputFormatters: [AuctionCreateController.priceFormatter],
+                errorText: _controller.errors[AuctionCreateField.startingPrice],
+                onChanged: (_) =>
+                    _controller.clearError(AuctionCreateField.startingPrice),
               ),
             ),
             const SizedBox(height: 24),
@@ -152,6 +171,9 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                 prefixText: '₩ ',
                 keyboardType: TextInputType.number,
                 inputFormatters: [AuctionCreateController.priceFormatter],
+                errorText: _controller.errors[AuctionCreateField.bidIncrement],
+                onChanged: (_) =>
+                    _controller.clearError(AuctionCreateField.bidIncrement),
               ),
             ),
             const SizedBox(height: 24),
@@ -163,6 +185,9 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                 prefixText: '₩ ',
                 keyboardType: TextInputType.number,
                 inputFormatters: [AuctionCreateController.priceFormatter],
+                errorText: _controller.errors[AuctionCreateField.buyNowPrice],
+                onChanged: (_) =>
+                    _controller.clearError(AuctionCreateField.buyNowPrice),
               ),
             ),
             const SizedBox(height: 8),
@@ -180,6 +205,8 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                       label: '시작 시간',
                       value: _controller.startsAt,
                       onTap: () => _pickDateTime(true),
+                      errorText:
+                          _controller.errors[AuctionCreateField.startsAt],
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -188,6 +215,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                       label: '끝나는 시간',
                       value: _controller.endsAt,
                       onTap: () => _pickDateTime(false),
+                      errorText: _controller.errors[AuctionCreateField.endsAt],
                     ),
                   ),
                 ],
@@ -269,7 +297,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     FocusScope.of(context).unfocus();
     final error = _controller.validate();
     if (error != null) {
-      _showMessage(error);
       return;
     }
     widget.onSubmitted?.call(_controller.toForm());
