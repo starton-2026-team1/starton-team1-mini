@@ -16,3 +16,4 @@ frontend/.flutter-plugins*
 .vscode/
 
 *.txt
+docs/

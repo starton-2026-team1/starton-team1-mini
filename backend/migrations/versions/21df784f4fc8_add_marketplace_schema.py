@@ -80,8 +80,12 @@ def upgrade() -> None:
             sa.Enum("ACTIVE", "SOLD", "CANCELLED", name="productstatus"),
             nullable=False,
         ),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False
+        ),
         sa.ForeignKeyConstraint(["category_id"], ["categories.id"]),
         sa.ForeignKeyConstraint(["seller_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -129,7 +133,9 @@ def upgrade() -> None:
         sa.Column("auction_id", sa.BigInteger(), nullable=False),
         sa.Column("bidder_id", sa.BigInteger(), nullable=False),
         sa.Column("amount", sa.BigInteger(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False
+        ),
         sa.ForeignKeyConstraint(["auction_id"], ["auctions.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["bidder_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -142,7 +148,9 @@ def upgrade() -> None:
         sa.Column("product_id", sa.BigInteger(), nullable=False),
         sa.Column("image_url", sa.String(length=500), nullable=False),
         sa.Column("sort_order", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False
+        ),
         sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("product_id", "sort_order", name="uq_product_images_order"),
@@ -151,7 +159,9 @@ def upgrade() -> None:
         "favorites",
         sa.Column("user_id", sa.BigInteger(), nullable=False),
         sa.Column("product_id", sa.BigInteger(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(), server_default=sa.text("CURRENT_TIMESTAMP"), nullable=False
+        ),
         sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
         sa.PrimaryKeyConstraint("user_id", "product_id"),

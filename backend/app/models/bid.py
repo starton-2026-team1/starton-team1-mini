@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, func
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Index, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -9,6 +9,10 @@ from app.models.base import Base
 class Bid(Base):
     __tablename__ = "bids"
     __table_args__ = (
+        CheckConstraint(
+            "amount > 0",
+            name="ck_bids_amount_positive",
+        ),
         Index("ix_bids_auction_amount", "auction_id", "amount"),
         Index("ix_bids_bidder_created", "bidder_id", "created_at"),
     )

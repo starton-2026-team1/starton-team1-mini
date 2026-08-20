@@ -8,9 +8,7 @@ from app.models.base import Base
 
 class ProductImage(Base):
     __tablename__ = "product_images"
-    __table_args__ = (
-        UniqueConstraint("product_id", "sort_order", name="uq_product_images_order"),
-    )
+    __table_args__ = (UniqueConstraint("product_id", "sort_order", name="uq_product_images_order"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(

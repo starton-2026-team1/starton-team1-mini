@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -9,7 +9,21 @@ from app.models.enums import AuctionStatus
 
 class Auction(Base):
     __tablename__ = "auctions"
-    __table_args__ = (Index("ix_auctions_status_ends", "status", "ends_at"),)
+    __table_args__ = (
+        CheckConstraint(
+            "start_price > 0",
+            name="ck_auctions_start_price_positive",
+        ),
+        CheckConstraint(
+            "minimum_bid_unit > 0",
+            name="ck_auctions_minimum_bid_unit_positive",
+        ),
+        CheckConstraint(
+            "ends_at > starts_at",
+            name="ck_auctions_ends_after_starts",
+        ),
+        Index("ix_auctions_status_ends", "status", "ends_at"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     product_id: Mapped[int] = mapped_column(
