@@ -40,12 +40,18 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
         actions: [
-          TextButton(
-            onPressed: () => _showMessage('게시글을 저장했어요.'),
-            child: const Text(
-              '임시저장',
-              style: TextStyle(color: Color(0xFF868B94), fontSize: 16),
-            ),
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return TextButton(
+                onPressed: _controller.isDirty ? _saveDraft : null,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF212124),
+                  disabledForegroundColor: const Color(0xFFD1D3D8),
+                ),
+                child: const Text('임시저장', style: TextStyle(fontSize: 16)),
+              );
+            },
           ),
         ],
       ),
@@ -251,6 +257,12 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     }
     widget.onSubmitted?.call(_controller.toForm());
     _showMessage('경매 글 작성이 완료됐어요.');
+  }
+
+  void _saveDraft() {
+    FocusScope.of(context).unfocus();
+    _controller.markSaved();
+    _showMessage('게시글을 임시저장했어요.');
   }
 
   void _showMessage(String message) {

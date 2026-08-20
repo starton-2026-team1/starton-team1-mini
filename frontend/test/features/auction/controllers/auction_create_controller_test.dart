@@ -2,6 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/auction/controllers/auction_create_controller.dart';
 
 void main() {
+  test('입력값이 변경될 때만 임시저장 상태가 활성화된다', () {
+    final controller = AuctionCreateController();
+    addTearDown(controller.dispose);
+
+    expect(controller.isDirty, isFalse);
+
+    controller.titleController.text = '자전거';
+    expect(controller.isDirty, isTrue);
+
+    controller.markSaved();
+    expect(controller.isDirty, isFalse);
+
+    controller.setExtensionCount(2);
+    expect(controller.isDirty, isTrue);
+  });
+
   test('필수 입력값이 없으면 제목 오류를 반환한다', () {
     final controller = AuctionCreateController();
     addTearDown(controller.dispose);

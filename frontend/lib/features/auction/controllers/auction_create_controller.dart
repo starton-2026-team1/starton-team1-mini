@@ -4,6 +4,12 @@ import 'package:flutter/services.dart';
 import '../models/auction_create_form.dart';
 
 class AuctionCreateController extends ChangeNotifier {
+  AuctionCreateController() {
+    for (final controller in _textControllers) {
+      controller.addListener(_markDirty);
+    }
+  }
+
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   final placeController = TextEditingController();
@@ -15,6 +21,16 @@ class AuctionCreateController extends ChangeNotifier {
   DateTime? endsAt;
   int extensionCount = 0;
   bool acceptPriceOffers = false;
+  bool isDirty = false;
+
+  List<TextEditingController> get _textControllers => [
+    titleController,
+    descriptionController,
+    placeController,
+    startingPriceController,
+    bidIncrementController,
+    buyNowPriceController,
+  ];
 
   static final priceFormatter = FilteringTextInputFormatter.digitsOnly;
 
@@ -23,21 +39,33 @@ class AuctionCreateController extends ChangeNotifier {
     if (endsAt != null && !endsAt!.isAfter(value)) {
       endsAt = value.add(const Duration(hours: 1));
     }
-    notifyListeners();
+    _markDirty();
   }
 
   void setEndsAt(DateTime value) {
     endsAt = value;
-    notifyListeners();
+    _markDirty();
   }
 
   void setExtensionCount(int value) {
     extensionCount = value;
-    notifyListeners();
+    _markDirty();
   }
 
   void setAcceptPriceOffers(bool value) {
     acceptPriceOffers = value;
+    _markDirty();
+  }
+
+  void markSaved() {
+    if (!isDirty) return;
+    isDirty = false;
+    notifyListeners();
+  }
+
+  void _markDirty() {
+    if (isDirty) return;
+    isDirty = true;
     notifyListeners();
   }
 
@@ -78,6 +106,9 @@ class AuctionCreateController extends ChangeNotifier {
 
   @override
   void dispose() {
+    for (final controller in _textControllers) {
+      controller.removeListener(_markDirty);
+    }
     titleController.dispose();
     descriptionController.dispose();
     placeController.dispose();
