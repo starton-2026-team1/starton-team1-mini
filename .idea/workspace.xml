@@ -5,18 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/core/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/core/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/core/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/core/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/auction.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/auction.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/bid.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/bid.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/enums.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/enums.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/favorite.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/favorite.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/fixed_price.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/fixed_price.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/product_image.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/product_image.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/migrations/versions/21df784f4fc8_add_marketplace_schema.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/migrations/versions/21df784f4fc8_add_marketplace_schema.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/product.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/product.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/user.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
