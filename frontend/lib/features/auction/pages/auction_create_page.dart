@@ -5,9 +5,11 @@ import '../controllers/auction_create_controller.dart';
 import '../models/auction_create_form.dart';
 import '../models/auction_draft.dart';
 import '../services/auction_draft_storage.dart';
+import '../widgets/auction_date_picker.dart';
 import '../widgets/auction_date_time_field.dart';
 import '../widgets/auction_draft_dialog.dart';
 import '../widgets/auction_form_section.dart';
+import '../widgets/auction_time_picker.dart';
 
 class AuctionCreatePage extends StatefulWidget {
   const AuctionCreatePage({this.onSubmitted, super.key});
@@ -264,22 +266,30 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
   }
 
   Future<void> _pickDateTime(bool isStart) async {
-    final now = DateTime.now();
+    final current = DateTime.now();
+    final today = DateTime(current.year, current.month, current.day);
+    final lastDate = today.add(const Duration(days: 27));
     final initial = isStart
-        ? (_controller.startsAt ?? now)
-        : (_controller.endsAt ?? now.add(const Duration(days: 1)));
-    final date = await showDatePicker(
+        ? (_controller.startsAt ?? current)
+        : (_controller.endsAt ?? current.add(const Duration(hours: 1)));
+    final initialDay = DateTime(initial.year, initial.month, initial.day);
+    final calendarInitialDate = initialDay.isBefore(today)
+        ? today
+        : initialDay.isAfter(lastDate)
+        ? lastDate
+        : initialDay;
+    final date = await showAuctionDatePicker(
       context: context,
-      initialDate: initial,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 365)),
+      initialDate: calendarInitialDate,
+      firstDate: today,
+      lastDate: lastDate,
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
+    final time = await showAuctionTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initial),
     );
-    if (time == null) return;
+    if (time == null || !mounted) return;
     final value = DateTime(
       date.year,
       date.month,
