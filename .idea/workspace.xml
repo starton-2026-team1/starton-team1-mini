@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/frontend/lib/shared/network/api_client.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/lib/shared/network/api_config.dart" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/lib/shared/network/api_exception.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/product.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/product.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/models/user.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models/user.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +33,9 @@
   &quot;fromUser&quot;: false
 }</component>
   <component name="ProjectId" id="3I2LvZ0zLy8kQbizhvnjNsZnr7j" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
