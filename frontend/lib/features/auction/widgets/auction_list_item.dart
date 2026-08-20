@@ -158,13 +158,10 @@ class _AuctionImage extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: imageAsset == null
           ? const Center(
-              child: SizedBox(
-                width: 42,
-                height: 42,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.5,
-                  color: Color(0xFFDADCE0),
-                ),
+              child: Icon(
+                Icons.gavel_outlined,
+                size: 60,
+                color: Color(0xFFDDDDE3),
               ),
             )
           : Image.asset(imageAsset!, fit: BoxFit.cover),
