@@ -6,12 +6,23 @@ import '../models/auth_tokens.dart';
 import '../models/auth_user.dart';
 import '../services/auth_token_storage.dart';
 
-class AuthApi {
+abstract interface class AuthGateway {
+  Future<AuthSession> login(String phoneNumber);
+
+  Future<AuthUser> getSession();
+
+  Future<AuthTokens> refresh();
+
+  Future<void> logout();
+}
+
+class AuthApi implements AuthGateway {
   AuthApi(this._client, this._tokenStorage);
 
   final ApiClient _client;
   final AuthTokenStorage _tokenStorage;
 
+  @override
   Future<AuthSession> login(String phoneNumber) async {
     final json = await _client.post(
       '/auth/login',
@@ -27,6 +38,7 @@ class AuthApi {
     return session;
   }
 
+  @override
   Future<AuthUser> getSession() async {
     final accessToken = await _requireAccessToken();
     final json = await _client.get(
@@ -37,6 +49,7 @@ class AuthApi {
     return AuthUser.fromJson(json['user'] as Map<String, dynamic>);
   }
 
+  @override
   Future<AuthTokens> refresh() async {
     final refreshToken = await _tokenStorage.readRefreshToken();
     if (refreshToken == null) {
@@ -61,6 +74,7 @@ class AuthApi {
     return tokens;
   }
 
+  @override
   Future<void> logout() async {
     final accessToken = await _tokenStorage.readAccessToken();
 
