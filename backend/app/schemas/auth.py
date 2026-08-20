@@ -67,6 +67,10 @@ class SessionResponse(BaseModel):
     user: UserSummary
 
 
+class LogoutResponse(BaseModel):
+    message: str
+
+
 class ErrorResponse(BaseModel):
     code: str
     message: str
