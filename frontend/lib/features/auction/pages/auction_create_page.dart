@@ -5,6 +5,7 @@ import '../models/auction_create_form.dart';
 import '../models/auction_draft.dart';
 import '../services/auction_draft_storage.dart';
 import '../widgets/auction_date_time_field.dart';
+import '../widgets/auction_draft_dialog.dart';
 import '../widgets/auction_form_section.dart';
 
 class AuctionCreatePage extends StatefulWidget {
@@ -19,6 +20,7 @@ class AuctionCreatePage extends StatefulWidget {
 class _AuctionCreatePageState extends State<AuctionCreatePage> {
   final _controller = AuctionCreateController();
   final _draftStorage = AuctionDraftStorage();
+  bool _canPop = false;
 
   @override
   void initState() {
@@ -34,85 +36,91 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return PopScope(
+      canPop: _canPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _requestClose();
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
-        leading: IconButton(
-          onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.close, size: 30),
-        ),
-        title: const Text(
-          '전국에 경매 올리기',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return TextButton(
-                onPressed: _controller.isDirty ? _saveDraft : null,
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF212124),
-                  disabledForegroundColor: const Color(0xFFD1D3D8),
-                ),
-                child: const Text('임시저장', style: TextStyle(fontSize: 16)),
-              );
-            },
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.transparent,
+          centerTitle: true,
+          leading: IconButton(
+            onPressed: _requestClose,
+            icon: const Icon(Icons.close, size: 30),
           ),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-                children: [
-                  _ImagePicker(onTap: () => _showMessage('사진 선택.')),
-                  const SizedBox(height: 30),
-                  AuctionFormSection(
-                    title: '제목',
-                    child: AuctionTextField(
-                      controller: _controller.titleController,
-                      hintText: '제목을 입력해 주세요.',
-                    ),
+          title: const Text(
+            '전국에 경매 올리기',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+          ),
+          actions: [
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                return TextButton(
+                  onPressed: _controller.isDirty ? _saveDraft : null,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF212124),
+                    disabledForegroundColor: const Color(0xFFD1D3D8),
                   ),
-                  const SizedBox(height: 28),
-                  AuctionFormSection(
-                    title: '자세한 설명',
-                    child: AuctionTextField(
-                      controller: _controller.descriptionController,
-                      hintText:
-                          '전국에 올릴 게시글 내용을 작성해 주세요. '
-                          '(판매 금지 물품은 게시가 제한될 수 있어요.)\n\n'
-                          '신뢰할 수 있는 거래를 위해 자세히 적어주세요. '
-                          '과학기술정보통신부, 한국인터넷진흥원과 함께 해요.',
-                      maxLines: 7,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  AuctionFormSection(
-                    title: '거래 희망 장소',
-                    child: AuctionTextField(
-                      controller: _controller.placeController,
-                      hintText: '거래 희망 장소를 입력해 주세요.',
-                      suffixIcon: const Icon(
-                        Icons.place_outlined,
-                        color: Color(0xFF868B94),
+                  child: const Text('임시저장', style: TextStyle(fontSize: 16)),
+                );
+              },
+            ),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                  children: [
+                    _ImagePicker(onTap: () => _showMessage('사진 선택.')),
+                    const SizedBox(height: 30),
+                    AuctionFormSection(
+                      title: '제목',
+                      child: AuctionTextField(
+                        controller: _controller.titleController,
+                        hintText: '제목을 입력해 주세요.',
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 36),
-                  _buildAuctionSettings(),
-                ],
+                    const SizedBox(height: 28),
+                    AuctionFormSection(
+                      title: '자세한 설명',
+                      child: AuctionTextField(
+                        controller: _controller.descriptionController,
+                        hintText:
+                            '전국에 올릴 게시글 내용을 작성해 주세요. '
+                            '(판매 금지 물품은 게시가 제한될 수 있어요.)\n\n'
+                            '신뢰할 수 있는 거래를 위해 자세히 적어주세요. '
+                            '과학기술정보통신부, 한국인터넷진흥원과 함께 해요.',
+                        maxLines: 7,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    AuctionFormSection(
+                      title: '거래 희망 장소',
+                      child: AuctionTextField(
+                        controller: _controller.placeController,
+                        hintText: '거래 희망 장소를 입력해 주세요.',
+                        suffixIcon: const Icon(
+                          Icons.place_outlined,
+                          color: Color(0xFF868B94),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    _buildAuctionSettings(),
+                  ],
+                ),
               ),
-            ),
-            _SubmitButton(onPressed: _submit),
-          ],
+              _SubmitButton(onPressed: _submit),
+            ],
+          ),
         ),
       ),
     );
@@ -270,23 +278,55 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 
   Future<void> _saveDraft() async {
     FocusScope.of(context).unfocus();
-    await _draftStorage.save(
-      AuctionDraft(
-        title: _controller.titleController.text,
-        description: _controller.descriptionController.text,
-        place: _controller.placeController.text,
-        startingPrice: _controller.startingPriceController.text,
-        bidIncrement: _controller.bidIncrementController.text,
-        buyNowPrice: _controller.buyNowPriceController.text,
-        startsAt: _controller.startsAt,
-        endsAt: _controller.endsAt,
-        extensionCount: _controller.extensionCount,
-        acceptPriceOffers: _controller.acceptPriceOffers,
-      ),
-    );
+    await _draftStorage.save(_createDraft());
     if (!mounted) return;
     _controller.markSaved();
     _showMessage('게시글을 임시저장했어요.');
+  }
+
+  Future<void> _requestClose() async {
+    FocusScope.of(context).unfocus();
+    if (!_controller.isDirty) {
+      _popPage();
+      return;
+    }
+
+    final choice = await showAuctionDraftDialog(
+      context: context,
+      message: '작성 중인 경매 글을 저장할까요?',
+      primaryLabel: '저장하기',
+      secondaryLabel: '저장 안 함',
+    );
+    if (!mounted || choice == null) return;
+
+    if (choice == AuctionDraftChoice.primary) {
+      await _draftStorage.save(_createDraft());
+      if (!mounted) return;
+      _controller.markSaved();
+    }
+    _popPage();
+  }
+
+  AuctionDraft _createDraft() {
+    return AuctionDraft(
+      title: _controller.titleController.text,
+      description: _controller.descriptionController.text,
+      place: _controller.placeController.text,
+      startingPrice: _controller.startingPriceController.text,
+      bidIncrement: _controller.bidIncrementController.text,
+      buyNowPrice: _controller.buyNowPriceController.text,
+      startsAt: _controller.startsAt,
+      endsAt: _controller.endsAt,
+      extensionCount: _controller.extensionCount,
+      acceptPriceOffers: _controller.acceptPriceOffers,
+    );
+  }
+
+  void _popPage() {
+    setState(() => _canPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.pop(context);
+    });
   }
 
   Future<void> _restoreDraft() async {

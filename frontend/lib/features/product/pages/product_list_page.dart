@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
 import '../../auction/pages/auction_create_page.dart';
+import '../../auction/services/auction_draft_storage.dart';
+import '../../auction/widgets/auction_draft_dialog.dart';
 import '../data/combined_product_feed.dart';
 import '../models/product_category.dart';
 import '../models/product_preview.dart';
@@ -118,10 +120,29 @@ class _ProductListPageState extends State<ProductListPage> {
     setState(() => _isCreateMenuOpen = false);
   }
 
-  void _handleCreateMenuSelected(String label) {
+  Future<void> _handleCreateMenuSelected(String label) async {
     _closeCreateMenu();
     if (label == '경매 등록') {
-      Navigator.of(context).push(
+      final storage = AuctionDraftStorage();
+      final draft = await storage.load();
+      if (!mounted) return;
+
+      if (draft != null) {
+        final choice = await showAuctionDraftDialog(
+          context: context,
+          title: '작성 중인 글이 있어요',
+          message: '글을 이어서 쓸까요?',
+          primaryLabel: '이어서 쓰기',
+          secondaryLabel: '새로 쓰기',
+        );
+        if (!mounted || choice == null) return;
+        if (choice == AuctionDraftChoice.secondary) {
+          await storage.clear();
+          if (!mounted) return;
+        }
+      }
+
+      await Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const AuctionCreatePage()),
       );
     }
