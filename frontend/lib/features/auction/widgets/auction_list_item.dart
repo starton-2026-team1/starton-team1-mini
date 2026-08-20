@@ -17,7 +17,7 @@ class AuctionListItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _AuctionImage(imageAsset: auction.imageAsset),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: SizedBox(
                 height: 120,
@@ -30,54 +30,66 @@ class AuctionListItem extends StatelessWidget {
                         Expanded(
                           child: Text(
                             auction.title,
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 14,
+                              color: Color(0xFF212124),
+                              fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 6),
                         const Icon(
                           Icons.more_vert,
-                          color: Color(0xFF969A9F),
-                          size: 22,
+                          color: Color(0xFF868B94),
+                          size: 20,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 5),
                     Text(
-                      auction.currentPrice,
+                      '${auction.location} · ${_statusLabel(auction.status)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
+                        color: Color(0xFF868B94),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _currentPriceLabel(auction.currentPrice),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF212124),
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 7),
+                    const Spacer(),
                     Row(
                       children: [
-                        _AuctionBadge(status: auction.status),
-                        const SizedBox(width: 8),
-                        Text(
-                          auction.remainingTimeLabel,
-                          style: const TextStyle(
-                            color: Color(0xFF969A9F),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 14,
+                          color: _accentColor(auction.status),
+                        ),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: _accentColor(auction.status),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        '입찰 ${auction.bidCount}  ·  관심 ${auction.favoriteCount}',
-                        style: const TextStyle(
-                          color: Color(0xFF969A9F),
-                          fontSize: 11,
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -87,6 +99,44 @@ class AuctionListItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _statusLabel(AuctionStatus status) {
+    return switch (status) {
+      AuctionStatus.waiting => '경매 시작 전',
+      AuctionStatus.active => '경매 진행 중',
+      AuctionStatus.completed => '낙찰 완료',
+    };
+  }
+
+  String _currentPriceLabel(String price) {
+    if (price.startsWith('현재가')) return price;
+    if (price.startsWith('현재 ')) return price.replaceFirst('현재 ', '현재가 ');
+    return '현재가 $price';
+  }
+
+  String _remainingTime(AuctionPreview auction) {
+    if (auction.status == AuctionStatus.completed ||
+        auction.remainingTime <= Duration.zero) {
+      return '경매 종료';
+    }
+
+    final hours = auction.remainingTime.inHours.toString().padLeft(2, '0');
+    final minutes = auction.remainingTime.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = auction.remainingTime.inSeconds
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    return '$hours:$minutes:$seconds';
+  }
+
+  Color _accentColor(AuctionStatus status) {
+    return status == AuctionStatus.completed
+        ? const Color(0xFF868B94)
+        : const Color(0xFFFF5A1F);
   }
 }
 
@@ -102,55 +152,22 @@ class _AuctionImage extends StatelessWidget {
       height: 120,
       decoration: BoxDecoration(
         color: const Color(0xFFFAFAFB),
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: const Color(0xFFE3E4E7)),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: const Color(0xFFDADCE0)),
       ),
       clipBehavior: Clip.antiAlias,
       child: imageAsset == null
-          ? const Icon(Icons.gavel_rounded, color: Color(0xFFDDDDE3), size: 58)
+          ? const Center(
+              child: SizedBox(
+                width: 42,
+                height: 42,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Color(0xFFDADCE0),
+                ),
+              ),
+            )
           : Image.asset(imageAsset!, fit: BoxFit.cover),
-    );
-  }
-}
-
-class _AuctionBadge extends StatelessWidget {
-  const _AuctionBadge({required this.status});
-
-  final AuctionStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (backgroundColor, foregroundColor) = switch (status) {
-      AuctionStatus.waiting => (
-        const Color(0xFFF1F3F5),
-        const Color(0xFF5F6368),
-      ),
-      AuctionStatus.active => (
-        const Color(0xFFFFF2E9),
-        const Color(0xFFFF6F0F),
-      ),
-      AuctionStatus.completed => (
-        const Color(0xFFEFF6FF),
-        const Color(0xFF3B82F6),
-      ),
-    };
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        child: Text(
-          status.label,
-          style: TextStyle(
-            color: foregroundColor,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }
