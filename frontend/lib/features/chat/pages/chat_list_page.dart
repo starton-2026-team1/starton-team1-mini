@@ -34,6 +34,7 @@ class _ChatListPageState extends State<ChatListPage> {
       backgroundColor: AppColors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        toolbarHeight: 64,
         backgroundColor: AppColors.white,
         surfaceTintColor: AppColors.transparent,
         titleSpacing: 20,
@@ -67,7 +68,6 @@ class _ChatListPageState extends State<ChatListPage> {
           final chats = _controller.visibleChats;
           return Column(
             children: [
-              const SizedBox(height: 10),
               ChatFilterBar(
                 selectedFilter: _controller.selectedFilter,
                 onSelected: _controller.selectFilter,
@@ -76,9 +76,7 @@ class _ChatListPageState extends State<ChatListPage> {
               const Divider(height: 1, color: AppColors.borderSubtle),
               Expanded(
                 child: chats.isEmpty
-                    ? const Center(
-                  child: Text('아직 채팅이 없어요.'),
-                )
+                    ? const Center(child: Text('아직 채팅이 없어요.'))
                     : ListView.separated(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         itemCount: chats.length,
