@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../../product/pages/product_list_page.dart';
 import '../models/main_tab.dart';
@@ -18,7 +19,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     const ProductListPage(),
     ...List.generate(
       MainTab.values.length - 1,
-      (_) => const ColoredBox(color: Colors.white),
+      (_) => const ColoredBox(color: AppColors.white),
     ),
   ];
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/product_category.dart';
 
@@ -33,20 +34,20 @@ class ProductCategoryBar extends StatelessWidget {
             showCheckmark: false,
             label: Text(category.label),
             labelStyle: TextStyle(
-              color: isSelected ? Colors.white : const Color(0xFF44464A),
+              color: isSelected ? AppColors.white : AppColors.categoryText,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
             color: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
-                return const Color(0xFF222D33);
+                return AppColors.categorySelected;
               }
-              return const Color(0xFFF5F5F6);
+              return AppColors.surfaceMuted;
             }),
             pressElevation: 0,
             elevation: 0,
-            shadowColor: Colors.transparent,
-            selectedShadowColor: Colors.transparent,
+            shadowColor: AppColors.transparent,
+            selectedShadowColor: AppColors.transparent,
             side: BorderSide.none,
             shape: const StadiumBorder(),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

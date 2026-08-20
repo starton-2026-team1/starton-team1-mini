@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 enum AuctionDraftChoice { primary, secondary }
 
@@ -12,11 +13,11 @@ Future<AuctionDraftChoice?> showAuctionDraftDialog({
   return showDialog<AuctionDraftChoice>(
     context: context,
     barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.42),
+    barrierColor: AppColors.black.withValues(alpha: 0.42),
     builder: (context) {
       return Dialog(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: AppColors.white,
+        surfaceTintColor: AppColors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 50),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
@@ -29,7 +30,7 @@ Future<AuctionDraftChoice?> showAuctionDraftDialog({
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Color(0xFF212124),
+                    color: AppColors.textPrimary,
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                   ),
@@ -39,7 +40,7 @@ Future<AuctionDraftChoice?> showAuctionDraftDialog({
               Text(
                 message,
                 style: const TextStyle(
-                  color: Color(0xFF212124),
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
                 ),
@@ -52,7 +53,7 @@ Future<AuctionDraftChoice?> showAuctionDraftDialog({
                   onPressed: () =>
                       Navigator.pop(context, AuctionDraftChoice.primary),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF292D32),
+                    backgroundColor: AppColors.darkSurface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(9),
                     ),
@@ -76,7 +77,7 @@ Future<AuctionDraftChoice?> showAuctionDraftDialog({
                   child: Text(
                     secondaryLabel,
                     style: const TextStyle(
-                      color: Color(0xFF212124),
+                      color: AppColors.textPrimary,
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
                     ),

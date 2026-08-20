@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../../main_navigation/pages/main_navigation_page.dart';
 import 'phone_auth_page.dart';
@@ -17,7 +18,7 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
@@ -44,11 +45,11 @@ class _WelcomePageState extends State<WelcomePage> {
             DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedCountry,
-                icon: Icon(Icons.keyboard_arrow_down, color: Colors.black54),
+                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.black54),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.black,
                 ),
                 onChanged: (String? newValue) {
                   setState(() {
@@ -96,13 +97,13 @@ class _WelcomePageState extends State<WelcomePage> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xffFF6F0F),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadiusGeometry.circular(5),
                   ),
                 ),
 
-                child: Text('시작하기', style: TextStyle(color: Colors.white)),
+                child: Text('시작하기', style: TextStyle(color: AppColors.white)),
               ),
             ),
             SizedBox(height: 16),
@@ -114,7 +115,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 );
               },
               style: TextButton.styleFrom(
-                foregroundColor: Colors.grey,
+                foregroundColor: AppColors.grey,
                 minimumSize: Size.zero,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -130,12 +131,12 @@ class _WelcomePageState extends State<WelcomePage> {
               children: [
                 Text(
                   "이미 계정이 있나요? ",
-                  style: TextStyle(color: Colors.grey.shade700),
+                  style: TextStyle(color: AppColors.grey700),
                 ),
                 Text(
                   "로그인",
                   style: TextStyle(
-                    color: Color(0xffFF6F0F),
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

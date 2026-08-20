@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
@@ -29,7 +30,7 @@ class _ProductListPageState extends State<ProductListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           Column(
@@ -67,7 +68,7 @@ class _ProductListPageState extends State<ProductListPage> {
                 child: GestureDetector(
                   onTap: _closeCreateMenu,
                   child: ColoredBox(
-                    color: Colors.black.withValues(alpha: 0.48),
+                    color: AppColors.black.withValues(alpha: 0.48),
                   ),
                 ),
               ),
@@ -99,11 +100,11 @@ class _ProductListPageState extends State<ProductListPage> {
           setState(() => _isCreateMenuOpen = !_isCreateMenuOpen);
         },
         backgroundColor: _isCreateMenuOpen
-            ? Colors.white
-            : const Color(0xFFFF6F0F),
+            ? AppColors.white
+            : AppColors.primary,
         foregroundColor: _isCreateMenuOpen
-            ? const Color(0xFF202124)
-            : Colors.white,
+            ? AppColors.textStrong
+            : AppColors.white,
         elevation: 3,
         shape: const CircleBorder(),
         child: AnimatedRotation(
@@ -165,7 +166,7 @@ class _ProductListPageState extends State<ProductListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: products.length,
       separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: Color(0xFFF0F1F3)),
+          const Divider(height: 1, color: AppColors.borderSubtle),
       itemBuilder: (context, index) {
         return ProductListItem(product: products[index]);
       },

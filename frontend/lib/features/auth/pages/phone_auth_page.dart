@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 class PhoneAuthPage extends StatefulWidget {
   const new({super.key});
@@ -37,7 +38,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
             Navigator.pop(context);
           },
           icon: Icon(Icons.close),
-          color: Colors.black,
+          color: AppColors.black,
           iconSize: 28,
         ),
       ),
@@ -48,9 +49,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                SizedBox(
-                  height: 16,
-                ),
+                SizedBox(height: 16),
                 Row(
                   children: [
                     Text(
@@ -58,24 +57,22 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: AppColors.black,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(
-                  height: 16,
-                ),
+                SizedBox(height: 16),
 
                 // 입력
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  style: TextStyle(fontSize: 18, color: AppColors.black),
                   decoration: InputDecoration(
                     hintText: '010-1234-5678',
                     hintStyle: TextStyle(
-                      color: Colors.grey.shade400,
+                      color: AppColors.grey400,
                       fontSize: 18,
                     ),
                     contentPadding: EdgeInsets.symmetric(
@@ -84,22 +81,23 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.black, width: 1.5),
+                      borderSide: BorderSide(
+                        color: AppColors.black,
+                        width: 1.5,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.black, width: 2),
+                      borderSide: BorderSide(color: AppColors.black, width: 2),
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 32,
-                ),
+                SizedBox(height: 32),
                 Center(
                   child: Text(
                     '휴대폰 번호가 변경되었나요?',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: AppColors.grey600,
                       fontSize: 13,
                       decoration: TextDecoration.underline,
                     ),
@@ -129,9 +127,9 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isButtonEnabled
-                    ? Color(0xffFF6F0F)
-                    : Colors.grey.shade600,
-                disabledBackgroundColor: Colors.grey.shade600,
+                    ? AppColors.primary
+                    : AppColors.grey600,
+                disabledBackgroundColor: AppColors.grey600,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadiusGeometry.circular(5),
                 ),
@@ -140,7 +138,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
               child: Text(
                 '다음',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

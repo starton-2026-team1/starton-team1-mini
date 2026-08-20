@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
 import '../widgets/auction_list_item.dart';
@@ -12,7 +13,7 @@ class AuctionListPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: mockAuctions.length,
       separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: Color(0xFFF0F1F3)),
+          const Divider(height: 1, color: AppColors.borderSubtle),
       itemBuilder: (context, index) {
         return AuctionListItem(auction: mockAuctions[index]);
       },

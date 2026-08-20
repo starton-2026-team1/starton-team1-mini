@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../controllers/auction_create_controller.dart';
 import '../models/auction_create_form.dart';
@@ -42,10 +43,10 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
         if (!didPop) _requestClose();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.transparent,
+          backgroundColor: AppColors.white,
+          surfaceTintColor: AppColors.transparent,
           centerTitle: true,
           leading: IconButton(
             onPressed: _requestClose,
@@ -62,8 +63,8 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                 return TextButton(
                   onPressed: _controller.isDirty ? _saveDraft : null,
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF212124),
-                    disabledForegroundColor: const Color(0xFFD1D3D8),
+                    foregroundColor: AppColors.textPrimary,
+                    disabledForegroundColor: AppColors.border,
                   ),
                   child: const Text('임시저장', style: TextStyle(fontSize: 16)),
                 );
@@ -120,7 +121,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                           hintText: '거래 희망 장소를 입력해 주세요.',
                           suffixIcon: const Icon(
                             Icons.place_outlined,
-                            color: Color(0xFF868B94),
+                            color: AppColors.textSecondary,
                           ),
                           errorText:
                               _controller.errors[AuctionCreateField.place],
@@ -193,7 +194,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
             const SizedBox(height: 8),
             const Text(
               '입력한 가격으로 즉시 낙찰할 수 있어요.',
-              style: TextStyle(color: Color(0xFF868B94), fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             AuctionFormSection(
@@ -240,7 +241,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
             const SizedBox(height: 8),
             const Text(
               '마감 직전 입찰이 들어오면 종료 시간을 연장해요.',
-              style: TextStyle(color: Color(0xFF868B94), fontSize: 14),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
           ],
         );
@@ -253,11 +254,11 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFFD1D3D8)),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: Color(0xFF868B94)),
+        borderSide: const BorderSide(color: AppColors.textSecondary),
       ),
     );
   }
@@ -380,12 +381,12 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
         content: Text(
           message,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontSize: 17,
             fontWeight: FontWeight.w400,
           ),
         ),
-        backgroundColor: const Color(0xFF292D32),
+        backgroundColor: AppColors.darkSurface,
         behavior: SnackBarBehavior.floating,
         elevation: 0,
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 112),
@@ -413,17 +414,17 @@ class _ImagePicker extends StatelessWidget {
           width: 76,
           height: 76,
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFD1D3D8)),
+            border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.camera_alt, color: Color(0xFF868B94), size: 27),
+              Icon(Icons.camera_alt, color: AppColors.textSecondary, size: 27),
               SizedBox(height: 2),
               Text(
                 '0/10',
-                style: TextStyle(color: Color(0xFF868B94), fontSize: 15),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
               ),
             ],
           ),
@@ -443,8 +444,8 @@ class _SubmitButton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF2F3F5))),
+        color: AppColors.white,
+        border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: SafeArea(
         top: false,
@@ -454,7 +455,7 @@ class _SubmitButton extends StatelessWidget {
           child: FilledButton(
             onPressed: onPressed,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6F0F),
+              backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

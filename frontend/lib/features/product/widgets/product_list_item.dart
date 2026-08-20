@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/product_preview.dart';
 
@@ -38,7 +39,7 @@ class ProductListItem extends StatelessWidget {
                       ),
                       const Icon(
                         Icons.more_vert,
-                        color: Color(0xFF969A9F),
+                        color: AppColors.textMuted,
                         size: 22,
                       ),
                     ],
@@ -49,7 +50,7 @@ class ProductListItem extends StatelessWidget {
                       product.time,
                     ].where((value) => value.isNotEmpty).join(' · '),
                     style: const TextStyle(
-                      color: Color(0xFF969A9F),
+                      color: AppColors.textMuted,
                       fontSize: 12,
                     ),
                   ),
@@ -92,18 +93,16 @@ class _ProductImage extends StatelessWidget {
       height: 120,
       decoration: BoxDecoration(
         color: product.isPartTimeJob
-            ? const Color(0xFFFAFAFB)
-            : const Color(0xFFFAFAFB),
+            ? AppColors.surfaceSubtle
+            : AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: const Color(0xFFE3E4E7)),
+        border: Border.all(color: AppColors.borderLight),
       ),
       clipBehavior: Clip.antiAlias,
       child: product.imageAsset == null
           ? Icon(
-              product.isPartTimeJob
-                  ? Icons.person
-                  : Icons.image_search,
-              color: const Color(0xFFDDDDE3),
+              product.isPartTimeJob ? Icons.person : Icons.image_search,
+              color: AppColors.iconDisabled,
               size: 70,
             )
           : Image.asset(product.imageAsset!, fit: BoxFit.cover),
@@ -122,20 +121,20 @@ class _ProductCounts extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (product.chatCount > 0) ...[
-          const Icon(Icons.group_rounded, size: 18, color: Color(0xFFD2D3D7)),
+          const Icon(Icons.group_rounded, size: 18, color: AppColors.iconMuted),
           const SizedBox(width: 2),
           Text(
             '${product.chatCount}',
-            style: const TextStyle(color: Color(0xFF969A9F), fontSize: 11),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
           ),
           const SizedBox(width: 6),
         ],
         if (product.favoriteCount > 0) ...[
-          const Icon(Icons.favorite, size: 19, color: Color(0xFFD2D3D7)),
+          const Icon(Icons.favorite, size: 19, color: AppColors.iconMuted),
           const SizedBox(width: 3),
           Text(
             '${product.favoriteCount}',
-            style: const TextStyle(color: Color(0xFF969A9F), fontSize: 11),
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
           ),
         ],
       ],
@@ -150,7 +149,7 @@ class _NeighborhoodBusinessBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF2E9),
+        color: AppColors.primaryContainer,
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Padding(
@@ -158,7 +157,7 @@ class _NeighborhoodBusinessBadge extends StatelessWidget {
         child: Text(
           '바로구매',
           style: TextStyle(
-            color: Color(0xFFFF6F0F),
+            color: AppColors.primary,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),

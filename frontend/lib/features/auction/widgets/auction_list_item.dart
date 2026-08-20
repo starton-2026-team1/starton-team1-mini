@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
 
@@ -33,7 +34,7 @@ class AuctionListItem extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Color(0xFF212124),
+                              color: AppColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
@@ -42,7 +43,7 @@ class AuctionListItem extends StatelessWidget {
                         const SizedBox(width: 6),
                         const Icon(
                           Icons.more_vert,
-                          color: Color(0xFF868B94),
+                          color: AppColors.textSecondary,
                           size: 20,
                         ),
                       ],
@@ -53,7 +54,7 @@ class AuctionListItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFF868B94),
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -63,7 +64,7 @@ class AuctionListItem extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Color(0xFF212124),
+                        color: AppColors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
@@ -135,8 +136,8 @@ class AuctionListItem extends StatelessWidget {
 
   Color _accentColor(AuctionStatus status) {
     return status == AuctionStatus.completed
-        ? const Color(0xFF868B94)
-        : const Color(0xFFFF5A1F);
+        ? AppColors.textSecondary
+        : AppColors.auction;
   }
 }
 
@@ -151,9 +152,9 @@ class _AuctionImage extends StatelessWidget {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFAFB),
+        color: AppColors.surfaceSubtle,
         borderRadius: BorderRadius.circular(5),
-        border: Border.all(color: const Color(0xFFDADCE0)),
+        border: Border.all(color: AppColors.imageBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: imageAsset == null
@@ -161,7 +162,7 @@ class _AuctionImage extends StatelessWidget {
               child: Icon(
                 Icons.gavel_outlined,
                 size: 60,
-                color: Color(0xFFDDDDE3),
+                color: AppColors.iconDisabled,
               ),
             )
           : Image.asset(imageAsset!, fit: BoxFit.cover),

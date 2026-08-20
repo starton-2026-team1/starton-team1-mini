@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 class ProductListHeader extends StatelessWidget {
   const ProductListHeader({super.key});
@@ -21,7 +22,7 @@ class ProductListHeader extends StatelessWidget {
             const Text(
               '전국',
               style: TextStyle(
-                color: Color(0xFFB8BBC0),
+                color: AppColors.textDisabled,
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
@@ -34,7 +35,7 @@ class ProductListHeader extends StatelessWidget {
             ),
             Badge(
               smallSize: 8,
-              backgroundColor: const Color(0xFFFF6F0F),
+              backgroundColor: AppColors.primary,
               offset: const Offset(-3, 4),
               child: IconButton(
                 onPressed: () {},

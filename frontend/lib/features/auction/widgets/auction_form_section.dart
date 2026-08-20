@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:flutter/services.dart';
 
 class AuctionFormSection extends StatelessWidget {
@@ -59,15 +60,18 @@ class AuctionTextField extends StatelessWidget {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 17, color: Color(0xFF212124)),
+      style: const TextStyle(fontSize: 17, color: AppColors.textPrimary),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(
-          color: Color(0xFF9A9CA2),
+          color: AppColors.textPlaceholder,
           fontWeight: FontWeight.w400,
         ),
         prefixText: prefixText,
-        prefixStyle: const TextStyle(fontSize: 17, color: Color(0xFF868B94)),
+        prefixStyle: const TextStyle(
+          fontSize: 17,
+          color: AppColors.textSecondary,
+        ),
         suffixIcon: suffixIcon,
         error: errorText == null ? null : _FieldError(message: errorText!),
         contentPadding: EdgeInsets.symmetric(
@@ -76,19 +80,19 @@ class AuctionTextField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFD1D3D8)),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF868B94)),
+          borderSide: const BorderSide(color: AppColors.textSecondary),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFFF3B30), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFFF3B30), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
       ),
     );
@@ -104,12 +108,12 @@ class _FieldError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.error, color: Color(0xFFFF3B30), size: 18),
+        const Icon(Icons.error, color: AppColors.error, size: 18),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             message,
-            style: const TextStyle(color: Color(0xFFFF3B30), fontSize: 14),
+            style: const TextStyle(color: AppColors.error, fontSize: 14),
           ),
         ),
       ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 class AuctionDateTimeField extends StatelessWidget {
   const AuctionDateTimeField({
@@ -27,9 +28,7 @@ class AuctionDateTimeField extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               border: Border.all(
-                color: errorText == null
-                    ? const Color(0xFFD1D3D8)
-                    : const Color(0xFFFF3B30),
+                color: errorText == null ? AppColors.border : AppColors.error,
                 width: errorText == null ? 1 : 1.5,
               ),
               borderRadius: BorderRadius.circular(10),
@@ -42,15 +41,15 @@ class AuctionDateTimeField extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       color: value == null
-                          ? const Color(0xFF9A9CA2)
-                          : const Color(0xFF212124),
+                          ? AppColors.textPlaceholder
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),
                 const Icon(
                   Icons.calendar_today_outlined,
                   size: 21,
-                  color: Color(0xFF868B94),
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),
@@ -61,15 +60,12 @@ class AuctionDateTimeField extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error, color: Color(0xFFFF3B30), size: 17),
+              const Icon(Icons.error, color: AppColors.error, size: 17),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   errorText!,
-                  style: const TextStyle(
-                    color: Color(0xFFFF3B30),
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: AppColors.error, fontSize: 12),
                 ),
               ),
             ],

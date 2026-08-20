@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../features/main_navigation/pages/main_navigation_page.dart';
 import '../shared/theme/app_theme.dart';
 
 const systemUiStyle = SystemUiOverlayStyle(
-  statusBarColor: Colors.transparent,
+  statusBarColor: AppColors.transparent,
   statusBarIconBrightness: Brightness.dark,
   statusBarBrightness: Brightness.light,
-  systemNavigationBarColor: Colors.white,
+  systemNavigationBarColor: AppColors.white,
   systemNavigationBarIconBrightness: Brightness.dark,
-  systemNavigationBarDividerColor: Colors.white,
+  systemNavigationBarDividerColor: AppColors.white,
   systemNavigationBarContrastEnforced: false,
 );
 
@@ -29,7 +30,7 @@ class CarrotMarketApp extends StatelessWidget {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: systemUiStyle,
           child: ColoredBox(
-            color: Colors.white,
+            color: AppColors.white,
             child: child ?? const SizedBox.shrink(),
           ),
         );

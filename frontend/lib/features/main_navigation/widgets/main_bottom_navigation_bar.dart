@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/main_tab.dart';
 
@@ -16,8 +17,8 @@ class MainBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF0F1F3))),
+        color: AppColors.white,
+        border: Border(top: BorderSide(color: AppColors.borderSubtle)),
       ),
       child: SafeArea(
         top: false,
@@ -47,8 +48,8 @@ class MainBottomNavigationBar extends StatelessWidget {
                           maxLines: 1,
                           style: TextStyle(
                             color: isSelected
-                                ? const Color(0xFF202124)
-                                : const Color(0xFFB8BBC0),
+                                ? AppColors.textStrong
+                                : AppColors.textDisabled,
                             fontSize: 12,
                             fontWeight: isSelected
                                 ? FontWeight.w600
@@ -79,7 +80,7 @@ class _NavigationIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = Icon(
       isSelected ? tab.selectedIcon : tab.icon,
-      color: isSelected ? const Color(0xFF202124) : const Color(0xFFB8BBC0),
+      color: isSelected ? AppColors.textStrong : AppColors.textDisabled,
       size: 29,
     );
 
@@ -89,8 +90,8 @@ class _NavigationIcon extends StatelessWidget {
 
     return Badge(
       label: Text('${tab.badgeCount}'),
-      backgroundColor: const Color(0xFFFF6F0F),
-      textColor: Colors.white,
+      backgroundColor: AppColors.primary,
+      textColor: AppColors.white,
       textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
       largeSize: 22,
       offset: const Offset(7, -4),

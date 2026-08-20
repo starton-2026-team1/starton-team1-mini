@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 
+import 'app_colors.dart';
+
 abstract final class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: Colors.white,
-      canvasColor: Colors.white,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      focusColor: Colors.transparent,
+      scaffoldBackgroundColor: AppColors.background,
+      canvasColor: AppColors.background,
+      splashColor: AppColors.transparent,
+      highlightColor: AppColors.transparent,
+      hoverColor: AppColors.transparent,
+      focusColor: AppColors.transparent,
       colorScheme: const ColorScheme.light(
-        primary: Color(0xFFFF6F0F),
-        onPrimary: Colors.white,
-        surface: Colors.white,
-        onSurface: Color(0xFF202124),
+        primary: AppColors.primary,
+        onPrimary: AppColors.white,
+        surface: AppColors.background,
+        onSurface: AppColors.textStrong,
       ),
       navigationBarTheme: const NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
+        backgroundColor: AppColors.background,
+        surfaceTintColor: AppColors.transparent,
       ),
     );
   }
