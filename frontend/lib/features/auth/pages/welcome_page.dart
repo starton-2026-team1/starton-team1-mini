@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
-import '../../main_navigation/pages/main_navigation_page.dart';
 import 'phone_auth_page.dart';
 
 class WelcomePage extends StatefulWidget {
