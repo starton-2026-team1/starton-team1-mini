@@ -5,7 +5,7 @@ import '../../main_navigation/pages/main_navigation_page.dart';
 import 'phone_auth_page.dart';
 
 class WelcomePage extends StatefulWidget {
-  const new({super.key});
+  const WelcomePage({super.key});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -93,7 +93,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => PhoneAuthPage()),
+                    MaterialPageRoute(builder: (_) => const PhoneAuthPage()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
