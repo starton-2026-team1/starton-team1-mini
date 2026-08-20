@@ -37,6 +37,8 @@ dependencies:
   shared_preferences: ^2.5.3
   http: ^1.6.0
   flutter_secure_storage: ^11.0.0
+  image_picker: ^1.2.1
+  photo_manager: ^3.8.0
 
 dev_dependencies:
   flutter_test:

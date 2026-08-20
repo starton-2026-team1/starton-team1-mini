@@ -14,6 +14,7 @@ void main() {
       endsAt: DateTime(2026, 8, 20, 13),
       extensionCount: 3,
       acceptPriceOffers: true,
+      imagePaths: const ['/tmp/bicycle.jpg'],
     );
 
     final restored = AuctionDraft.fromJson(draft.toJson());
@@ -23,5 +24,6 @@ void main() {
     expect(restored.endsAt, draft.endsAt);
     expect(restored.extensionCount, 3);
     expect(restored.acceptPriceOffers, isTrue);
+    expect(restored.imagePaths, draft.imagePaths);
   });
 }

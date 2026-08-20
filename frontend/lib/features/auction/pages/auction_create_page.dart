@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
+import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
 import '../controllers/auction_create_controller.dart';
 import '../models/auction_create_form.dart';
@@ -9,6 +10,7 @@ import '../widgets/auction_date_picker.dart';
 import '../widgets/auction_date_time_field.dart';
 import '../widgets/auction_draft_dialog.dart';
 import '../widgets/auction_form_section.dart';
+import '../widgets/auction_image_picker.dart';
 import '../widgets/auction_time_picker.dart';
 
 class AuctionCreatePage extends StatefulWidget {
@@ -23,6 +25,7 @@ class AuctionCreatePage extends StatefulWidget {
 class _AuctionCreatePageState extends State<AuctionCreatePage> {
   final _controller = AuctionCreateController();
   final _draftStorage = AuctionDraftStorage();
+  List<String> _imagePaths = [];
   bool _canPop = false;
 
   @override
@@ -84,7 +87,13 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                   builder: (context, _) => ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
                     children: [
-                      _ImagePicker(onTap: () => _showMessage('사진 선택.')),
+                      AuctionImagePicker(
+                        imagePaths: _imagePaths,
+                        errorText:
+                            _controller.errors[AuctionCreateField.images],
+                        onChanged: _setImagePaths,
+                        onMessage: _showMessage,
+                      ),
                       const SizedBox(height: 30),
                       AuctionFormSection(
                         title: '제목',
@@ -363,6 +372,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
       endsAt: _controller.endsAt,
       extensionCount: _controller.extensionCount,
       acceptPriceOffers: _controller.acceptPriceOffers,
+      imagePaths: _imagePaths,
     );
   }
 
@@ -387,66 +397,18 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     if (draft.endsAt != null) _controller.setEndsAt(draft.endsAt!);
     _controller.setExtensionCount(draft.extensionCount);
     _controller.setAcceptPriceOffers(draft.acceptPriceOffers);
+    _imagePaths = draft.imagePaths.take(10).toList();
+    _controller.setImagePaths(_imagePaths);
     _controller.markSaved();
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        backgroundColor: AppColors.darkSurface,
-        behavior: SnackBarBehavior.floating,
-        elevation: 0,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 112),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  void _setImagePaths(List<String> paths) {
+    setState(() => _imagePaths = paths);
+    _controller.setImagePaths(paths);
   }
-}
 
-class _ImagePicker extends StatelessWidget {
-  const _ImagePicker({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.camera_alt, color: AppColors.textSecondary, size: 27),
-              SizedBox(height: 2),
-              Text(
-                '0/10',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _showMessage(String message) {
+    showAppSnackBar(context, message, bottomMargin: 112);
   }
 }
 

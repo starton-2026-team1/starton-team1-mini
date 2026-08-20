@@ -8,6 +8,7 @@ class AuctionCreateForm {
     required this.startsAt,
     required this.endsAt,
     required this.extensionCount,
+    required this.imagePaths,
     this.buyNowPrice,
     this.acceptPriceOffers = false,
   });
@@ -22,4 +23,5 @@ class AuctionCreateForm {
   final int? buyNowPrice;
   final int extensionCount;
   final bool acceptPriceOffers;
+  final List<String> imagePaths;
 }

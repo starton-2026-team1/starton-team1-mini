@@ -10,6 +10,7 @@ class AuctionDraft {
     required this.endsAt,
     required this.extensionCount,
     required this.acceptPriceOffers,
+    this.imagePaths = const [],
   });
 
   final String title;
@@ -22,6 +23,7 @@ class AuctionDraft {
   final DateTime? endsAt;
   final int extensionCount;
   final bool acceptPriceOffers;
+  final List<String> imagePaths;
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,6 +37,7 @@ class AuctionDraft {
       'endsAt': endsAt?.toIso8601String(),
       'extensionCount': extensionCount,
       'acceptPriceOffers': acceptPriceOffers,
+      'imagePaths': imagePaths,
     };
   }
 
@@ -50,6 +53,11 @@ class AuctionDraft {
       endsAt: DateTime.tryParse(json['endsAt'] as String? ?? ''),
       extensionCount: json['extensionCount'] as int? ?? 0,
       acceptPriceOffers: json['acceptPriceOffers'] as bool? ?? false,
+      imagePaths:
+          (json['imagePaths'] as List<dynamic>?)
+              ?.whereType<String>()
+              .toList() ??
+          const [],
     );
   }
 }

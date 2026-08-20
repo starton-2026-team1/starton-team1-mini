@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/auction_create_form.dart';
 
 enum AuctionCreateField {
+  images,
   title,
   description,
   place,
@@ -36,6 +37,7 @@ class AuctionCreateController extends ChangeNotifier {
   bool acceptPriceOffers = false;
   bool isDirty = false;
   final Map<AuctionCreateField, String> errors = {};
+  List<String> imagePaths = const [];
 
   List<TextEditingController> get _textControllers => [
     titleController,
@@ -74,6 +76,13 @@ class AuctionCreateController extends ChangeNotifier {
 
   void setAcceptPriceOffers(bool value) {
     acceptPriceOffers = value;
+    isDirty = true;
+    notifyListeners();
+  }
+
+  void setImagePaths(List<String> value) {
+    imagePaths = List.unmodifiable(value);
+    errors.remove(AuctionCreateField.images);
     isDirty = true;
     notifyListeners();
   }
@@ -131,6 +140,9 @@ class AuctionCreateController extends ChangeNotifier {
             buyNowPrice <= startingPrice)) {
       errors[AuctionCreateField.buyNowPrice] = '바로 입찰 가격은 시작 가격보다 높아야 해요.';
     }
+    if (imagePaths.isEmpty) {
+      errors[AuctionCreateField.images] = '상품 사진을 한 장 이상 등록해 주세요.';
+    }
     notifyListeners();
     return errors.isEmpty ? null : errors.values.first;
   }
@@ -147,6 +159,7 @@ class AuctionCreateController extends ChangeNotifier {
       buyNowPrice: int.tryParse(buyNowPriceController.text),
       extensionCount: extensionCount,
       acceptPriceOffers: acceptPriceOffers,
+      imagePaths: imagePaths,
     );
   }
 
