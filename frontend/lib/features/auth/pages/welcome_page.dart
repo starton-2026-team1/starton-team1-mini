@@ -18,23 +18,22 @@ class _WelcomePageState extends State<WelcomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+      body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 빈 화면 병합
-            Spacer(),
+            Spacer(flex: 3),
             // 당근 이미지 로고
             Image(
               image: AssetImage('assets/image/logo.png'),
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
             ),
             SizedBox(height: 16),
             Text(
               "당신 근처의 당근",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16),
             Text("동네라서 가능한 모든 것"),
@@ -83,11 +82,12 @@ class _WelcomePageState extends State<WelcomePage> {
                     }).toList(),
               ),
             ),
-            const Spacer(),
+            const Spacer(flex: 4),
 
             // 시작하기 버튼
             SizedBox(
               width: double.infinity,
+              height: 56,
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -98,11 +98,14 @@ class _WelcomePageState extends State<WelcomePage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(5),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
 
-                child: Text('시작하기', style: TextStyle(color: AppColors.white)),
+                child: Text(
+                  '시작하기',
+                  style: TextStyle(color: AppColors.white, fontSize: 16),
+                ),
               ),
             ),
             SizedBox(height: 16),
@@ -124,7 +127,7 @@ class _WelcomePageState extends State<WelcomePage> {
                 ),
               ],
             ),
-            Spacer(),
+            SizedBox(height: 24),
           ],
         ),
       ),
