@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
+import '../../chat/pages/chat_list_page.dart';
 import '../../product/pages/product_list_page.dart';
-import '../models/main_tab.dart';
 import '../widgets/main_bottom_navigation_bar.dart';
 
 class MainNavigationPage extends StatefulWidget {
@@ -17,10 +17,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   late final List<Widget> _pages = [
     const ProductListPage(),
-    ...List.generate(
-      MainTab.values.length - 1,
-      (_) => const ColoredBox(color: AppColors.white),
-    ),
+    const ColoredBox(color: AppColors.white),
+    const ColoredBox(color: AppColors.white),
+    const ChatListPage(),
+    const ColoredBox(color: AppColors.white),
   ];
 
   @override
