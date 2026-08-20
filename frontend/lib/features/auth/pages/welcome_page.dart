@@ -107,23 +107,6 @@ class _WelcomePageState extends State<WelcomePage> {
               ),
             ),
             SizedBox(height: 16),
-
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MainNavigationPage()),
-                );
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.grey,
-                minimumSize: Size.zero,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: const Text('메인 화면 테스트', style: TextStyle(fontSize: 12)),
-            ),
-
-            SizedBox(height: 16),
             // 로그인 버튼
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
