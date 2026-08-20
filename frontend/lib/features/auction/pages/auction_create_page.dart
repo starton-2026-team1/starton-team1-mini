@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/auction_create_controller.dart';
 import '../models/auction_create_form.dart';
+import '../models/auction_draft.dart';
+import '../services/auction_draft_storage.dart';
 import '../widgets/auction_date_time_field.dart';
 import '../widgets/auction_form_section.dart';
 
@@ -16,6 +18,13 @@ class AuctionCreatePage extends StatefulWidget {
 
 class _AuctionCreatePageState extends State<AuctionCreatePage> {
   final _controller = AuctionCreateController();
+  final _draftStorage = AuctionDraftStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreDraft();
+  }
 
   @override
   void dispose() {
@@ -259,10 +268,42 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     _showMessage('경매 글 작성이 완료됐어요.');
   }
 
-  void _saveDraft() {
+  Future<void> _saveDraft() async {
     FocusScope.of(context).unfocus();
+    await _draftStorage.save(
+      AuctionDraft(
+        title: _controller.titleController.text,
+        description: _controller.descriptionController.text,
+        place: _controller.placeController.text,
+        startingPrice: _controller.startingPriceController.text,
+        bidIncrement: _controller.bidIncrementController.text,
+        buyNowPrice: _controller.buyNowPriceController.text,
+        startsAt: _controller.startsAt,
+        endsAt: _controller.endsAt,
+        extensionCount: _controller.extensionCount,
+        acceptPriceOffers: _controller.acceptPriceOffers,
+      ),
+    );
+    if (!mounted) return;
     _controller.markSaved();
     _showMessage('게시글을 임시저장했어요.');
+  }
+
+  Future<void> _restoreDraft() async {
+    final draft = await _draftStorage.load();
+    if (draft == null || !mounted) return;
+
+    _controller.titleController.text = draft.title;
+    _controller.descriptionController.text = draft.description;
+    _controller.placeController.text = draft.place;
+    _controller.startingPriceController.text = draft.startingPrice;
+    _controller.bidIncrementController.text = draft.bidIncrement;
+    _controller.buyNowPriceController.text = draft.buyNowPrice;
+    if (draft.startsAt != null) _controller.setStartsAt(draft.startsAt!);
+    if (draft.endsAt != null) _controller.setEndsAt(draft.endsAt!);
+    _controller.setExtensionCount(draft.extensionCount);
+    _controller.setAcceptPriceOffers(draft.acceptPriceOffers);
+    _controller.markSaved();
   }
 
   void _showMessage(String message) {
