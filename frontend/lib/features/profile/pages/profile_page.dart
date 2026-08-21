@@ -114,8 +114,15 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             actions: [
               IconButton(
-                onPressed: () =>
-                    _handleTap(context, profileMenuSections.first.items.first),
+                onPressed: () => _handleTap(
+                  context,
+                  const ProfileMenuItem(
+                    label: '앱 설정',
+                    icon: Icons.settings_outlined,
+                    routeKey: 'app_settings',
+                  ),
+                ),
+                tooltip: '앱 설정',
                 icon: const Icon(Icons.settings_outlined, size: 29),
               ),
               const SizedBox(width: 8),

@@ -76,4 +76,22 @@ void main() {
 
     expect(logoutCount, 1);
   });
+
+  testWidgets('설정 버튼은 로그아웃 콜백을 호출하지 않는다', (tester) async {
+    var logoutCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: buildProfilePage(onLogout: () async => logoutCount++),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('앱 설정'));
+    await tester.pump();
+
+    expect(logoutCount, 0);
+    expect(find.text('앱 설정 페이지는 준비 중이에요.'), findsOneWidget);
+  });
 }
