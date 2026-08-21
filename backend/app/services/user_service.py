@@ -55,6 +55,9 @@ class UserService:
 
         return user
 
+    async def update_name(self, user: User, name: str) -> User:
+        return await self.repository.update_name(user, name.strip())
+
     @staticmethod
     def _decode_token(
         token: str,

@@ -8,19 +8,24 @@ import '../../auth/services/auth_token_storage.dart';
 import '../../chat/pages/chat_list_page.dart';
 import '../../product/pages/product_list_page.dart';
 import '../../profile/pages/profile_page.dart';
+import '../../profile/data/profile_api.dart';
 import '../widgets/main_bottom_navigation_bar.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({
+    this.userId = 0,
     this.userName = '사용자',
     this.mannerTemperature = 36.5,
     this.authGateway,
+    this.profileGateway,
     super.key,
   });
 
+  final int userId;
   final String userName;
   final double mannerTemperature;
   final AuthGateway? authGateway;
+  final ProfileGateway? profileGateway;
 
   @override
   State<MainNavigationPage> createState() => _MainNavigationPageState();
@@ -30,28 +35,37 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
   ApiClient? _apiClient;
   late final AuthGateway _authGateway;
+  late final ProfileGateway _profileGateway;
+  late String _userName;
 
   @override
   void initState() {
     super.initState();
+    _userName = widget.userName;
 
     if (widget.authGateway != null) {
       _authGateway = widget.authGateway!;
-      return;
+    } else {
+      _apiClient = ApiClient();
+      _authGateway = AuthApi(_apiClient!, AuthTokenStorage());
     }
 
-    _apiClient = ApiClient();
-    _authGateway = AuthApi(_apiClient!, AuthTokenStorage());
+    _profileGateway =
+        widget.profileGateway ??
+        ProfileApi(_apiClient ??= ApiClient(), AuthTokenStorage());
   }
 
-  late final List<Widget> _pages = [
+  List<Widget> get _pages => [
     const ProductListPage(),
     const ColoredBox(color: AppColors.white),
     const ColoredBox(color: AppColors.white),
     const ChatListPage(),
     ProfilePage(
-      userName: widget.userName,
+      userId: widget.userId,
+      userName: _userName,
       mannerTemperature: widget.mannerTemperature,
+      profileGateway: _profileGateway,
+      onNameUpdated: (name) => setState(() => _userName = name),
       onLogout: _logout,
     ),
   ];

@@ -3,22 +3,30 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
 import '../data/profile_menu_data.dart';
+import '../data/profile_api.dart';
 import '../models/profile_menu_item.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_section_card.dart';
 import '../widgets/profile_shortcut_card.dart';
+import 'profile_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
+    required this.userId,
     required this.userName,
     this.mannerTemperature = 37.9,
+    required this.profileGateway,
+    required this.onNameUpdated,
     this.onMenuTap,
     this.onLogout,
     super.key,
   });
 
+  final int userId;
   final String userName;
   final double mannerTemperature;
+  final ProfileGateway profileGateway;
+  final ValueChanged<String> onNameUpdated;
   final ValueChanged<ProfileMenuItem>? onMenuTap;
   final Future<void> Function()? onLogout;
 
@@ -30,6 +38,11 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoggingOut = false;
 
   void _handleTap(BuildContext context, ProfileMenuItem item) {
+    if (item.routeKey == 'profile_edit') {
+      _openProfileDetail();
+      return;
+    }
+
     if (item.routeKey == 'logout') {
       _logout();
       return;
@@ -41,6 +54,20 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     showAppSnackBar(context, '${item.label} 페이지는 준비 중이에요.', bottomMargin: 92);
+  }
+
+  Future<void> _openProfileDetail() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (_) => ProfileDetailPage(
+          userId: widget.userId,
+          userName: widget.userName,
+          mannerTemperature: widget.mannerTemperature,
+          profileGateway: widget.profileGateway,
+          onNameUpdated: widget.onNameUpdated,
+        ),
+      ),
+    );
   }
 
   Future<void> _logout() async {

@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend/features/profile/data/profile_api.dart';
 import 'package:frontend/features/profile/pages/profile_page.dart';
+
+class FakeProfileGateway implements ProfileGateway {
+  @override
+  Future<String> updateName(String name) async => name;
+}
+
+Widget buildProfilePage({
+  String userName = '사용자',
+  ValueChanged<dynamic>? onMenuTap,
+  Future<void> Function()? onLogout,
+}) {
+  return ProfilePage(
+    userId: 1,
+    userName: userName,
+    profileGateway: FakeProfileGateway(),
+    onNameUpdated: (_) {},
+    onMenuTap: onMenuTap,
+    onLogout: onLogout,
+  );
+}
 
 void main() {
   testWidgets('로그인 사용자 이름과 마이페이지 메뉴를 보여준다', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: ProfilePage(userName: '김주')),
+      MaterialApp(
+        home: Scaffold(body: buildProfilePage(userName: '김주')),
       ),
     );
 
@@ -23,8 +44,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: ProfilePage(
-            userName: '사용자',
+          body: buildProfilePage(
             onMenuTap: (item) => selectedRoute = item.routeKey,
           ),
         ),
@@ -46,10 +66,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: ProfilePage(
-            userName: '사용자',
-            onLogout: () async => logoutCount++,
-          ),
+          body: buildProfilePage(onLogout: () async => logoutCount++),
         ),
       ),
     );

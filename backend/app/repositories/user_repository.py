@@ -39,3 +39,8 @@ class UserRepository:
             return user
 
         return await self.create(phone_number)
+
+    async def update_name(self, user: User, name: str) -> User:
+        user.name = name
+        await self.session.flush()
+        return user
