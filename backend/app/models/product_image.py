@@ -1,11 +1,15 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
+if TYPE_CHECKING:
+    from app.models.product import Product
 
+    
 class ProductImage(Base):
     __tablename__ = "product_images"
     __table_args__ = (UniqueConstraint("product_id", "sort_order", name="uq_product_images_order"),)
@@ -21,4 +25,7 @@ class ProductImage(Base):
         DateTime,
         nullable=False,
         server_default=func.now(),
+    )
+    product: Mapped["Product"] = relationship(
+        back_populates="images",
     )

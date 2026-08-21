@@ -16,6 +16,8 @@ abstract final class AppColors {
   static const surfaceSubtle = Color(0xFFFAFAFB);
   static const surfaceMuted = Color(0xFFF5F5F6);
   static const primaryContainer = Color(0xFFFFF2E9);
+  static const temperature = Color(0xFFFF6F0F);
+  static const temperatureContainer = Color(0xFFFFF1E7);
   static const darkSurface = Color(0xFF292D32);
   static const categorySelected = Color(0xFF222D33);
   static const categoryText = Color(0xFF44464A);

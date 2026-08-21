@@ -1,11 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from app.models.enums import AuctionStatus
 
+if TYPE_CHECKING:
+    from app.models.product import Product
 
 class Auction(Base):
     __tablename__ = "auctions"
@@ -50,4 +53,7 @@ class Auction(Base):
         Enum(AuctionStatus),
         nullable=False,
         default=AuctionStatus.WAITING,
+    )
+    product: Mapped["Product"] = relationship(
+        back_populates="auction",
     )

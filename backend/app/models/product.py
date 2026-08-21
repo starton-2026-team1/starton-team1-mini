@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     BigInteger,
@@ -11,10 +12,17 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 from app.models.enums import ProductStatus, SaleType
+
+if TYPE_CHECKING:
+    from app.models.auction import Auction
+    from app.models.category import Category
+    from app.models.fixed_price import FixedPrice
+    from app.models.product_image import ProductImage
+    from app.models.user import User
 
 
 class Product(Base):
@@ -46,3 +54,33 @@ class Product(Base):
         server_default=func.now(),
         server_onupdate=FetchedValue(),
     )
+
+    seller: Mapped["User"] = relationship(
+        back_populates="products",
+    )
+
+    category: Mapped["Category"] = relationship(
+        back_populates="products",
+    )
+
+    images: Mapped[list["ProductImage"]] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        order_by="ProductImage.sort_order",
+    )
+
+    fixed_price: Mapped["FixedPrice | None"] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        single_parent=True,
+    )
+
+    auction: Mapped["Auction | None"] = relationship(
+        back_populates="product",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        single_parent=True,
+    )
+
