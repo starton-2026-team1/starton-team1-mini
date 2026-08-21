@@ -10,9 +10,10 @@ class ProductRepository:
         self,
         session: AsyncSession,
         data: ProductCreate,
+        seller_id: int,
     ) -> Product:
         product = Product(
-            seller_id=data.seller_id,
+            seller_id=seller_id,
             category_id=data.category_id,
             sale_type=data.sale_type,
             title=data.title,
