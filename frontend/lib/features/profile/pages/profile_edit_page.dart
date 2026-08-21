@@ -113,7 +113,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 54),
+            const SizedBox(height: 25),
             const Align(
               child: Stack(
                 clipBehavior: Clip.none,
@@ -138,12 +138,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 42),
+            const SizedBox(height: 20),
             const Text(
               '닉네임',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 13),
             TextField(
               controller: _nameController,
               maxLength: 50,
@@ -152,20 +152,20 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 counterText: '',
                 errorText: _errorMessage,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(5),
                   borderSide: const BorderSide(color: AppColors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(5),
                   borderSide: const BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(5),
                   borderSide: const BorderSide(color: AppColors.textStrong),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 18,
+                  vertical: 11,
                 ),
               ),
             ),
