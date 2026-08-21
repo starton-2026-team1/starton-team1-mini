@@ -23,7 +23,7 @@ async def create_product(
     return {
         "id": product.id,
         "seller_id": product.seller_id,
-        "category_id": categories_id,
+        "category_id": product.category_id,
         "sale_type": product.sale_type,
         "title": product.title,
         "description": product.description,
