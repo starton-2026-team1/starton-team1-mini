@@ -13,6 +13,7 @@ class ProductService:
     async def create_product(
         self,
         session: AsyncSession,
+        seller_id: int,
         data: ProductCreate,
     ) -> Product:
         if data.sale_type != SaleType.FIXED_PRICE:
@@ -20,6 +21,7 @@ class ProductService:
 
         product = await self.repository.create_fixed_price_product(
             session=session,
+            seller_id=seller_id,
             data=data,
         )
 
