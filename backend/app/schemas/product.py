@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.models.enums import ProductStatus, SaleType
 
@@ -31,6 +31,23 @@ class ProductCreate(BaseModel):
     price: int = Field(gt=0)
 
 
+class ProductUpdate(BaseModel):
+    category_id: int | None = Field(default=None, gt=0)
+    title: ProductTitle | None = None
+    description: ProductDescription | None = None
+    price: int | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def require_update_value(self) -> "ProductUpdate":
+        if all(value is None for value in self.model_dump().values()):
+            raise ValueError("수정할 값을 한 개 이상 입력해 주세요.")
+        return self
+
+
+class ProductStatusUpdate(BaseModel):
+    status: ProductStatus
+
+
 class FixedPriceResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -51,5 +68,16 @@ class ProductResponse(BaseModel):
     updated_at: datetime
 
 
-class ProductCreateResponse(ProductResponse):
+class ProductDetailResponse(ProductResponse):
     fixed_price: FixedPriceResponse
+
+
+class ProductCreateResponse(ProductDetailResponse):
+    pass
+
+
+class ProductListResponse(BaseModel):
+    items: list[ProductDetailResponse]
+    total: int = Field(ge=0)
+    offset: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
