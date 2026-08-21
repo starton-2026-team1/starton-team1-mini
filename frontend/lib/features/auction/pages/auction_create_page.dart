@@ -174,25 +174,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
             ),
             const SizedBox(height: 24),
             AuctionFormSection(
-              title: '바로 입찰 가격',
-              child: AuctionTextField(
-                controller: _controller.buyNowPriceController,
-                hintText: '선택 입력',
-                prefixText: '₩ ',
-                keyboardType: TextInputType.number,
-                inputFormatters: [AuctionCreateController.priceFormatter],
-                errorText: _controller.errors[AuctionCreateField.buyNowPrice],
-                onChanged: (_) =>
-                    _controller.clearError(AuctionCreateField.buyNowPrice),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '입력한 가격으로 즉시 낙찰할 수 있어요.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            AuctionFormSection(
               title: '경매 시간',
               child: Row(
                 children: [
@@ -350,7 +331,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
       description: _controller.descriptionController.text,
       startingPrice: _controller.startingPriceController.text,
       bidIncrement: _controller.bidIncrementController.text,
-      buyNowPrice: _controller.buyNowPriceController.text,
       startsAt: _controller.startsAt,
       endsAt: _controller.endsAt,
       extensionCount: _controller.extensionCount,
@@ -373,7 +353,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     _controller.descriptionController.text = draft.description;
     _controller.startingPriceController.text = draft.startingPrice;
     _controller.bidIncrementController.text = draft.bidIncrement;
-    _controller.buyNowPriceController.text = draft.buyNowPrice;
     if (draft.startsAt != null) _controller.setStartsAt(draft.startsAt!);
     if (draft.endsAt != null) _controller.setEndsAt(draft.endsAt!);
     _controller.setExtensionCount(draft.extensionCount);

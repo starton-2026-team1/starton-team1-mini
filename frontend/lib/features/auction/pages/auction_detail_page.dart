@@ -372,7 +372,10 @@ class _AuctionStatusSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final latestBid = auction.bids.first;
+    final latestBid = auction.bids.firstOrNull;
+    final displayedPrice = latestBid == null
+        ? auction.startPrice
+        : auction.currentPrice;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
       child: Column(
@@ -403,8 +406,8 @@ class _AuctionStatusSection extends StatelessWidget {
           Row(
             children: [
               _Metric(
-                label: '현재 입찰가',
-                value: _formatPrice(auction.currentPrice),
+                label: latestBid == null ? '시작가' : '현재 입찰가',
+                value: _formatPrice(displayedPrice),
                 large: true,
               ),
               const SizedBox(width: 34),
@@ -438,21 +441,28 @@ class _AuctionStatusSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 18),
-                Text(
-                  '최근 입찰 ${latestBid.bidderName}',
-                  style: const TextStyle(
-                    color: Color(0xFF666666),
-                    fontSize: 12,
+                if (latestBid == null)
+                  const Text(
+                    '아직 입찰이 없어요',
+                    style: TextStyle(color: Color(0xFF666666), fontSize: 12),
+                  )
+                else ...[
+                  Text(
+                    '최근 입찰 ${latestBid.bidderName}',
+                    style: const TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  latestBid.timeLabel,
-                  style: const TextStyle(
-                    color: Color(0xFF858585),
-                    fontSize: 11,
+                  const Spacer(),
+                  Text(
+                    latestBid.timeLabel,
+                    style: const TextStyle(
+                      color: Color(0xFF858585),
+                      fontSize: 11,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

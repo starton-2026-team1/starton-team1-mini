@@ -8,7 +8,6 @@ void main() {
       description: '상태가 좋아요',
       startingPrice: '10000',
       bidIncrement: '1000',
-      buyNowPrice: '50000',
       startsAt: DateTime(2026, 8, 20, 12),
       endsAt: DateTime(2026, 8, 20, 13),
       extensionCount: 3,

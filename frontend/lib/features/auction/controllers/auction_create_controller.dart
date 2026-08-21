@@ -9,7 +9,6 @@ enum AuctionCreateField {
   description,
   startingPrice,
   bidIncrement,
-  buyNowPrice,
   startsAt,
   endsAt,
 }
@@ -25,7 +24,6 @@ class AuctionCreateController extends ChangeNotifier {
   final descriptionController = TextEditingController();
   final startingPriceController = TextEditingController();
   final bidIncrementController = TextEditingController();
-  final buyNowPriceController = TextEditingController();
 
   final now = DateTime.now();
 
@@ -41,7 +39,6 @@ class AuctionCreateController extends ChangeNotifier {
     descriptionController,
     startingPriceController,
     bidIncrementController,
-    buyNowPriceController,
   ];
 
   static final priceFormatter = FilteringTextInputFormatter.digitsOnly;
@@ -119,14 +116,6 @@ class AuctionCreateController extends ChangeNotifier {
     } else if (startsAt != null && !endsAt!.isAfter(startsAt!)) {
       errors[AuctionCreateField.endsAt] = '종료 시간은 시작 시간보다 늦어야 해요.';
     }
-    final buyNowText = buyNowPriceController.text;
-    final buyNowPrice = int.tryParse(buyNowText);
-    if (buyNowText.isNotEmpty &&
-        (buyNowPrice == null ||
-            startingPrice == null ||
-            buyNowPrice <= startingPrice)) {
-      errors[AuctionCreateField.buyNowPrice] = '바로 입찰 가격은 시작 가격보다 높아야 해요.';
-    }
     if (imagePaths.isEmpty) {
       errors[AuctionCreateField.images] = '상품 사진을 한 장 이상 등록해 주세요.';
     }
@@ -142,7 +131,6 @@ class AuctionCreateController extends ChangeNotifier {
       bidIncrement: int.parse(bidIncrementController.text),
       startsAt: startsAt!,
       endsAt: endsAt!,
-      buyNowPrice: int.tryParse(buyNowPriceController.text),
       extensionCount: extensionCount,
       imagePaths: imagePaths,
     );
@@ -157,7 +145,6 @@ class AuctionCreateController extends ChangeNotifier {
     descriptionController.dispose();
     startingPriceController.dispose();
     bidIncrementController.dispose();
-    buyNowPriceController.dispose();
     super.dispose();
   }
 }

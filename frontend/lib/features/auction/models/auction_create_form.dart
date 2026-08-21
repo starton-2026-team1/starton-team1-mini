@@ -8,7 +8,6 @@ class AuctionCreateForm {
     required this.endsAt,
     required this.extensionCount,
     required this.imagePaths,
-    this.buyNowPrice,
   });
 
   final String title;
@@ -17,7 +16,6 @@ class AuctionCreateForm {
   final int bidIncrement;
   final DateTime startsAt;
   final DateTime endsAt;
-  final int? buyNowPrice;
   final int extensionCount;
   final List<String> imagePaths;
 }

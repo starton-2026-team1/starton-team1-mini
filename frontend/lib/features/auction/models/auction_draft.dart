@@ -4,7 +4,6 @@ class AuctionDraft {
     required this.description,
     required this.startingPrice,
     required this.bidIncrement,
-    required this.buyNowPrice,
     required this.startsAt,
     required this.endsAt,
     required this.extensionCount,
@@ -15,7 +14,6 @@ class AuctionDraft {
   final String description;
   final String startingPrice;
   final String bidIncrement;
-  final String buyNowPrice;
   final DateTime? startsAt;
   final DateTime? endsAt;
   final int extensionCount;
@@ -27,7 +25,6 @@ class AuctionDraft {
       'description': description,
       'startingPrice': startingPrice,
       'bidIncrement': bidIncrement,
-      'buyNowPrice': buyNowPrice,
       'startsAt': startsAt?.toIso8601String(),
       'endsAt': endsAt?.toIso8601String(),
       'extensionCount': extensionCount,
@@ -41,7 +38,6 @@ class AuctionDraft {
       description: json['description'] as String? ?? '',
       startingPrice: json['startingPrice'] as String? ?? '',
       bidIncrement: json['bidIncrement'] as String? ?? '',
-      buyNowPrice: json['buyNowPrice'] as String? ?? '',
       startsAt: DateTime.tryParse(json['startsAt'] as String? ?? ''),
       endsAt: DateTime.tryParse(json['endsAt'] as String? ?? ''),
       extensionCount: json['extensionCount'] as int? ?? 0,

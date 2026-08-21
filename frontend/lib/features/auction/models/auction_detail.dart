@@ -41,7 +41,8 @@ class AuctionDetail {
   final List<AuctionBidPreview> bids;
   final int imageCount;
 
-  int get nextBidPrice => currentPrice + minimumBidUnit;
+  int get nextBidPrice =>
+      bids.isEmpty ? startPrice : currentPrice + minimumBidUnit;
 }
 
 const mockAuctionDetail = AuctionDetail(
