@@ -14,9 +14,9 @@ product_service = ProductService()
     status_code=status.HTTP_201_CREATED,
 )
 async def create_product(
-        data: ProductCreate,
-        session: DatabaseSession,
-        current_user: CurrentUserDependency,
+    data: ProductCreate,
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
 ) -> ProductCreateResponse:
     product = await product_service.create_product(
         session=session,
@@ -24,12 +24,4 @@ async def create_product(
         data=data,
     )
 
-    return ProductCreateResponse(
-        product_id=product.id,
-        seller_id=product.seller_id,
-        category_id=product.category_id,
-        sale_type=product.sale_type,
-        title=product.title,
-        description=product.description,
-        price=data.price,
-    )
+    return ProductCreateResponse.model_validate(product)
