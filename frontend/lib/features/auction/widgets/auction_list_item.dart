@@ -2,101 +2,106 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
+import '../models/auction_status.dart';
 
 class AuctionListItem extends StatelessWidget {
-  const AuctionListItem({required this.auction, super.key});
+  const AuctionListItem({required this.auction, this.onTap, super.key});
 
   final AuctionPreview auction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 170,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _AuctionImage(imageAsset: auction.imageAsset),
-            const SizedBox(width: 14),
-            Expanded(
-              child: SizedBox(
-                height: 120,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            auction.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 170,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AuctionImage(imageAsset: auction.imageAsset),
+              const SizedBox(width: 14),
+              Expanded(
+                child: SizedBox(
+                  height: 120,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              auction.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.more_vert,
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.more_vert,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '${auction.location} · ${_statusLabel(auction.status)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
-                          size: 20,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${auction.location} · ${_statusLabel(auction.status)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _currentPriceLabel(auction.currentPrice),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 14,
-                          color: _accentColor(auction.status),
+                      const SizedBox(height: 3),
+                      Text(
+                        _currentPriceLabel(auction.currentPrice),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(
-                            '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _accentColor(auction.status),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: _accentColor(auction.status),
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _accentColor(auction.status),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -107,6 +112,9 @@ class AuctionListItem extends StatelessWidget {
       AuctionStatus.waiting => '경매 시작 전',
       AuctionStatus.active => '경매 진행 중',
       AuctionStatus.completed => '낙찰 완료',
+      AuctionStatus.noBids => '유찰',
+      AuctionStatus.cancelled => '경매 취소',
+      AuctionStatus.tradeCompleted => '거래 완료',
     };
   }
 
@@ -117,10 +125,8 @@ class AuctionListItem extends StatelessWidget {
   }
 
   String _remainingTime(AuctionPreview auction) {
-    if (auction.status == AuctionStatus.completed ||
-        auction.remainingTime <= Duration.zero) {
-      return '경매 종료';
-    }
+    if (!auction.status.hasRunningTimer) return auction.status.label;
+    if (auction.remainingTime <= Duration.zero) return '경매 종료';
 
     final hours = auction.remainingTime.inHours.toString().padLeft(2, '0');
     final minutes = auction.remainingTime.inMinutes
@@ -135,7 +141,7 @@ class AuctionListItem extends StatelessWidget {
   }
 
   Color _accentColor(AuctionStatus status) {
-    return status == AuctionStatus.completed
+    return !status.hasRunningTimer
         ? AppColors.textSecondary
         : AppColors.auction;
   }

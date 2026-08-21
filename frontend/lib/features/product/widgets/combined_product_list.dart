@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../../auction/widgets/auction_list_item.dart';
+import '../../auction/pages/auction_detail_page.dart';
 import '../models/product_feed_item.dart';
 import 'product_list_item.dart';
 
@@ -20,7 +21,14 @@ class CombinedProductList extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         if (item.isAuction) {
-          return AuctionListItem(auction: item.auction!);
+          return AuctionListItem(
+            auction: item.auction!,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AuctionDetailPage(),
+              ),
+            ),
+          );
         }
 
         return ProductListItem(product: item.product!);

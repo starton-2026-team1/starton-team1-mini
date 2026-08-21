@@ -124,22 +124,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
-                      AuctionFormSection(
-                        title: '거래 희망 장소',
-                        child: AuctionTextField(
-                          controller: _controller.placeController,
-                          hintText: '거래 희망 장소를 입력해 주세요.',
-                          suffixIcon: const Icon(
-                            Icons.place_outlined,
-                            color: AppColors.textSecondary,
-                          ),
-                          errorText:
-                              _controller.errors[AuctionCreateField.place],
-                          onChanged: (_) =>
-                              _controller.clearError(AuctionCreateField.place),
-                        ),
-                      ),
                       const SizedBox(height: 36),
                       _buildAuctionSettings(),
                     ],
@@ -187,25 +171,6 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                 onChanged: (_) =>
                     _controller.clearError(AuctionCreateField.bidIncrement),
               ),
-            ),
-            const SizedBox(height: 24),
-            AuctionFormSection(
-              title: '바로 입찰 가격',
-              child: AuctionTextField(
-                controller: _controller.buyNowPriceController,
-                hintText: '선택 입력',
-                prefixText: '₩ ',
-                keyboardType: TextInputType.number,
-                inputFormatters: [AuctionCreateController.priceFormatter],
-                errorText: _controller.errors[AuctionCreateField.buyNowPrice],
-                onChanged: (_) =>
-                    _controller.clearError(AuctionCreateField.buyNowPrice),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '입력한 가격으로 즉시 낙찰할 수 있어요.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 24),
             AuctionFormSection(
@@ -364,14 +329,11 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     return AuctionDraft(
       title: _controller.titleController.text,
       description: _controller.descriptionController.text,
-      place: _controller.placeController.text,
       startingPrice: _controller.startingPriceController.text,
       bidIncrement: _controller.bidIncrementController.text,
-      buyNowPrice: _controller.buyNowPriceController.text,
       startsAt: _controller.startsAt,
       endsAt: _controller.endsAt,
       extensionCount: _controller.extensionCount,
-      acceptPriceOffers: _controller.acceptPriceOffers,
       imagePaths: _imagePaths,
     );
   }
@@ -389,14 +351,11 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 
     _controller.titleController.text = draft.title;
     _controller.descriptionController.text = draft.description;
-    _controller.placeController.text = draft.place;
     _controller.startingPriceController.text = draft.startingPrice;
     _controller.bidIncrementController.text = draft.bidIncrement;
-    _controller.buyNowPriceController.text = draft.buyNowPrice;
     if (draft.startsAt != null) _controller.setStartsAt(draft.startsAt!);
     if (draft.endsAt != null) _controller.setEndsAt(draft.endsAt!);
     _controller.setExtensionCount(draft.extensionCount);
-    _controller.setAcceptPriceOffers(draft.acceptPriceOffers);
     _imagePaths = draft.imagePaths.take(10).toList();
     _controller.setImagePaths(_imagePaths);
     _controller.markSaved();

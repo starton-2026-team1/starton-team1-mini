@@ -7,10 +7,8 @@ enum AuctionCreateField {
   images,
   title,
   description,
-  place,
   startingPrice,
   bidIncrement,
-  buyNowPrice,
   startsAt,
   endsAt,
 }
@@ -24,17 +22,14 @@ class AuctionCreateController extends ChangeNotifier {
 
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final placeController = TextEditingController();
   final startingPriceController = TextEditingController();
   final bidIncrementController = TextEditingController();
-  final buyNowPriceController = TextEditingController();
 
   final now = DateTime.now();
 
   DateTime? startsAt;
   DateTime? endsAt;
   int extensionCount = 0;
-  bool acceptPriceOffers = false;
   bool isDirty = false;
   final Map<AuctionCreateField, String> errors = {};
   List<String> imagePaths = const [];
@@ -42,10 +37,8 @@ class AuctionCreateController extends ChangeNotifier {
   List<TextEditingController> get _textControllers => [
     titleController,
     descriptionController,
-    placeController,
     startingPriceController,
     bidIncrementController,
-    buyNowPriceController,
   ];
 
   static final priceFormatter = FilteringTextInputFormatter.digitsOnly;
@@ -70,12 +63,6 @@ class AuctionCreateController extends ChangeNotifier {
 
   void setExtensionCount(int value) {
     extensionCount = value;
-    isDirty = true;
-    notifyListeners();
-  }
-
-  void setAcceptPriceOffers(bool value) {
-    acceptPriceOffers = value;
     isDirty = true;
     notifyListeners();
   }
@@ -111,9 +98,6 @@ class AuctionCreateController extends ChangeNotifier {
     if (descriptionController.text.trim().isEmpty) {
       errors[AuctionCreateField.description] = '상세 내용을 입력해 주세요.';
     }
-    if (placeController.text.trim().isEmpty) {
-      errors[AuctionCreateField.place] = '거래 희망 장소를 입력해 주세요.';
-    }
     final startingPrice = int.tryParse(startingPriceController.text);
     if (startingPrice == null || startingPrice <= 0) {
       errors[AuctionCreateField.startingPrice] = '시작 가격을 입력해 주세요.';
@@ -132,14 +116,6 @@ class AuctionCreateController extends ChangeNotifier {
     } else if (startsAt != null && !endsAt!.isAfter(startsAt!)) {
       errors[AuctionCreateField.endsAt] = '종료 시간은 시작 시간보다 늦어야 해요.';
     }
-    final buyNowText = buyNowPriceController.text;
-    final buyNowPrice = int.tryParse(buyNowText);
-    if (buyNowText.isNotEmpty &&
-        (buyNowPrice == null ||
-            startingPrice == null ||
-            buyNowPrice <= startingPrice)) {
-      errors[AuctionCreateField.buyNowPrice] = '바로 입찰 가격은 시작 가격보다 높아야 해요.';
-    }
     if (imagePaths.isEmpty) {
       errors[AuctionCreateField.images] = '상품 사진을 한 장 이상 등록해 주세요.';
     }
@@ -151,14 +127,11 @@ class AuctionCreateController extends ChangeNotifier {
     return AuctionCreateForm(
       title: titleController.text.trim(),
       description: descriptionController.text.trim(),
-      place: placeController.text.trim(),
       startingPrice: int.parse(startingPriceController.text),
       bidIncrement: int.parse(bidIncrementController.text),
       startsAt: startsAt!,
       endsAt: endsAt!,
-      buyNowPrice: int.tryParse(buyNowPriceController.text),
       extensionCount: extensionCount,
-      acceptPriceOffers: acceptPriceOffers,
       imagePaths: imagePaths,
     );
   }
@@ -170,10 +143,8 @@ class AuctionCreateController extends ChangeNotifier {
     }
     titleController.dispose();
     descriptionController.dispose();
-    placeController.dispose();
     startingPriceController.dispose();
     bidIncrementController.dispose();
-    buyNowPriceController.dispose();
     super.dispose();
   }
 }
