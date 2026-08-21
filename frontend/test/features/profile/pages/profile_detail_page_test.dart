@@ -28,8 +28,9 @@ void main() {
     await tester.tap(salesCard);
     await tester.pumpAndSettle();
 
-    expect(find.text('판매관리'), findsOneWidget);
-    expect(find.text('판매중 0'), findsOneWidget);
-    expect(find.text('거래완료 0'), findsOneWidget);
+    expect(find.text('판매/경매관리'), findsOneWidget);
+    expect(find.text('경매중 1'), findsOneWidget);
+    expect(find.text('판매중 1'), findsOneWidget);
+    expect(find.text('완료 2'), findsOneWidget);
   });
 }

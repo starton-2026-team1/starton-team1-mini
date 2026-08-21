@@ -34,7 +34,7 @@ void main() {
     expect(find.text('김주'), findsOneWidget);
     expect(find.text('37.9°C'), findsOneWidget);
     expect(find.text('관심목록'), findsWidgets);
-    expect(find.text('판매관리'), findsOneWidget);
+    expect(find.text('판매/경매관리'), findsOneWidget);
     expect(find.text('구매내역'), findsOneWidget);
   });
 
@@ -51,7 +51,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('판매관리'));
+    await tester.tap(find.text('판매/경매관리'));
 
     expect(selectedRoute, 'sales');
   });

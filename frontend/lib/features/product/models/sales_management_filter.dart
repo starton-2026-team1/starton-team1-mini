@@ -1,6 +1,7 @@
 enum SalesManagementFilter {
+  auction('경매중'),
   selling('판매중'),
-  completed('거래완료');
+  completed('완료');
 
   const SalesManagementFilter(this.label);
 

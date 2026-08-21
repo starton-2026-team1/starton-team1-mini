@@ -27,7 +27,7 @@ const profileMenuSections = [
     title: '나의 거래',
     items: [
       ProfileMenuItem(
-        label: '판매관리',
+        label: '판매/경매관리',
         icon: Icons.receipt_long_outlined,
         routeKey: 'sales',
       ),
