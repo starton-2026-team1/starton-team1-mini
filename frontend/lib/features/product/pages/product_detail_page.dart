@@ -266,15 +266,28 @@ class ProductDetailPage extends StatelessWidget {
 
                               const SizedBox(width: 4),
 
-                              // Pay 표시
-                              const Text(
-                                '●pay',
-
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFFF6F0F),
-                                ),
+                              // 당근 로고 표시 + pay
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    'lib/assets/image/logo.png',
+                                    width: 14,
+                                    height: 14,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  const SizedBox(width: 1),
+                                  const Text(
+                                    'pay',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFFF6F0F),
+                                      height: 1,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
