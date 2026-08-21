@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Any
+from typing import Annotated
 
 from pydantic import (
     BaseModel,
@@ -70,8 +70,3 @@ class SessionResponse(BaseModel):
 class LogoutResponse(BaseModel):
     message: str
 
-
-class ErrorResponse(BaseModel):
-    code: str
-    message: str
-    details: dict[str, Any] | None = None

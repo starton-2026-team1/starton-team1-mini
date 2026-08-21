@@ -1,13 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from starlette.responses import JSONResponse
 
 from app.api.dependencies import UserServiceDependency
 from app.core.exceptions import AuthenticationError
 from app.schemas.auth import (
-    ErrorResponse,
     LogoutResponse,
     PhoneLoginRequest,
     RefreshTokenRequest,
@@ -27,19 +25,14 @@ BearerCredentials = Annotated[
 ]
 
 unauthorized_response = {
-    "model": ErrorResponse,
     "description": "인증 실패",
 }
 
 
-def unauthorized(message: str) -> JSONResponse:
-    error = ErrorResponse(
-        code="AUTHENTICATION_FAILED",
-        message=message,
-    )
-    return JSONResponse(
+def unauthorized(message: str) -> HTTPException:
+    return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        content=error.model_dump(exclude_none=True),
+        detail=message,
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -52,11 +45,11 @@ def unauthorized(message: str) -> JSONResponse:
 async def login(
     request: PhoneLoginRequest,
     service: UserServiceDependency,
-) -> TokenResponse | JSONResponse:
+) -> TokenResponse:
     try:
         return await service.login(request.phone_number)
     except AuthenticationError as exc:
-        return unauthorized(str(exc))
+        raise unauthorized(str(exc)) from exc
 
 
 @router.post(
@@ -67,11 +60,11 @@ async def login(
 async def refresh(
     request: RefreshTokenRequest,
     service: UserServiceDependency,
-) -> RefreshTokenResponse | JSONResponse:
+) -> RefreshTokenResponse:
     try:
         return await service.refresh(request.refresh_token)
     except AuthenticationError as exc:
-        return unauthorized(str(exc))
+        raise unauthorized(str(exc)) from exc
 
 
 @router.get(
@@ -82,14 +75,14 @@ async def refresh(
 async def session(
     credentials: BearerCredentials,
     service: UserServiceDependency,
-) -> SessionResponse | JSONResponse:
+) -> SessionResponse:
     if credentials is None:
-        return unauthorized("인증 토큰이 필요합니다.")
+        raise unauthorized("인증 토큰이 필요합니다.")
 
     try:
         user = await service.authenticate(credentials.credentials)
     except AuthenticationError as exc:
-        return unauthorized(str(exc))
+        raise unauthorized(str(exc)) from exc
 
     return SessionResponse(
         user=UserSummary.model_validate(user),
@@ -104,14 +97,14 @@ async def session(
 async def logout(
     credentials: BearerCredentials,
     service: UserServiceDependency,
-) -> LogoutResponse | JSONResponse:
+) -> LogoutResponse:
     if credentials is None:
-        return unauthorized("인증 토큰이 필요합니다.")
+        raise unauthorized("인증 토큰이 필요합니다.")
 
     try:
         await service.authenticate(credentials.credentials)
     except AuthenticationError as exc:
-        return unauthorized(str(exc))
+        raise unauthorized(str(exc)) from exc
 
     return LogoutResponse(
         message="로그아웃되었습니다.",

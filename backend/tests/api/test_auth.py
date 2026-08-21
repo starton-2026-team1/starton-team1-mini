@@ -89,7 +89,7 @@ async def test_session_requires_access_token(
     response = await client.get("/api/v1/auth/session")
 
     assert response.status_code == 401
-    assert response.json()["code"] == "AUTHENTICATION_FAILED"
+    assert response.json() == {"detail": "인증 토큰이 필요합니다."}
     service.authenticate.assert_not_awaited()
 
 
@@ -107,6 +107,7 @@ async def test_session_rejects_invalid_token(
     )
 
     assert response.status_code == 401
+    assert response.json() == {"detail": "유효하지 않거나 만료된 토큰입니다."}
     assert response.headers["www-authenticate"] == "Bearer"
 
 
