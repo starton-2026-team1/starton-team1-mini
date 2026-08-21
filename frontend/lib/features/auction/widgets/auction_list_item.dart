@@ -4,99 +4,103 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import '../models/auction_preview.dart';
 
 class AuctionListItem extends StatelessWidget {
-  const AuctionListItem({required this.auction, super.key});
+  const AuctionListItem({required this.auction, this.onTap, super.key});
 
   final AuctionPreview auction;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 170,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _AuctionImage(imageAsset: auction.imageAsset),
-            const SizedBox(width: 14),
-            Expanded(
-              child: SizedBox(
-                height: 120,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            auction.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 170,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _AuctionImage(imageAsset: auction.imageAsset),
+              const SizedBox(width: 14),
+              Expanded(
+                child: SizedBox(
+                  height: 120,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              auction.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.more_vert,
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.more_vert,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '${auction.location} · ${_statusLabel(auction.status)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
-                          size: 20,
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      '${auction.location} · ${_statusLabel(auction.status)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _currentPriceLabel(auction.currentPrice),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 14,
-                          color: _accentColor(auction.status),
+                      const SizedBox(height: 3),
+                      Text(
+                        _currentPriceLabel(auction.currentPrice),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
                         ),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(
-                            '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _accentColor(auction.status),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: _accentColor(auction.status),
+                          ),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(
+                              '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _accentColor(auction.status),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
+import 'auction_detail_page.dart';
 import '../widgets/auction_list_item.dart';
 
 class AuctionListPage extends StatelessWidget {
@@ -15,7 +16,12 @@ class AuctionListPage extends StatelessWidget {
       separatorBuilder: (_, _) =>
           const Divider(height: 1, color: AppColors.borderSubtle),
       itemBuilder: (context, index) {
-        return AuctionListItem(auction: mockAuctions[index]);
+        return AuctionListItem(
+          auction: mockAuctions[index],
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const AuctionDetailPage()),
+          ),
+        );
       },
     );
   }

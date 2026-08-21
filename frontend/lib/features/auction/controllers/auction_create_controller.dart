@@ -7,7 +7,6 @@ enum AuctionCreateField {
   images,
   title,
   description,
-  place,
   startingPrice,
   bidIncrement,
   buyNowPrice,
@@ -24,7 +23,6 @@ class AuctionCreateController extends ChangeNotifier {
 
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
-  final placeController = TextEditingController();
   final startingPriceController = TextEditingController();
   final bidIncrementController = TextEditingController();
   final buyNowPriceController = TextEditingController();
@@ -34,7 +32,6 @@ class AuctionCreateController extends ChangeNotifier {
   DateTime? startsAt;
   DateTime? endsAt;
   int extensionCount = 0;
-  bool acceptPriceOffers = false;
   bool isDirty = false;
   final Map<AuctionCreateField, String> errors = {};
   List<String> imagePaths = const [];
@@ -42,7 +39,6 @@ class AuctionCreateController extends ChangeNotifier {
   List<TextEditingController> get _textControllers => [
     titleController,
     descriptionController,
-    placeController,
     startingPriceController,
     bidIncrementController,
     buyNowPriceController,
@@ -70,12 +66,6 @@ class AuctionCreateController extends ChangeNotifier {
 
   void setExtensionCount(int value) {
     extensionCount = value;
-    isDirty = true;
-    notifyListeners();
-  }
-
-  void setAcceptPriceOffers(bool value) {
-    acceptPriceOffers = value;
     isDirty = true;
     notifyListeners();
   }
@@ -110,9 +100,6 @@ class AuctionCreateController extends ChangeNotifier {
     }
     if (descriptionController.text.trim().isEmpty) {
       errors[AuctionCreateField.description] = '상세 내용을 입력해 주세요.';
-    }
-    if (placeController.text.trim().isEmpty) {
-      errors[AuctionCreateField.place] = '거래 희망 장소를 입력해 주세요.';
     }
     final startingPrice = int.tryParse(startingPriceController.text);
     if (startingPrice == null || startingPrice <= 0) {
@@ -151,14 +138,12 @@ class AuctionCreateController extends ChangeNotifier {
     return AuctionCreateForm(
       title: titleController.text.trim(),
       description: descriptionController.text.trim(),
-      place: placeController.text.trim(),
       startingPrice: int.parse(startingPriceController.text),
       bidIncrement: int.parse(bidIncrementController.text),
       startsAt: startsAt!,
       endsAt: endsAt!,
       buyNowPrice: int.tryParse(buyNowPriceController.text),
       extensionCount: extensionCount,
-      acceptPriceOffers: acceptPriceOffers,
       imagePaths: imagePaths,
     );
   }
@@ -170,7 +155,6 @@ class AuctionCreateController extends ChangeNotifier {
     }
     titleController.dispose();
     descriptionController.dispose();
-    placeController.dispose();
     startingPriceController.dispose();
     bidIncrementController.dispose();
     buyNowPriceController.dispose();

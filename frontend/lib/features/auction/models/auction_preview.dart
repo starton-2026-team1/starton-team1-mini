@@ -48,13 +48,12 @@ class AuctionPreview {
 
 const mockAuctions = [
   AuctionPreview(
-    title: '아이패드 프로 11인치',
-    location: '송도동',
+    title: '라이카 M6 클래식 필름 카메라',
+    location: '성수동',
     status: AuctionStatus.active,
-    remainingTime: Duration(minutes: 12, seconds: 34),
-    currentPrice: '현재 420,000원',
-    bidCount: 8,
-    favoriteCount: 14,
+    remainingTime: Duration(hours: 2, minutes: 14, seconds: 36),
+    currentPrice: '현재 1,280,000원',
+    bidCount: 4,
+    favoriteCount: 18,
   ),
-
 ];

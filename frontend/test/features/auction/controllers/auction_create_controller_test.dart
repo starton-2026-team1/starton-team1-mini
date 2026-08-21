@@ -30,7 +30,6 @@ void main() {
     addTearDown(controller.dispose);
     controller.titleController.text = '자전거';
     controller.descriptionController.text = '상태가 좋아요';
-    controller.placeController.text = '서울역 1번 출구';
     controller.startingPriceController.text = '10000';
     controller.bidIncrementController.text = '1000';
     final startsAt = controller.now.add(const Duration(hours: 2));
@@ -45,7 +44,6 @@ void main() {
     addTearDown(controller.dispose);
     controller.titleController.text = '자전거';
     controller.descriptionController.text = '상태가 좋아요';
-    controller.placeController.text = '서울역 1번 출구';
     controller.startingPriceController.text = '10000';
     controller.bidIncrementController.text = '1000';
     controller.buyNowPriceController.text = '9000';
@@ -61,7 +59,6 @@ void main() {
     addTearDown(controller.dispose);
     controller.titleController.text = ' 자전거 ';
     controller.descriptionController.text = ' 상태가 좋아요 ';
-    controller.placeController.text = ' 서울역 1번 출구 ';
     controller.startingPriceController.text = '10000';
     controller.bidIncrementController.text = '1000';
     controller.buyNowPriceController.text = '50000';
@@ -85,7 +82,6 @@ void main() {
     addTearDown(controller.dispose);
     controller.titleController.text = '자전거';
     controller.descriptionController.text = '상태가 좋아요';
-    controller.placeController.text = '서울역 1번 출구';
     controller.startingPriceController.text = '10000';
     controller.bidIncrementController.text = '1000';
     final startsAt = controller.now.add(const Duration(hours: 1));
