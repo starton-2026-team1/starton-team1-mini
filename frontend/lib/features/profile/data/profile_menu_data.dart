@@ -21,8 +21,8 @@ const profileMenuSections = [
     title: '자주 사용',
     items: [
       ProfileMenuItem(
-        label: '앱 설정',
-        icon: Icons.settings_outlined,
+        label: '로그아웃',
+        icon: Icons.logout,
         routeKey: 'settings',
       ),
     ],

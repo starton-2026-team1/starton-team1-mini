@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/lib/features/auth/pages/phone_auth_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/auth/pages/phone_auth_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/lib/features/main_navigation/pages/main_navigation_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/main_navigation/pages/main_navigation_page.dart" afterDir="false" />
-    </list>
+    <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
