@@ -52,7 +52,9 @@ class _PhoneAuthPageState extends State<PhoneAuthPage> {
     }
 
     await Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const MainNavigationPage()),
+      MaterialPageRoute<void>(
+        builder: (_) => MainNavigationPage(userName: session.user.name),
+      ),
       (_) => false,
     );
   }
