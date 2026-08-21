@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
+import '../../product/pages/sales_management_page.dart';
 import '../data/profile_menu_data.dart';
 import '../data/profile_api.dart';
 import '../models/profile_menu_item.dart';
@@ -50,6 +51,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (widget.onMenuTap != null) {
       widget.onMenuTap!(item);
+      return;
+    }
+
+    if (item.routeKey == 'sales') {
+      Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => const SalesManagementPage()),
+      );
       return;
     }
 

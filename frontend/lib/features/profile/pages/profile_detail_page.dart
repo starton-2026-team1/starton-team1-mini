@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
+import '../../product/pages/sales_management_page.dart';
 import '../data/profile_api.dart';
 import '../widgets/profile_temperature_badge.dart';
 import 'profile_edit_page.dart';
@@ -83,7 +84,11 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           const SizedBox(height: 12),
           _MannerTemperatureCard(mannerTemperature: widget.mannerTemperature),
           const SizedBox(height: 12),
-          const _ActivityCard(),
+          _ActivityCard(
+            onTap: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => const SalesManagementPage()),
+            ),
+          ),
         ],
       ),
     );
@@ -248,7 +253,9 @@ class _MannerTemperatureCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard();
+  const _ActivityCard({required this.onTap});
+
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -257,18 +264,33 @@ class _ActivityCard extends StatelessWidget {
         color: AppColors.white,
         borderRadius: BorderRadius.circular(22),
       ),
-      child: const Padding(
-        padding: EdgeInsets.all(20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '판매물품 0',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+      child: Column(
+        children: [
+          Material(
+            color: AppColors.transparent,
+            borderRadius: BorderRadius.circular(22),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(22),
+              child: const Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '판매물품 0',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
             ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
