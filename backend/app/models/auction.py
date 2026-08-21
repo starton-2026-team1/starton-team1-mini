@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -22,6 +22,14 @@ class Auction(Base):
             "ends_at > starts_at",
             name="ck_auctions_ends_after_starts",
         ),
+        CheckConstraint(
+            "buy_now_price IS NULL OR buy_now_price > start_price",
+            name="ck_auctions_buy_now_price_above_start",
+        ),
+        CheckConstraint(
+            "extension_count IS NULL OR extension_count >= 0",
+            name="ck_auctions_extension_count_non_negative",
+        ),
         Index("ix_auctions_status_ends", "status", "ends_at"),
     )
 
@@ -34,6 +42,8 @@ class Auction(Base):
     winner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     start_price: Mapped[int] = mapped_column(BigInteger, nullable=False)
     minimum_bid_unit: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    buy_now_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    extension_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     starts_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     ends_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[AuctionStatus] = mapped_column(
