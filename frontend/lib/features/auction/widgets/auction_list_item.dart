@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
+import '../models/auction_status.dart';
 
 class AuctionListItem extends StatelessWidget {
   const AuctionListItem({required this.auction, this.onTap, super.key});
@@ -111,6 +112,9 @@ class AuctionListItem extends StatelessWidget {
       AuctionStatus.waiting => '경매 시작 전',
       AuctionStatus.active => '경매 진행 중',
       AuctionStatus.completed => '낙찰 완료',
+      AuctionStatus.noBids => '유찰',
+      AuctionStatus.cancelled => '경매 취소',
+      AuctionStatus.tradeCompleted => '거래 완료',
     };
   }
 
@@ -121,10 +125,8 @@ class AuctionListItem extends StatelessWidget {
   }
 
   String _remainingTime(AuctionPreview auction) {
-    if (auction.status == AuctionStatus.completed ||
-        auction.remainingTime <= Duration.zero) {
-      return '경매 종료';
-    }
+    if (!auction.status.hasRunningTimer) return auction.status.label;
+    if (auction.remainingTime <= Duration.zero) return '경매 종료';
 
     final hours = auction.remainingTime.inHours.toString().padLeft(2, '0');
     final minutes = auction.remainingTime.inMinutes
@@ -139,7 +141,7 @@ class AuctionListItem extends StatelessWidget {
   }
 
   Color _accentColor(AuctionStatus status) {
-    return status == AuctionStatus.completed
+    return !status.hasRunningTimer
         ? AppColors.textSecondary
         : AppColors.auction;
   }

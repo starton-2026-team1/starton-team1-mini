@@ -5,6 +5,7 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
 import '../models/auction_detail.dart';
+import '../models/auction_status.dart';
 
 class AuctionDetailPage extends StatefulWidget {
   const AuctionDetailPage({this.auction = mockAuctionDetail, super.key});
@@ -23,6 +24,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   @override
   void initState() {
     super.initState();
+    if (!widget.auction.status.hasRunningTimer) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted || _remainingTime <= Duration.zero) return;
       setState(() => _remainingTime -= const Duration(seconds: 1));
@@ -72,6 +74,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
             ),
             _BidBar(
               price: auction.nextBidPrice,
+              status: auction.status,
               favoriteCount: auction.favoriteCount + (_isFavorite ? 1 : 0),
               isFavorite: _isFavorite,
               onFavorite: () => setState(() => _isFavorite = !_isFavorite),
@@ -97,6 +100,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 
   void _showBidSheet() {
+    if (!widget.auction.status.canBid) return;
     final price = widget.auction.nextBidPrice;
     showModalBottomSheet<void>(
       context: context,
@@ -381,9 +385,9 @@ class _AuctionStatusSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 '실시간 경매',
                 style: TextStyle(
                   color: AppColors.primary,
@@ -391,11 +395,11 @@ class _AuctionStatusSection extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
-                '● 진행 중',
+                '● ${_statusLabel(auction.status)}',
                 style: TextStyle(
-                  color: Color(0xFF0AB838),
+                  color: _statusColor(auction.status),
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -411,7 +415,12 @@ class _AuctionStatusSection extends StatelessWidget {
                 large: true,
               ),
               const SizedBox(width: 34),
-              _Metric(label: '남은 시간', value: _formatDuration(remainingTime)),
+              _Metric(
+                label: _timeMetricLabel(auction.status),
+                value: auction.status.hasRunningTimer
+                    ? _formatDuration(remainingTime)
+                    : '-',
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -467,9 +476,9 @@ class _AuctionStatusSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            '입찰 후에는 취소할 수 없어요.',
-            style: TextStyle(color: Color(0xFF808080), fontSize: 11),
+          Text(
+            _statusDescription(auction.status),
+            style: const TextStyle(color: Color(0xFF808080), fontSize: 11),
           ),
         ],
       ),
@@ -578,12 +587,14 @@ class _SectionDivider extends StatelessWidget {
 class _BidBar extends StatelessWidget {
   const _BidBar({
     required this.price,
+    required this.status,
     required this.favoriteCount,
     required this.isFavorite,
     required this.onFavorite,
     required this.onBid,
   });
   final int price;
+  final AuctionStatus status;
   final int favoriteCount;
   final bool isFavorite;
   final VoidCallback onFavorite;
@@ -631,9 +642,11 @@ class _BidBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: FilledButton(
-              onPressed: onBid,
+              onPressed: status.canBid ? onBid : null,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                disabledBackgroundColor: const Color(0xFFE5E5E5),
+                disabledForegroundColor: const Color(0xFF8A8A8A),
                 minimumSize: const Size.fromHeight(58),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -643,7 +656,9 @@ class _BidBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${_formatPrice(price)}부터 입찰하기',
+                      status.canBid
+                          ? '${_formatPrice(price)}부터 입찰하기'
+                          : _bidButtonLabel(status),
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -660,6 +675,44 @@ class _BidBar extends StatelessWidget {
     ),
   );
 }
+
+String _statusLabel(AuctionStatus status) => switch (status) {
+  AuctionStatus.waiting => '시작 전',
+  AuctionStatus.active => '진행 중',
+  AuctionStatus.completed => '종료',
+  AuctionStatus.noBids => '유찰',
+  AuctionStatus.cancelled => '취소됨',
+  AuctionStatus.tradeCompleted => '거래 완료',
+};
+
+Color _statusColor(AuctionStatus status) => switch (status) {
+  AuctionStatus.waiting => const Color(0xFF3974D6),
+  AuctionStatus.active => const Color(0xFF0AB838),
+  AuctionStatus.completed ||
+  AuctionStatus.tradeCompleted => const Color(0xFF666666),
+  AuctionStatus.noBids || AuctionStatus.cancelled => const Color(0xFFD04444),
+};
+
+String _timeMetricLabel(AuctionStatus status) =>
+    status == AuctionStatus.waiting ? '시작까지' : '남은 시간';
+
+String _statusDescription(AuctionStatus status) => switch (status) {
+  AuctionStatus.waiting => '경매가 시작되면 입찰할 수 있어요.',
+  AuctionStatus.active => '입찰 후에는 취소할 수 없어요.',
+  AuctionStatus.completed => '입찰이 마감된 경매예요.',
+  AuctionStatus.noBids => '입찰 없이 종료된 경매예요.',
+  AuctionStatus.cancelled => '판매자가 취소한 경매예요.',
+  AuctionStatus.tradeCompleted => '낙찰자와 거래가 완료됐어요.',
+};
+
+String _bidButtonLabel(AuctionStatus status) => switch (status) {
+  AuctionStatus.waiting => '경매 시작 전이에요',
+  AuctionStatus.active => '입찰하기',
+  AuctionStatus.completed => '경매가 종료됐어요',
+  AuctionStatus.noBids => '유찰된 경매예요',
+  AuctionStatus.cancelled => '취소된 경매예요',
+  AuctionStatus.tradeCompleted => '거래가 완료됐어요',
+};
 
 String _mannerEmoji(double temperature) {
   if (temperature >= 50) return '😍';

@@ -1,12 +1,4 @@
-enum AuctionStatus {
-  waiting('경매 대기중'),
-  active('경매 진행중'),
-  completed('경매 완료');
-
-  const AuctionStatus(this.label);
-
-  final String label;
-}
+import 'auction_status.dart';
 
 class AuctionPreview {
   const AuctionPreview({

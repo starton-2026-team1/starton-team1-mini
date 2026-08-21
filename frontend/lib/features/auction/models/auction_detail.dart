@@ -1,3 +1,5 @@
+import 'auction_status.dart';
+
 class AuctionBidPreview {
   const AuctionBidPreview({
     required this.bidderName,
@@ -24,6 +26,7 @@ class AuctionDetail {
     required this.description,
     required this.favoriteCount,
     required this.bids,
+    this.status = AuctionStatus.active,
     this.imageCount = 1,
   });
 
@@ -39,6 +42,7 @@ class AuctionDetail {
   final String description;
   final int favoriteCount;
   final List<AuctionBidPreview> bids;
+  final AuctionStatus status;
   final int imageCount;
 
   int get nextBidPrice =>
