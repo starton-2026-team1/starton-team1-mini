@@ -9,6 +9,8 @@ import '../../auction/widgets/auction_draft_dialog.dart';
 import '../data/combined_product_feed.dart';
 import '../models/product_category.dart';
 import '../models/product_preview.dart';
+import '../services/product_sell_draft_storage.dart';
+import 'product_sell_page.dart';
 import '../widgets/combined_product_list.dart';
 import '../widgets/product_category_bar.dart';
 import '../widgets/product_create_menu.dart';
@@ -123,6 +125,32 @@ class _ProductListPageState extends State<ProductListPage> {
 
   Future<void> _handleCreateMenuSelected(String label) async {
     _closeCreateMenu();
+    if (label == '내 물건 팔기') {
+      final storage = ProductSellDraftStorage();
+      final draft = await storage.load();
+      if (!mounted) return;
+
+      if (draft != null) {
+        final choice = await showAuctionDraftDialog(
+          context: context,
+          title: '작성 중인 글이 있어요',
+          message: '글을 이어서 쓸까요?',
+          primaryLabel: '이어서 쓰기',
+          secondaryLabel: '새로 쓰기',
+        );
+        if (!mounted || choice == null) return;
+        if (choice == AuctionDraftChoice.secondary) {
+          await storage.clear();
+          if (!mounted) return;
+        }
+      }
+
+      await Navigator.of(
+        context,
+      ).push<void>(MaterialPageRoute(builder: (_) => const ProductSellPage()));
+      return;
+    }
+
     if (label == '경매 등록') {
       final storage = AuctionDraftStorage();
       final draft = await storage.load();
