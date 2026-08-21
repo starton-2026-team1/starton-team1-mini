@@ -13,11 +13,13 @@ import '../widgets/main_bottom_navigation_bar.dart';
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({
     this.userName = '사용자',
+    this.mannerTemperature = 36.5,
     this.authGateway,
     super.key,
   });
 
   final String userName;
+  final double mannerTemperature;
   final AuthGateway? authGateway;
 
   @override
@@ -47,7 +49,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     const ColoredBox(color: AppColors.white),
     const ColoredBox(color: AppColors.white),
     const ChatListPage(),
-    ProfilePage(userName: widget.userName, onLogout: _logout),
+    ProfilePage(
+      userName: widget.userName,
+      mannerTemperature: widget.mannerTemperature,
+      onLogout: _logout,
+    ),
   ];
 
   Future<void> _logout() async {

@@ -11,12 +11,14 @@ import '../widgets/profile_shortcut_card.dart';
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
     required this.userName,
+    this.mannerTemperature = 37.9,
     this.onMenuTap,
     this.onLogout,
     super.key,
   });
 
   final String userName;
+  final double mannerTemperature;
   final ValueChanged<ProfileMenuItem>? onMenuTap;
   final Future<void> Function()? onLogout;
 
@@ -90,6 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 ProfileHeader(
                   userName: widget.userName,
+                  mannerTemperature: widget.mannerTemperature,
                   onTap: () => _handleTap(
                     context,
                     const ProfileMenuItem(

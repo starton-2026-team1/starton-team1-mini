@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
+import 'profile_temperature_badge.dart';
+
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({required this.userName, required this.onTap, super.key});
+  const ProfileHeader({
+    required this.userName,
+    required this.mannerTemperature,
+    required this.onTap,
+    super.key,
+  });
 
   final String userName;
+  final double mannerTemperature;
   final VoidCallback onTap;
 
   @override
@@ -26,14 +34,22 @@ class ProfileHeader extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  userName,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textStrong,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        userName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textStrong,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ProfileTemperatureBadge(temperature: mannerTemperature),
+                  ],
                 ),
               ),
               const Icon(

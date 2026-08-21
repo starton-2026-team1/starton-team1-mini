@@ -6,8 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/frontend/lib/features/main_navigation/pages/main_navigation_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/main_navigation/pages/main_navigation_page.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/lib/features/profile/data/profile_menu_data.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/profile/data/profile_menu_data.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/lib/features/profile/pages/profile_page.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/profile/pages/profile_page.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/lib/features/profile/widgets/profile_header.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/profile/widgets/profile_header.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/lib/shared/theme/app_colors.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/shared/theme/app_colors.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/test/features/profile/pages/profile_page_test.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/test/features/profile/pages/profile_page_test.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
