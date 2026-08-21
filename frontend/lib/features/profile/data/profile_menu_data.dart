@@ -20,11 +20,7 @@ const profileMenuSections = [
   ProfileMenuSection(
     title: '자주 사용',
     items: [
-      ProfileMenuItem(
-        label: '로그아웃',
-        icon: Icons.logout,
-        routeKey: 'settings',
-      ),
+      ProfileMenuItem(label: '로그아웃', icon: Icons.logout, routeKey: 'logout'),
     ],
   ),
   ProfileMenuSection(

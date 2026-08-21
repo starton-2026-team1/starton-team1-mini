@@ -34,4 +34,28 @@ void main() {
 
     expect(selectedRoute, 'sales');
   });
+
+  testWidgets('로그아웃 버튼이 로그아웃 콜백을 호출한다', (tester) async {
+    var logoutCount = 0;
+    tester.view.physicalSize = const Size(800, 2200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ProfilePage(
+            userName: '사용자',
+            onLogout: () async => logoutCount++,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('로그아웃'));
+    await tester.pumpAndSettle();
+
+    expect(logoutCount, 1);
+  });
 }

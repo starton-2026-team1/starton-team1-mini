@@ -8,19 +8,57 @@ import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_section_card.dart';
 import '../widgets/profile_shortcut_card.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({required this.userName, this.onMenuTap, super.key});
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({
+    required this.userName,
+    this.onMenuTap,
+    this.onLogout,
+    super.key,
+  });
 
   final String userName;
   final ValueChanged<ProfileMenuItem>? onMenuTap;
+  final Future<void> Function()? onLogout;
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool _isLoggingOut = false;
 
   void _handleTap(BuildContext context, ProfileMenuItem item) {
-    if (onMenuTap != null) {
-      onMenuTap!(item);
+    if (item.routeKey == 'logout') {
+      _logout();
+      return;
+    }
+
+    if (widget.onMenuTap != null) {
+      widget.onMenuTap!(item);
       return;
     }
 
     showAppSnackBar(context, '${item.label} 페이지는 준비 중이에요.', bottomMargin: 92);
+  }
+
+  Future<void> _logout() async {
+    if (widget.onLogout == null || _isLoggingOut) {
+      return;
+    }
+
+    setState(() => _isLoggingOut = true);
+
+    try {
+      await widget.onLogout!();
+    } on Object {
+      if (mounted) {
+        showAppSnackBar(context, '로그아웃에 실패했어요. 다시 시도해 주세요.', bottomMargin: 92);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoggingOut = false);
+      }
+    }
   }
 
   @override
@@ -51,7 +89,7 @@ class ProfilePage extends StatelessWidget {
             sliver: SliverList.list(
               children: [
                 ProfileHeader(
-                  userName: userName,
+                  userName: widget.userName,
                   onTap: () => _handleTap(
                     context,
                     const ProfileMenuItem(
