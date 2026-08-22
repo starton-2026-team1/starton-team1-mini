@@ -39,6 +39,7 @@ dependencies:
   flutter_secure_storage: ^11.0.0
   image_picker: ^1.2.1
   photo_manager: ^3.8.0
+  web_socket_channel: ^2.4.0
 
 dev_dependencies:
   flutter_test:

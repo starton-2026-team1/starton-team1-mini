@@ -1,6 +1,17 @@
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import (
+    APIRouter,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
+from pydantic import ValidationError
 
 from app.api.dependencies import CurrentUserDependency, DatabaseSession
 from app.core.exceptions import (
@@ -9,6 +20,7 @@ from app.core.exceptions import (
     ProductStateError,
 )
 from app.models.enums import ProductStatus
+from app.schemas.auction import AuctionCreate, AuctionProductResponse
 from app.schemas.product import (
     ProductCreate,
     ProductCreateResponse,
@@ -54,6 +66,55 @@ async def create_product(
     except ProductStateError as error:
         raise product_error(error) from error
     return ProductCreateResponse.model_validate(product)
+
+
+# 경매 상품 등록 (multipart/form-data: 폼 필드 + 이미지 파일들)
+@router.post(
+    "/auctions",
+    response_model=AuctionProductResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_auction_product(
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+    category_id: Annotated[int, Form(gt=0)],
+    title: Annotated[str, Form(min_length=1, max_length=100)],
+    description: Annotated[str, Form(min_length=1)],
+    start_price: Annotated[int, Form(gt=0)],
+    minimum_bid_unit: Annotated[int, Form(gt=0)],
+    starts_at: Annotated[datetime, Form()],
+    ends_at: Annotated[datetime, Form()],
+    images: Annotated[list[UploadFile], File()],
+    extension_count: Annotated[int, Form(ge=0)] = 0,
+) -> AuctionProductResponse:
+    try:
+        data = AuctionCreate(
+            category_id=category_id,
+            title=title,
+            description=description,
+            start_price=start_price,
+            minimum_bid_unit=minimum_bid_unit,
+            starts_at=starts_at,
+            ends_at=ends_at,
+            extension_count=extension_count,
+        )
+    except ValidationError as error:
+        # 요청 바디가 아니라 함수 안에서 직접 만든 모델이라 FastAPI가 자동으로 422 처리를 안 해줌
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+
+    try:
+        product = await product_service.create_auction_product(
+            session=session,
+            seller_id=current_user.id,
+            data=data,
+            images=images,
+        )
+    except ProductStateError as error:
+        raise product_error(error) from error
+    return AuctionProductResponse.model_validate(product)
 
 
 @router.get("", response_model=ProductListResponse)

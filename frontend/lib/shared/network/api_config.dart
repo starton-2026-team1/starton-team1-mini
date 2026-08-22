@@ -14,4 +14,6 @@ abstract final class ApiConfig {
 
     return 'http://127.0.0.1:8000/api/v1';
   }
+
+  static String get mediaBaseUrl => baseUrl.replaceFirst('/api/v1', '');
 }

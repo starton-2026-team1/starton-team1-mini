@@ -30,6 +30,7 @@ class AuctionCreateController extends ChangeNotifier {
   DateTime? startsAt;
   DateTime? endsAt;
   int extensionCount = 0;
+  int categoryId = 1;
   bool isDirty = false;
   final Map<AuctionCreateField, String> errors = {};
   List<String> imagePaths = const [];
@@ -125,6 +126,7 @@ class AuctionCreateController extends ChangeNotifier {
 
   AuctionCreateForm toForm() {
     return AuctionCreateForm(
+      categoryId: categoryId,
       title: titleController.text.trim(),
       description: descriptionController.text.trim(),
       startingPrice: int.parse(startingPriceController.text),

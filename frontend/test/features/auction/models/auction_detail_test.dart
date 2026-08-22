@@ -5,6 +5,7 @@ import 'package:frontend/features/auction/models/auction_status.dart';
 void main() {
   test('입찰이 없으면 시작가부터 입찰한다', () {
     const auction = AuctionDetail(
+      id: 1,
       title: '테스트 상품',
       category: '기타',
       location: '동네',
@@ -24,6 +25,7 @@ void main() {
 
   test('입찰이 있으면 현재가에 최소 입찰 단위를 더한다', () {
     const auction = AuctionDetail(
+      id: 1,
       title: '테스트 상품',
       category: '기타',
       location: '동네',

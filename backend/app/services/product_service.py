@@ -1,3 +1,4 @@
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -8,12 +9,19 @@ from app.core.exceptions import (
 from app.models.enums import ProductStatus, SaleType
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
+from app.schemas.auction import AuctionCreate
 from app.schemas.product import ProductCreate, ProductUpdate
+from app.services.image_storage import ImageStorage, image_storage
 
 
 class ProductService:
-    def __init__(self, repository: ProductRepository | None = None) -> None:
+    def __init__(
+        self,
+        repository: ProductRepository | None = None,
+        images: ImageStorage | None = None,
+    ) -> None:
         self.repository = repository or ProductRepository()
+        self.images = images or image_storage
 
     async def create_product(
         self,
@@ -28,6 +36,25 @@ class ProductService:
             session=session,
             seller_id=seller_id,
             data=data,
+        )
+
+    # 이미지 저장 -> 상품/경매 레코드 생성 순서로 진행
+    async def create_auction_product(
+        self,
+        session: AsyncSession,
+        seller_id: int,
+        data: AuctionCreate,
+        images: list[UploadFile],
+    ) -> Product:
+        if not images:
+            raise ProductStateError("상품 사진을 한 장 이상 등록해 주세요.")
+
+        image_urls = await self.images.save(images)
+        return await self.repository.create_auction_product(
+            session=session,
+            seller_id=seller_id,
+            data=data,
+            image_urls=image_urls,
         )
 
     async def list_products(

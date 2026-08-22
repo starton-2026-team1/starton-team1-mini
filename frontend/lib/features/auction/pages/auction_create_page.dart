@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/auth/services/auth_token_storage.dart';
+import 'package:frontend/shared/network/api_client.dart';
+import 'package:frontend/shared/network/api_exception.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
 import '../controllers/auction_create_controller.dart';
+import '../data/auction_api.dart';
 import '../models/auction_create_form.dart';
 import '../models/auction_draft.dart';
 import '../services/auction_draft_storage.dart';
@@ -25,8 +29,10 @@ class AuctionCreatePage extends StatefulWidget {
 class _AuctionCreatePageState extends State<AuctionCreatePage> {
   final _controller = AuctionCreateController();
   final _draftStorage = AuctionDraftStorage();
+  final _auctionApi = AuctionApi(ApiClient(), AuthTokenStorage());
   List<String> _imagePaths = [];
   bool _canPop = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -130,7 +136,9 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                   ),
                 ),
               ),
-              _SubmitButton(onPressed: _submit),
+              _SubmitButton(
+                onPressed: _isSubmitting ? null : _submit,
+              ),
             ],
           ),
         ),
@@ -283,15 +291,32 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 
     final error = _controller.validate();
     if (error != null) {
+      _showMessage(error);
       return;
     }
 
-    widget.onSubmitted?.call(_controller.toForm());
+    final form = _controller.toForm();
+    setState(() => _isSubmitting = true);
+    try {
+      await _auctionApi.createAuction(form);
+    } on ApiException catch (error) {
+      if (mounted) _showMessage(error.message);
+      return;
+    } catch (error) {
+      debugPrint('auction create failed: $error');
+      if (mounted) _showMessage('경매 등록에 실패했어요. 잠시 후 다시 시도해 주세요.');
+      return;
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+
+    widget.onSubmitted?.call(form);
     await _draftStorage.clear();
 
     if (!mounted) return;
     _controller.markSaved();
     _showMessage('경매 글 작성이 완료됐어요.');
+    _popPage();
   }
 
   Future<void> _saveDraft() async {
@@ -374,7 +399,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
 class _SubmitButton extends StatelessWidget {
   const _SubmitButton({required this.onPressed});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

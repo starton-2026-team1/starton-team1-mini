@@ -21,7 +21,7 @@ class AuctionListItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _AuctionImage(imageAsset: auction.imageAsset),
+              _AuctionImage(imageUrl: auction.thumbnailUrl),
               const SizedBox(width: 14),
               Expanded(
                 child: SizedBox(
@@ -54,7 +54,7 @@ class AuctionListItem extends StatelessWidget {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        '${auction.location} · ${_statusLabel(auction.status)}',
+                        '${auction.categoryName} · ${_statusLabel(auction.status)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -148,9 +148,9 @@ class AuctionListItem extends StatelessWidget {
 }
 
 class _AuctionImage extends StatelessWidget {
-  const _AuctionImage({this.imageAsset});
+  const _AuctionImage({this.imageUrl});
 
-  final String? imageAsset;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +163,7 @@ class _AuctionImage extends StatelessWidget {
         border: Border.all(color: AppColors.imageBorder),
       ),
       clipBehavior: Clip.antiAlias,
-      child: imageAsset == null
+      child: imageUrl == null
           ? const Center(
               child: Icon(
                 Icons.gavel_outlined,
@@ -171,7 +171,17 @@ class _AuctionImage extends StatelessWidget {
                 color: AppColors.iconDisabled,
               ),
             )
-          : Image.asset(imageAsset!, fit: BoxFit.cover),
+          : Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const Center(
+                child: Icon(
+                  Icons.gavel_outlined,
+                  size: 60,
+                  color: AppColors.iconDisabled,
+                ),
+              ),
+            ),
     );
   }
 }

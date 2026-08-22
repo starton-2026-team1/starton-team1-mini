@@ -25,7 +25,7 @@ class CombinedProductList extends StatelessWidget {
             auction: item.auction!,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const AuctionDetailPage(),
+                builder: (_) => AuctionDetailPage(auctionId: item.auction!.id),
               ),
             ),
           );
