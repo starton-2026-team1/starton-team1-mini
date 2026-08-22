@@ -1,45 +1,147 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:frontend/features/auth/services/auth_token_storage.dart';
+import 'package:frontend/shared/network/api_client.dart';
+import 'package:frontend/shared/network/api_config.dart';
+import 'package:frontend/shared/network/api_exception.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../data/auction_api.dart';
 import '../models/auction_detail.dart';
 import '../models/auction_status.dart';
+import '../models/auction_update_message.dart';
 
 class AuctionDetailPage extends StatefulWidget {
-  const AuctionDetailPage({this.auction = mockAuctionDetail, super.key});
+  const AuctionDetailPage({required this.auctionId, super.key});
 
-  final AuctionDetail auction;
+  final int auctionId;
 
   @override
   State<AuctionDetailPage> createState() => _AuctionDetailPageState();
 }
 
 class _AuctionDetailPageState extends State<AuctionDetailPage> {
-  late Duration _remainingTime = widget.auction.remainingTime;
+  final _auctionApi = AuctionApi(ApiClient(), AuthTokenStorage());
+
+  AuctionDetail? _auction;
+  bool _isLoading = true;
+  String? _loadError;
+
+  Duration _remainingTime = Duration.zero;
+  List<AuctionBidPreview> _bids = const [];
+  int _currentPrice = 0;
   Timer? _timer;
   bool _isFavorite = false;
+  bool _isBidding = false;
+
+  WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _socketSubscription;
 
   @override
   void initState() {
     super.initState();
-    if (!widget.auction.status.hasRunningTimer) return;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || _remainingTime <= Duration.zero) return;
-      setState(() => _remainingTime -= const Duration(seconds: 1));
-    });
+    _loadAuction();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _socketSubscription?.cancel();
+    _channel?.sink.close();
     super.dispose();
+  }
+
+  Future<void> _loadAuction() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = null;
+    });
+    try {
+      final auction = await _auctionApi.getAuctionDetail(widget.auctionId);
+      if (!mounted) return;
+      setState(() {
+        _auction = auction;
+        _bids = auction.bids;
+        _currentPrice = auction.currentPrice;
+        _remainingTime = auction.remainingTime;
+        _isLoading = false;
+      });
+      if (auction.status.hasRunningTimer) {
+        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted || _remainingTime <= Duration.zero) return;
+          setState(() => _remainingTime -= const Duration(seconds: 1));
+        });
+      }
+      _connectSocket();
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = error.message;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = '경매 정보를 불러오지 못했어요.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _connectSocket() {
+    final wsBaseUrl = ApiConfig.baseUrl.replaceFirst('http', 'ws');
+    _channel = WebSocketChannel.connect(
+      Uri.parse('$wsBaseUrl/auctions/${widget.auctionId}/ws'),
+    );
+    _socketSubscription = _channel!.stream.listen(_onSocketMessage);
+  }
+
+  AuctionDetail get _liveAuction =>
+      _auction!.copyWith(bids: _bids, currentPrice: _currentPrice);
+
+  void _onSocketMessage(dynamic raw) {
+    final json = jsonDecode(raw as String) as Map<String, dynamic>;
+    final update = AuctionUpdateMessage.fromJson(json);
+    if (!mounted) return;
+    setState(() {
+      _currentPrice = update.currentPrice;
+      _bids = [update.latestBid, ..._bids];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final auction = widget.auction;
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_loadError != null || _auction == null) {
+      return Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _loadError ?? '경매 정보를 불러오지 못했어요.',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              TextButton(onPressed: _loadAuction, child: const Text('다시 시도')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final auction = _liveAuction;
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
@@ -100,64 +202,115 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 
   void _showBidSheet() {
-    if (!widget.auction.status.canBid) return;
-    final price = widget.auction.nextBidPrice;
+    final auction = _liveAuction;
+    if (!auction.status.canBid) return;
+    final minPrice = auction.nextBidPrice;
+    final amountController = TextEditingController(text: '$minPrice');
+
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '입찰하기',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Text('${_formatPrice(price)}부터 입찰할 수 있어요.'),
-              const SizedBox(height: 4),
-              Text(
-                '최소 입찰 단위 ${_formatPrice(widget.auction.minimumBidUnit)}',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '입찰 후에는 취소할 수 없어요.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+      isScrollControlled: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: StatefulBuilder(
+            builder: (sheetContext, setSheetState) {
+              final amount = int.tryParse(amountController.text);
+              final errorText = amount == null
+                  ? '금액을 입력해 주세요.'
+                  : amount < minPrice
+                  ? '${_formatPrice(minPrice)} 이상 입력해 주세요.'
+                  : null;
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '입찰하기',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                     ),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    showAppSnackBar(context, 'API 연결 후 실제 입찰이 진행돼요.');
-                  },
-                  child: Text(
-                    '${_formatPrice(price)} 입찰하기',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                    const SizedBox(height: 8),
+                    Text('${_formatPrice(minPrice)}부터 입찰할 수 있어요.'),
+                    const SizedBox(height: 4),
+                    Text(
+                      '최소 입찰 단위 ${_formatPrice(auction.minimumBidUnit)}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountController,
+                      autofocus: true,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (_) => setSheetState(() {}),
+                      decoration: InputDecoration(
+                        suffixText: '원',
+                        errorText: errorText,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '입찰 후에는 취소할 수 없어요.',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: (_isBidding || errorText != null)
+                            ? null
+                            : () {
+                                Navigator.pop(sheetContext);
+                                _placeBid(amount!);
+                              },
+                        child: Text(
+                          amount == null
+                              ? '입찰하기'
+                              : '${_formatPrice(amount)} 입찰하기',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _placeBid(int amount) async {
+    setState(() => _isBidding = true);
+    try {
+      await _auctionApi.placeBid(widget.auctionId, amount);
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    } finally {
+      if (mounted) setState(() => _isBidding = false);
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 class AuctionCreateForm {
   const AuctionCreateForm({
+    required this.categoryId,
     required this.title,
     required this.description,
     required this.startingPrice,
@@ -10,6 +11,7 @@ class AuctionCreateForm {
     required this.imagePaths,
   });
 
+  final int categoryId;
   final String title;
   final String description;
   final int startingPrice;
