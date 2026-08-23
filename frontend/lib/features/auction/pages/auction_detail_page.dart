@@ -41,6 +41,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSubscription;
+  Timer? _socketReconnectTimer;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   void dispose() {
     _timer?.cancel();
     _socketSubscription?.cancel();
+    _socketReconnectTimer?.cancel();
     _channel?.sink.close();
     super.dispose();
   }
@@ -72,7 +74,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _isLoading = false;
       });
       _startStatusTimer(auction);
-      _connectSocket();
+      if (auction.status == AuctionStatus.active) _connectSocket();
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -117,30 +119,55 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _remainingTime = auction.remainingTime;
       });
       _startStatusTimer(auction);
+      if (auction.status == AuctionStatus.active) _connectSocket();
     } catch (_) {
       // 상태 재조회 실패 시 기존 상세 정보 유지
     }
   }
 
   void _connectSocket() {
+    _socketReconnectTimer?.cancel();
+    _socketSubscription?.cancel();
+    _channel?.sink.close();
     final wsBaseUrl = ApiConfig.baseUrl.replaceFirst('http', 'ws');
-    _channel = WebSocketChannel.connect(
-      Uri.parse('$wsBaseUrl/auctions/${widget.auctionId}/ws'),
-    );
-    _socketSubscription = _channel!.stream.listen(_onSocketMessage);
+    try {
+      _channel = WebSocketChannel.connect(
+        Uri.parse('$wsBaseUrl/auctions/${widget.auctionId}/ws'),
+      );
+      _socketSubscription = _channel!.stream.listen(
+        _onSocketMessage,
+        onError: (_) => _scheduleSocketReconnect(),
+        onDone: _scheduleSocketReconnect,
+        cancelOnError: true,
+      );
+    } catch (_) {
+      _scheduleSocketReconnect();
+    }
+  }
+
+  void _scheduleSocketReconnect() {
+    if (!mounted || _auction?.status != AuctionStatus.active) return;
+    if (_socketReconnectTimer?.isActive ?? false) return;
+
+    // 진행 중 경매의 웹소켓 연결 종료 시 3초 후 재연결
+    _socketReconnectTimer = Timer(const Duration(seconds: 3), _connectSocket);
   }
 
   AuctionDetail get _liveAuction =>
       _auction!.copyWith(bids: _bids, currentPrice: _currentPrice);
 
   void _onSocketMessage(dynamic raw) {
-    final json = jsonDecode(raw as String) as Map<String, dynamic>;
-    final update = AuctionUpdateMessage.fromJson(json);
-    if (!mounted) return;
-    setState(() {
-      _currentPrice = update.currentPrice;
-      _bids = [update.latestBid, ..._bids];
-    });
+    try {
+      final json = jsonDecode(raw as String) as Map<String, dynamic>;
+      final update = AuctionUpdateMessage.fromJson(json);
+      if (!mounted) return;
+      setState(() {
+        _currentPrice = update.currentPrice;
+        _bids = [update.latestBid, ..._bids];
+      });
+    } catch (_) {
+      // 잘못된 실시간 메시지는 화면 상태 변경 없이 무시
+    }
   }
 
   @override

@@ -31,7 +31,11 @@ class ConnectionManager:
         payload = message.model_dump_json()
         # 순회 중 끊기는 연결이 있을 수 있어 리스트로 복사해서 순회
         for websocket in list(connections):
-            await websocket.send_text(payload)
+            try:
+                await websocket.send_text(payload)
+            except Exception:
+                # 전송 실패 연결을 제거하고 나머지 사용자에게 계속 브로드캐스트
+                self.disconnect(auction_id, websocket)
 
 
 # REST 핸들러와 웹소켓 핸들러가 같은 인스턴스를 봐야 하므로 프로세스 전체에서 하나만 공유
