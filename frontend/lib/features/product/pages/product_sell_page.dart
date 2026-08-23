@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../auction/widgets/auction_form_section.dart';
 import '../../auction/widgets/auction_draft_dialog.dart';
@@ -102,7 +103,7 @@ class _ProductSellPageState extends State<ProductSellPage> {
                       padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
                       children: [
                         AuctionImagePicker(
-                          imagePaths: _controller.imagePaths,
+                          imageFiles: _controller.imageFiles,
                           onChanged: _controller.setImages,
                           onMessage: (message) =>
                               showAppSnackBar(context, message),
@@ -229,7 +230,7 @@ class _ProductSellPageState extends State<ProductSellPage> {
       description: _controller.descriptionController.text,
       price: _controller.priceController.text,
       place: _controller.placeController.text,
-      imagePaths: _controller.imagePaths,
+      imagePaths: _controller.imageFiles.map((image) => image.path).toList(),
     );
   }
 
@@ -241,7 +242,7 @@ class _ProductSellPageState extends State<ProductSellPage> {
     _controller.descriptionController.text = draft.description;
     _controller.priceController.text = draft.price;
     _controller.placeController.text = draft.place;
-    _controller.setImages(draft.imagePaths.take(10).toList());
+    _controller.setImages(draft.imagePaths.take(10).map(XFile.new).toList());
     _controller.markSaved();
   }
 

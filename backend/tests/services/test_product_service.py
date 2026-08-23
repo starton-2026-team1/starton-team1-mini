@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
@@ -8,9 +9,12 @@ from app.core.exceptions import (
     ProductPermissionError,
     ProductStateError,
 )
-from app.models.enums import ProductStatus, SaleType
+from app.models.auction import Auction
+from app.models.enums import AuctionStatus, ProductStatus, SaleType
 from app.models.fixed_price import FixedPrice
 from app.models.product import Product
+from app.models.product_image import ProductImage
+from app.repositories.bid_repository import BidRepository
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductUpdate
 from app.services.product_service import ProductService
@@ -123,3 +127,81 @@ async def test_active_product_can_be_updated(
         product,
         data,
     )
+
+
+async def test_sales_management_products_include_fixed_price_and_auction(
+    repository: AsyncMock,
+    session: AsyncMock,
+) -> None:
+    now = datetime.now()
+    fixed_price_product = make_product()
+    fixed_price_product.created_at = now
+    auction_product = Product(
+        id=20,
+        seller_id=1,
+        category_id=1,
+        sale_type=SaleType.AUCTION,
+        title="아이패드",
+        description="상태가 좋아요.",
+        status=ProductStatus.ACTIVE,
+        created_at=now,
+        images=[ProductImage(id=1, image_url="/uploads/ipad.jpg", sort_order=0)],
+        auction=Auction(
+            id=7,
+            product_id=20,
+            start_price=100_000,
+            minimum_bid_unit=10_000,
+            starts_at=now - timedelta(hours=1),
+            ends_at=now + timedelta(hours=1),
+            status=AuctionStatus.WAITING,
+        ),
+    )
+    repository.list_sales_management_products.return_value = (
+        [auction_product, fixed_price_product],
+        2,
+    )
+    bid_repository = AsyncMock(spec=BidRepository)
+    bid_repository.get_stats.return_value = {7: (3, 140_000)}
+    service = ProductService(repository, bid_repository=bid_repository)
+
+    items, total = await service.list_sales_management_products(
+        session,
+        seller_id=1,
+    )
+
+    assert total == 2
+    assert items[0].auction_id == 7
+    assert items[0].auction_status == AuctionStatus.ACTIVE
+    assert items[0].management_status == "AUCTION"
+    assert items[0].price == 140_000
+    assert items[0].bid_count == 3
+    assert items[0].thumbnail_url == "/uploads/ipad.jpg"
+    assert items[1].auction_id is None
+    assert items[1].management_status == "SELLING"
+    assert items[1].price == 30_000
+
+
+@pytest.mark.parametrize(
+    ("product_status", "auction_status", "expected"),
+    [
+        (ProductStatus.ACTIVE, AuctionStatus.WAITING, "AUCTION"),
+        (ProductStatus.ACTIVE, AuctionStatus.ACTIVE, "AUCTION"),
+        (ProductStatus.ACTIVE, AuctionStatus.COMPLETED, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.NO_BIDS, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.CANCELLED, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.TRADE_COMPLETED, "COMPLETED"),
+        (ProductStatus.SOLD, AuctionStatus.ACTIVE, "COMPLETED"),
+        (ProductStatus.CANCELLED, AuctionStatus.ACTIVE, "COMPLETED"),
+    ],
+)
+def test_sales_management_status_mapping(
+    product_status: ProductStatus,
+    auction_status: AuctionStatus,
+    expected: str,
+) -> None:
+    result = ProductService._sales_management_status(
+        product_status,
+        auction_status,
+    )
+
+    assert result == expected

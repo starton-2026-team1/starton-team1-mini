@@ -2,6 +2,7 @@ import 'product_category.dart';
 
 class ProductPreview {
   const ProductPreview({
+    this.id = 0,
     required this.category,
     required this.title,
     required this.location,
@@ -15,6 +16,7 @@ class ProductPreview {
     this.imageAsset,
   });
 
+  final int id;
   final ProductCategory category;
   final String title;
   final String location;
@@ -26,6 +28,40 @@ class ProductPreview {
   final bool isPartTimeJob;
   final bool isNeighborhoodBusiness;
   final String? imageAsset;
+
+  // 일반 상품 목록 API 응답을 기존 카드 표시 모델로 변환한다.
+  factory ProductPreview.fromJson(Map<String, dynamic> json, {DateTime? now}) {
+    final createdAt = DateTime.parse(json['created_at'] as String).toLocal();
+    final currentTime = now ?? DateTime.now();
+    final fixedPrice = json['fixed_price'] as Map<String, dynamic>;
+    return ProductPreview(
+      id: (json['id'] as num).toInt(),
+      category: ProductCategory.used,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      location: '전국',
+      time: _elapsedTimeLabel(createdAt, currentTime),
+      price: _formatPrice((fixedPrice['price'] as num).toInt()),
+    );
+  }
+}
+
+String _elapsedTimeLabel(DateTime createdAt, DateTime now) {
+  final elapsed = now.difference(createdAt);
+  if (elapsed.inMinutes < 1) return '방금 전';
+  if (elapsed.inHours < 1) return '${elapsed.inMinutes}분 전';
+  if (elapsed.inDays < 1) return '${elapsed.inHours}시간 전';
+  return '${elapsed.inDays}일 전';
+}
+
+String _formatPrice(int value) {
+  final digits = value.toString();
+  final buffer = StringBuffer();
+  for (var index = 0; index < digits.length; index++) {
+    if (index > 0 && (digits.length - index) % 3 == 0) buffer.write(',');
+    buffer.write(digits[index]);
+  }
+  return '$buffer원';
 }
 
 const mockProducts = [

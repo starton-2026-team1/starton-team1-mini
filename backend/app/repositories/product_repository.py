@@ -146,6 +146,35 @@ class ProductRepository:
             int(total_result.scalar_one()),
         )
 
+    async def list_sales_management_products(
+        self,
+        session: AsyncSession,
+        *,
+        seller_id: int,
+        status: ProductStatus | None = None,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[Product], int]:
+        filters = [Product.seller_id == seller_id]
+        if status is not None:
+            filters.append(Product.status == status)
+        products_result = await session.execute(
+            select(Product)
+            .where(*filters)
+            .options(
+                selectinload(Product.fixed_price),
+                selectinload(Product.auction),
+                selectinload(Product.images),
+            )
+            .order_by(Product.created_at.desc(), Product.id.desc())
+            .offset(offset)
+            .limit(limit),
+        )
+        total_result = await session.execute(
+            select(func.count(Product.id)).where(*filters),
+        )
+        return list(products_result.scalars().all()), int(total_result.scalar_one())
+
     async def get_by_id(
         self,
         session: AsyncSession,

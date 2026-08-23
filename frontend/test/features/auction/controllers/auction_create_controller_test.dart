@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/auction/controllers/auction_create_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   test('입력값이 변경될 때만 임시저장 상태가 활성화된다', () {
@@ -50,14 +51,14 @@ void main() {
     controller.setStartsAt(startsAt);
     controller.setEndsAt(startsAt.add(const Duration(hours: 1)));
     controller.setExtensionCount(3);
-    controller.setImagePaths(['/tmp/bicycle.jpg']);
+    controller.setImageFiles([XFile('/tmp/bicycle.jpg')]);
 
     expect(controller.validate(), isNull);
     final form = controller.toForm();
     expect(form.title, '자전거');
     expect(form.startingPrice, 10000);
     expect(form.extensionCount, 3);
-    expect(form.imagePaths, ['/tmp/bicycle.jpg']);
+    expect(form.imageFiles.single.path, '/tmp/bicycle.jpg');
   });
 
   test('상품 사진이 없으면 사진 오류를 반환한다', () {

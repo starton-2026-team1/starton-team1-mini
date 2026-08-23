@@ -4,9 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     AuctionNotFoundError,
+    AuctionPermissionError,
     AuctionStateError,
     BidAmountError,
 )
+from app.core.time import now_kst_naive
 from app.models.auction import Auction
 from app.models.enums import AuctionStatus
 from app.models.user import User
@@ -16,6 +18,7 @@ from app.schemas.auction import (
     AuctionBidHistoryResponse,
     AuctionDetailResponse,
     AuctionPreviewResponse,
+    AuctionStatusResponse,
 )
 from app.schemas.bid import AuctionBroadcastMessage, BidResponse
 from app.services.connection_manager import ConnectionManager, connection_manager
@@ -44,9 +47,13 @@ class AuctionService:
         if auction is None:
             raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
 
+        # 판매자가 가격을 인위적으로 올리지 못하도록 자신의 경매 입찰 차단
+        if auction.product.seller_id == bidder_id:
+            raise AuctionPermissionError("판매자는 자신의 경매에 입찰할 수 없습니다.")
+
         # DB status 컬럼은 시작/종료 시각이 지나도 자동으로 안 바뀌므로
         # 저장된 값 대신 현재 시각 기준으로 계산한 상태를 써야 함
-        now = datetime.now()
+        now = now_kst_naive()
         if _effective_status(auction, now) != AuctionStatus.ACTIVE:
             raise AuctionStateError("진행 중인 경매가 아닙니다.")
 
@@ -91,6 +98,55 @@ class AuctionService:
         user = await session.get(User, bidder_id)
         return user.name if user is not None else "알 수 없음"
 
+    async def cancel_auction(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 경매를 취소할 수 있습니다.")
+
+        current_status = _effective_status(auction, now_kst_naive())
+        if current_status not in {AuctionStatus.WAITING, AuctionStatus.ACTIVE}:
+            raise AuctionStateError("취소할 수 있는 경매가 아닙니다.")
+        if await self.bid_repository.get_highest_amount(session, auction_id) is not None:
+            raise AuctionStateError("입찰이 있는 경매는 취소할 수 없습니다.")
+
+        # 취소 조건 검증 후 경매 상태 변경
+        auction.status = AuctionStatus.CANCELLED
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+    async def complete_trade(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 거래를 완료할 수 있습니다.")
+
+        highest_amount = await self.bid_repository.get_highest_amount(session, auction_id)
+        current_status = _effective_status(
+            auction,
+            now_kst_naive(),
+            bid_count=0 if highest_amount is None else 1,
+        )
+        if current_status != AuctionStatus.COMPLETED:
+            raise AuctionStateError("낙찰 완료된 경매만 거래 완료 처리할 수 있습니다.")
+
+        # 낙찰 완료 상태 검증 후 거래 완료 상태 변경
+        auction.status = AuctionStatus.TRADE_COMPLETED
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
     # 경매 목록 응답 조립 (경매별 입찰수/최고가는 한 번에 집계해서 N+1 방지)
     async def list_auctions(
         self,
@@ -100,9 +156,11 @@ class AuctionService:
         offset: int = 0,
         limit: int = 20,
     ) -> tuple[list[AuctionPreviewResponse], int]:
+        now = now_kst_naive()
         auctions, total = await self.auction_repository.list_auctions(
             session,
             status=status,
+            now=now,
             offset=offset,
             limit=limit,
         )
@@ -111,7 +169,7 @@ class AuctionService:
             [auction.id for auction in auctions],
         )
         items = [
-            self._to_preview(auction, stats.get(auction.id))
+            self._to_preview(auction, stats.get(auction.id), now)
             for auction in auctions
         ]
         return items, total
@@ -133,7 +191,7 @@ class AuctionService:
         )
         highest_amount = recent_bids[0][0].amount if recent_bids else None
         product = auction.product
-        now = datetime.now()
+        now = now_kst_naive()
 
         return AuctionDetailResponse(
             id=auction.id,
@@ -141,7 +199,9 @@ class AuctionService:
             description=product.description,
             category_name=product.category.name,
             seller_name=product.seller.name,
-            status=_effective_status(auction, now),
+            seller_id=product.seller_id,
+            winner_name=_mask_name(recent_bids[0][1]) if recent_bids else None,
+            status=_effective_status(auction, now, bid_count=len(recent_bids)),
             image_urls=[image.image_url for image in product.images],
             start_price=auction.start_price,
             current_price=highest_amount or auction.start_price,
@@ -162,16 +222,16 @@ class AuctionService:
         self,
         auction: Auction,
         stat: tuple[int, int] | None,
+        now: datetime,
     ) -> AuctionPreviewResponse:
         bid_count, highest_amount = stat or (0, None)
         product = auction.product
         thumbnail_url = product.images[0].image_url if product.images else None
-        now = datetime.now()
         return AuctionPreviewResponse(
             id=auction.id,
             title=product.title,
             category_name=product.category.name,
-            status=_effective_status(auction, now),
+            status=_effective_status(auction, now, bid_count=bid_count),
             thumbnail_url=thumbnail_url,
             start_price=auction.start_price,
             current_price=highest_amount or auction.start_price,
@@ -192,13 +252,20 @@ _TERMINAL_STATUSES = {
 
 # 별도 스케줄러 없이, 조회 시점의 starts_at/ends_at과 현재 시각을 비교해 상태를 계산
 # (서버 KST 로컬시각 기준 naive datetime - UTC로 계산하면 9시간 어긋남)
-def _effective_status(auction: Auction, now: datetime) -> AuctionStatus:
+def _effective_status(
+    auction: Auction,
+    now: datetime,
+    bid_count: int | None = None,
+) -> AuctionStatus:
     if auction.status in _TERMINAL_STATUSES:
         return auction.status
     if now < auction.starts_at:
         return AuctionStatus.WAITING
     if now < auction.ends_at:
         return AuctionStatus.ACTIVE
+    # 종료 시점에는 입찰 존재 여부에 따라 낙찰 완료와 유찰 구분
+    if bid_count == 0:
+        return AuctionStatus.NO_BIDS
     return AuctionStatus.COMPLETED
 
 

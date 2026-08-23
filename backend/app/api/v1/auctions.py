@@ -3,9 +3,18 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUserDependency, DatabaseSession
-from app.core.exceptions import AuctionNotFoundError, AuctionStateError, BidAmountError
+from app.core.exceptions import (
+    AuctionNotFoundError,
+    AuctionPermissionError,
+    AuctionStateError,
+    BidAmountError,
+)
 from app.models.enums import AuctionStatus
-from app.schemas.auction import AuctionDetailResponse, AuctionPreviewListResponse
+from app.schemas.auction import (
+    AuctionDetailResponse,
+    AuctionPreviewListResponse,
+    AuctionStatusResponse,
+)
 from app.schemas.bid import AuctionBroadcastMessage, BidCreate
 from app.services.auction_service import AuctionService
 
@@ -13,10 +22,12 @@ router = APIRouter()
 auction_service = AuctionService()
 
 
-# 경매 도메인 예외를 HTTP 에러로 변환 (경매 없음 -> 404, 그 외 상태/금액 문제 -> 409)
+# 경매 도메인 예외를 HTTP 에러로 변환 (경매 없음 404, 본인 입찰 403, 상태/금액 409)
 def bid_error(error: Exception) -> HTTPException:
     if isinstance(error, AuctionNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
+    if isinstance(error, AuctionPermissionError):
+        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error))
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error))
 
 
@@ -73,5 +84,52 @@ async def create_bid(
             bidder_id=current_user.id,
             amount=data.amount,
         )
-    except (AuctionNotFoundError, AuctionStateError, BidAmountError) as error:
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
+        BidAmountError,
+    ) as error:
+        raise bid_error(error) from error
+
+
+# 판매자 경매 취소 (입찰이 없는 시작 전/진행 중 경매만 허용)
+@router.patch("/{auction_id}/cancel", response_model=AuctionStatusResponse)
+async def cancel_auction(
+    auction_id: int,
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+) -> AuctionStatusResponse:
+    try:
+        return await auction_service.cancel_auction(
+            session,
+            auction_id=auction_id,
+            seller_id=current_user.id,
+        )
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
+    ) as error:
+        raise bid_error(error) from error
+
+
+# 낙찰 경매 거래 완료 처리 (판매자만 허용)
+@router.patch("/{auction_id}/trade-complete", response_model=AuctionStatusResponse)
+async def complete_auction_trade(
+    auction_id: int,
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+) -> AuctionStatusResponse:
+    try:
+        return await auction_service.complete_trade(
+            session,
+            auction_id=auction_id,
+            seller_id=current_user.id,
+        )
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
+    ) as error:
         raise bid_error(error) from error

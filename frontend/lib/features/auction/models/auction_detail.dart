@@ -1,3 +1,5 @@
+import 'package:frontend/shared/network/api_config.dart';
+
 import 'auction_status.dart';
 
 class AuctionBidPreview {
@@ -19,6 +21,8 @@ class AuctionDetail {
     required this.category,
     required this.location,
     required this.sellerName,
+    this.sellerId = 0,
+    this.winnerName,
     required this.mannerTemperature,
     required this.startPrice,
     required this.currentPrice,
@@ -28,7 +32,7 @@ class AuctionDetail {
     required this.favoriteCount,
     required this.bids,
     this.status = AuctionStatus.active,
-    this.imageCount = 1,
+    this.imageUrls = const [],
   });
 
   final int id;
@@ -36,6 +40,8 @@ class AuctionDetail {
   final String category;
   final String location;
   final String sellerName;
+  final int sellerId;
+  final String? winnerName;
   final double mannerTemperature;
   final int startPrice;
   final int currentPrice;
@@ -45,21 +51,22 @@ class AuctionDetail {
   final int favoriteCount;
   final List<AuctionBidPreview> bids;
   final AuctionStatus status;
-  final int imageCount;
+  final List<String> imageUrls;
+
+  int get imageCount => imageUrls.isEmpty ? 1 : imageUrls.length;
 
   int get nextBidPrice =>
       bids.isEmpty ? startPrice : currentPrice + minimumBidUnit;
 
-  AuctionDetail copyWith({
-    List<AuctionBidPreview>? bids,
-    int? currentPrice,
-  }) {
+  AuctionDetail copyWith({List<AuctionBidPreview>? bids, int? currentPrice}) {
     return AuctionDetail(
       id: id,
       title: title,
       category: category,
       location: location,
       sellerName: sellerName,
+      sellerId: sellerId,
+      winnerName: winnerName,
       mannerTemperature: mannerTemperature,
       startPrice: startPrice,
       currentPrice: currentPrice ?? this.currentPrice,
@@ -69,7 +76,7 @@ class AuctionDetail {
       favoriteCount: favoriteCount,
       bids: bids ?? this.bids,
       status: status,
-      imageCount: imageCount,
+      imageUrls: imageUrls,
     );
   }
 
@@ -88,6 +95,8 @@ class AuctionDetail {
       category: json['category_name'] as String,
       location: '',
       sellerName: json['seller_name'] as String,
+      sellerId: json['seller_id'] as int,
+      winnerName: json['winner_name'] as String?,
       mannerTemperature: 36.5,
       startPrice: json['start_price'] as int,
       currentPrice: json['current_price'] as int,
@@ -107,7 +116,9 @@ class AuctionDetail {
           )
           .toList(),
       status: status,
-      imageCount: images.isEmpty ? 1 : images.length,
+      imageUrls: images
+          .map((image) => _absoluteImageUrl(image as String))
+          .toList(),
     );
   }
 }
@@ -120,30 +131,8 @@ String relativeTimeLabel(DateTime time) {
   return '${diff.inDays}일 전';
 }
 
-const mockAuctionDetail = AuctionDetail(
-  id: 1,
-  title: '라이카 M6 클래식 필름 카메라',
-  category: '디지털기기',
-  location: '성수동',
-  sellerName: '카메라좋아',
-  mannerTemperature: 39.8,
-  startPrice: 1000000,
-  currentPrice: 1280000,
-  minimumBidUnit: 20000,
-  remainingTime: Duration(hours: 2, minutes: 14, seconds: 36),
-  description:
-      '필름 한 롤 테스트 촬영까지 완료했습니다. 노출계와 셔터 모두 정상 작동하며 '
-      '생활 사용감 외에 큰 흠집은 없습니다. 본체, 스트랩, 바디캡, 정품 박스를 함께 드립니다.',
-  favoriteCount: 18,
-  imageCount: 4,
-  bids: [
-    AuctionBidPreview(bidderName: 'kim***', amount: 1280000, timeLabel: '방금 전'),
-    AuctionBidPreview(bidderName: 'par***', amount: 1260000, timeLabel: '3분 전'),
-    AuctionBidPreview(bidderName: 'lee***', amount: 1240000, timeLabel: '8분 전'),
-    AuctionBidPreview(
-      bidderName: 'cho***',
-      amount: 1220000,
-      timeLabel: '12분 전',
-    ),
-  ],
-);
+String _absoluteImageUrl(String path) {
+  final uri = Uri.tryParse(path);
+  if (uri != null && uri.hasScheme) return path;
+  return '${ApiConfig.mediaBaseUrl}$path';
+}

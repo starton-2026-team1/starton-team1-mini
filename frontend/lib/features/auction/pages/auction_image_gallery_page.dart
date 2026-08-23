@@ -99,7 +99,7 @@ class _AuctionImageGalleryPageState extends State<AuctionImageGalleryPage> {
         imageQuality: 88,
       );
       if (!mounted || photo == null) return;
-      Navigator.pop(context, [photo.path]);
+      Navigator.pop(context, [photo]);
     } catch (_) {
       if (!mounted) return;
       showAppSnackBar(context, '카메라 권한을 확인해 주세요.');
@@ -121,18 +121,18 @@ class _AuctionImageGalleryPageState extends State<AuctionImageGalleryPage> {
   Future<void> _completeSelection() async {
     if (_selected.isEmpty || _isCompleting) return;
     setState(() => _isCompleting = true);
-    final paths = <String>[];
+    final files = <XFile>[];
     for (final asset in _selected) {
       final file = await asset.originFile;
-      if (file != null) paths.add(file.path);
+      if (file != null) files.add(XFile(file.path));
     }
     if (!mounted) return;
-    if (paths.isEmpty) {
+    if (files.isEmpty) {
       setState(() => _isCompleting = false);
       showAppSnackBar(context, '선택한 사진을 불러오지 못했어요.');
       return;
     }
-    Navigator.pop(context, paths);
+    Navigator.pop(context, files);
   }
 
   @override

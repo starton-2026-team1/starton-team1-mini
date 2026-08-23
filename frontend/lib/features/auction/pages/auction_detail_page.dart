@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/features/auth/services/auth_token_storage.dart';
+import 'package:frontend/features/auth/data/auth_api.dart';
 import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_config.dart';
 import 'package:frontend/shared/network/api_exception.dart';
@@ -27,6 +28,7 @@ class AuctionDetailPage extends StatefulWidget {
 
 class _AuctionDetailPageState extends State<AuctionDetailPage> {
   final _auctionApi = AuctionApi(ApiClient(), AuthTokenStorage());
+  final _authApi = AuthApi(ApiClient(), AuthTokenStorage());
 
   AuctionDetail? _auction;
   bool _isLoading = true;
@@ -38,20 +40,33 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   Timer? _timer;
   bool _isFavorite = false;
   bool _isBidding = false;
+  int? _currentUserId;
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSubscription;
+  Timer? _socketReconnectTimer;
 
   @override
   void initState() {
     super.initState();
     _loadAuction();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final user = await _authApi.getSession();
+      if (mounted) setState(() => _currentUserId = user.id);
+    } catch (_) {
+      // 비로그인 상태에서는 판매자 전용 메뉴 숨김
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _socketSubscription?.cancel();
+    _socketReconnectTimer?.cancel();
     _channel?.sink.close();
     super.dispose();
   }
@@ -71,13 +86,8 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _remainingTime = auction.remainingTime;
         _isLoading = false;
       });
-      if (auction.status.hasRunningTimer) {
-        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-          if (!mounted || _remainingTime <= Duration.zero) return;
-          setState(() => _remainingTime -= const Duration(seconds: 1));
-        });
-      }
-      _connectSocket();
+      _startStatusTimer(auction);
+      if (auction.status == AuctionStatus.active) _connectSocket();
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -93,25 +103,84 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     }
   }
 
+  void _startStatusTimer(AuctionDetail auction) {
+    _timer?.cancel();
+    if (!auction.status.hasRunningTimer) return;
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_remainingTime > const Duration(seconds: 1)) {
+        setState(() => _remainingTime -= const Duration(seconds: 1));
+        return;
+      }
+
+      timer.cancel();
+      setState(() => _remainingTime = Duration.zero);
+      unawaited(_reloadStatusAfterDeadline());
+    });
+  }
+
+  Future<void> _reloadStatusAfterDeadline() async {
+    try {
+      // 시작 또는 종료 시각 도달 후 서버에서 계산한 최신 경매 상태 재조회
+      final auction = await _auctionApi.getAuctionDetail(widget.auctionId);
+      if (!mounted) return;
+      setState(() {
+        _auction = auction;
+        _bids = auction.bids;
+        _currentPrice = auction.currentPrice;
+        _remainingTime = auction.remainingTime;
+      });
+      _startStatusTimer(auction);
+      if (auction.status == AuctionStatus.active) _connectSocket();
+    } catch (_) {
+      // 상태 재조회 실패 시 기존 상세 정보 유지
+    }
+  }
+
   void _connectSocket() {
+    _socketReconnectTimer?.cancel();
+    _socketSubscription?.cancel();
+    _channel?.sink.close();
     final wsBaseUrl = ApiConfig.baseUrl.replaceFirst('http', 'ws');
-    _channel = WebSocketChannel.connect(
-      Uri.parse('$wsBaseUrl/auctions/${widget.auctionId}/ws'),
-    );
-    _socketSubscription = _channel!.stream.listen(_onSocketMessage);
+    try {
+      _channel = WebSocketChannel.connect(
+        Uri.parse('$wsBaseUrl/auctions/${widget.auctionId}/ws'),
+      );
+      _socketSubscription = _channel!.stream.listen(
+        _onSocketMessage,
+        onError: (_) => _scheduleSocketReconnect(),
+        onDone: _scheduleSocketReconnect,
+        cancelOnError: true,
+      );
+    } catch (_) {
+      _scheduleSocketReconnect();
+    }
+  }
+
+  void _scheduleSocketReconnect() {
+    if (!mounted || _auction?.status != AuctionStatus.active) return;
+    if (_socketReconnectTimer?.isActive ?? false) return;
+
+    // 진행 중 경매의 웹소켓 연결 종료 시 3초 후 재연결
+    _socketReconnectTimer = Timer(const Duration(seconds: 3), _connectSocket);
   }
 
   AuctionDetail get _liveAuction =>
       _auction!.copyWith(bids: _bids, currentPrice: _currentPrice);
 
   void _onSocketMessage(dynamic raw) {
-    final json = jsonDecode(raw as String) as Map<String, dynamic>;
-    final update = AuctionUpdateMessage.fromJson(json);
-    if (!mounted) return;
-    setState(() {
-      _currentPrice = update.currentPrice;
-      _bids = [update.latestBid, ..._bids];
-    });
+    try {
+      final json = jsonDecode(raw as String) as Map<String, dynamic>;
+      final update = AuctionUpdateMessage.fromJson(json);
+      if (!mounted) return;
+      setState(() {
+        _currentPrice = update.currentPrice;
+        _bids = [update.latestBid, ..._bids];
+      });
+    } catch (_) {
+      // 잘못된 실시간 메시지는 화면 상태 변경 없이 무시
+    }
   }
 
   @override
@@ -151,7 +220,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
               child: ListView(
                 children: [
                   _ProductImage(
-                    imageCount: auction.imageCount,
+                    imageUrls: auction.imageUrls,
                     onBack: () => Navigator.maybePop(context),
                     onShare: () => showAppSnackBar(context, '공유 기능을 준비 중이에요.'),
                     onMore: _showMoreMenu,
@@ -189,16 +258,105 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 
   void _showMoreMenu() {
+    final canCancel =
+        _currentUserId == _auction?.sellerId &&
+        (_auction?.status == AuctionStatus.waiting ||
+            _auction?.status == AuctionStatus.active);
+    final canCompleteTrade =
+        _currentUserId == _auction?.sellerId &&
+        _auction?.status == AuctionStatus.completed;
     showModalBottomSheet<void>(
       context: context,
       builder: (context) => SafeArea(
-        child: ListTile(
-          leading: const Icon(Icons.flag_outlined),
-          title: const Text('게시글 신고하기'),
-          onTap: () => Navigator.pop(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (canCancel)
+              ListTile(
+                leading: const Icon(Icons.cancel_outlined),
+                title: const Text('경매 취소하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmCancelAuction();
+                },
+              ),
+            if (canCompleteTrade)
+              ListTile(
+                leading: const Icon(Icons.handshake_outlined),
+                title: const Text('거래 완료 처리'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmCompleteTrade();
+                },
+              ),
+            if (!canCancel && !canCompleteTrade)
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('게시글 신고하기'),
+                onTap: () => Navigator.pop(context),
+              ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCompleteTrade() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('거래를 완료할까요?'),
+        content: const Text('낙찰자와 거래를 마친 뒤 완료해 주세요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('아니요'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('완료하기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _auctionApi.completeTrade(widget.auctionId);
+      await _loadAuction();
+      if (mounted) showAppSnackBar(context, '거래가 완료됐어요.');
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    }
+  }
+
+  Future<void> _confirmCancelAuction() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('경매를 취소할까요?'),
+        content: const Text('입찰이 있는 경매는 취소할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('아니요'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('취소하기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _auctionApi.cancelAuction(widget.auctionId);
+      await _loadAuction();
+      if (mounted) showAppSnackBar(context, '경매가 취소됐어요.');
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    }
   }
 
   void _showBidSheet() {
@@ -233,7 +391,10 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                   children: [
                     const Text(
                       '입찰하기',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text('${_formatPrice(minPrice)}부터 입찰할 수 있어요.'),
@@ -314,17 +475,24 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 }
 
-class _ProductImage extends StatelessWidget {
+class _ProductImage extends StatefulWidget {
   const _ProductImage({
-    required this.imageCount,
+    required this.imageUrls,
     required this.onBack,
     required this.onShare,
     required this.onMore,
   });
-  final int imageCount;
+  final List<String> imageUrls;
   final VoidCallback onBack;
   final VoidCallback onShare;
   final VoidCallback onMore;
+
+  @override
+  State<_ProductImage> createState() => _ProductImageState();
+}
+
+class _ProductImageState extends State<_ProductImage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -335,17 +503,18 @@ class _ProductImage extends StatelessWidget {
           height: 330,
           width: double.infinity,
           color: const Color(0xFFE8E8E8),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.image_outlined, size: 50, color: Color(0xFF8C8C8C)),
-              SizedBox(height: 8),
-              Text(
-                '상품 사진',
-                style: TextStyle(color: Color(0xFF666666), fontSize: 13),
-              ),
-            ],
-          ),
+          child: widget.imageUrls.isEmpty
+              ? const _ImageFallback()
+              : PageView.builder(
+                  itemCount: widget.imageUrls.length,
+                  onPageChanged: (index) =>
+                      setState(() => _currentIndex = index),
+                  itemBuilder: (context, index) => Image.network(
+                    widget.imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const _ImageFallback(),
+                  ),
+                ),
         ),
         Positioned(
           bottom: 10,
@@ -356,7 +525,7 @@ class _ProductImage extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
-              '1 / $imageCount',
+              '${_currentIndex + 1} / ${widget.imageUrls.isEmpty ? 1 : widget.imageUrls.length}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
@@ -369,7 +538,7 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           left: 8,
           child: IconButton(
-            onPressed: onBack,
+            onPressed: widget.onBack,
             icon: const Icon(Icons.arrow_back_ios_new, size: 22),
           ),
         ),
@@ -377,7 +546,7 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           right: 48,
           child: IconButton(
-            onPressed: onShare,
+            onPressed: widget.onShare,
             icon: const Icon(Icons.share_outlined, size: 23),
           ),
         ),
@@ -385,11 +554,33 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           right: 8,
           child: IconButton(
-            onPressed: onMore,
+            onPressed: widget.onMore,
             icon: const Icon(Icons.more_vert, size: 24),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xFFE8E8E8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image_outlined, size: 50, color: Color(0xFF8C8C8C)),
+          SizedBox(height: 8),
+          Text(
+            '상품 사진',
+            style: TextStyle(color: Color(0xFF666666), fontSize: 13),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -633,6 +824,19 @@ class _AuctionStatusSection extends StatelessWidget {
             _statusDescription(auction.status),
             style: const TextStyle(color: Color(0xFF808080), fontSize: 11),
           ),
+          if (auction.winnerName != null &&
+              (auction.status == AuctionStatus.completed ||
+                  auction.status == AuctionStatus.tradeCompleted)) ...[
+            const SizedBox(height: 8),
+            Text(
+              '낙찰자 ${auction.winnerName}',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -49,13 +49,11 @@ class ProductDetailPage extends StatelessWidget {
                             color: const Color(0xFFF2F3F5),
 
                             child: product.imageAsset == null
-                                // 이미지가 없는 경우
                                 ? const Icon(
                                     Icons.image_outlined,
                                     size: 80,
                                     color: Color(0xFFD2D3D7),
                                   )
-                                // 이미지가 있는 경우
                                 : Image.asset(
                                     product.imageAsset!,
                                     fit: BoxFit.cover,

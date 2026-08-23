@@ -69,4 +69,75 @@ void main() {
       expect(status.canBid, isFalse, reason: status.apiValue);
     }
   });
+
+  test('상세 API 이미지 상대 경로를 서버 주소와 결합한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '테스트 상품',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'seller_id': 7,
+      'winner_name': null,
+      'status': 'ACTIVE',
+      'start_price': 10000,
+      'current_price': 10000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2026-08-23T10:00:00+09:00',
+      'ends_at': '2099-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': ['/static/uploads/auction.jpg'],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.imageUrls, hasLength(1));
+    expect(auction.imageUrls.single, endsWith('/static/uploads/auction.jpg'));
+    expect(auction.imageCount, 1);
+  });
+
+  test('종료된 상세 응답은 입찰을 비활성화하고 남은 시간을 0으로 처리한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '종료 경매',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'seller_id': 7,
+      'winner_name': null,
+      'status': 'NO_BIDS',
+      'start_price': 10000,
+      'current_price': 10000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2020-08-23T10:00:00+09:00',
+      'ends_at': '2020-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': <String>[],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.status, AuctionStatus.noBids);
+    expect(auction.status.canBid, isFalse);
+    expect(auction.remainingTime, Duration.zero);
+  });
+
+  test('낙찰 완료 상세 응답에서 낙찰자 정보를 보관한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '낙찰 경매',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'seller_id': 7,
+      'winner_name': '입***',
+      'status': 'COMPLETED',
+      'start_price': 10000,
+      'current_price': 12000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2020-08-23T10:00:00+09:00',
+      'ends_at': '2020-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': <String>[],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.winnerName, '입***');
+    expect(auction.status, AuctionStatus.completed);
+  });
 }
