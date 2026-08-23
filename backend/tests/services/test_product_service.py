@@ -173,10 +173,38 @@ async def test_sales_management_products_include_fixed_price_and_auction(
     assert total == 2
     assert items[0].auction_id == 7
     assert items[0].auction_status == AuctionStatus.ACTIVE
+    assert items[0].management_status == "AUCTION"
     assert items[0].price == 140_000
     assert items[0].bid_count == 3
     assert items[0].favorite_count == 5
     assert items[0].thumbnail_url == "/uploads/ipad.jpg"
     assert items[1].auction_id is None
+    assert items[1].management_status == "SELLING"
     assert items[1].price == 30_000
     assert items[1].favorite_count == 2
+
+
+@pytest.mark.parametrize(
+    ("product_status", "auction_status", "expected"),
+    [
+        (ProductStatus.ACTIVE, AuctionStatus.WAITING, "AUCTION"),
+        (ProductStatus.ACTIVE, AuctionStatus.ACTIVE, "AUCTION"),
+        (ProductStatus.ACTIVE, AuctionStatus.COMPLETED, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.NO_BIDS, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.CANCELLED, "COMPLETED"),
+        (ProductStatus.ACTIVE, AuctionStatus.TRADE_COMPLETED, "COMPLETED"),
+        (ProductStatus.SOLD, AuctionStatus.ACTIVE, "COMPLETED"),
+        (ProductStatus.CANCELLED, AuctionStatus.ACTIVE, "COMPLETED"),
+    ],
+)
+def test_sales_management_status_mapping(
+    product_status: ProductStatus,
+    auction_status: AuctionStatus,
+    expected: str,
+) -> None:
+    result = ProductService._sales_management_status(
+        product_status,
+        auction_status,
+    )
+
+    assert result == expected

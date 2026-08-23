@@ -5,14 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/api/v1/products.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/api/v1/products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/app/repositories/product_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/repositories/product_repository.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/schemas/product.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas/product.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/app/services/product_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/services/product_service.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/tests/services/test_product_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/tests/services/test_product_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/ios/Podfile.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/ios/Runner.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/ios/Runner.xcodeproj/project.pbxproj" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

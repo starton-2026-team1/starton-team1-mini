@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import StrEnum
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
@@ -83,12 +84,19 @@ class ProductListResponse(BaseModel):
     limit: int = Field(ge=1, le=100)
 
 
+class SalesManagementStatus(StrEnum):
+    AUCTION = "AUCTION"
+    SELLING = "SELLING"
+    COMPLETED = "COMPLETED"
+
+
 class SalesManagementProductResponse(BaseModel):
     id: int = Field(gt=0)
     auction_id: int | None = Field(default=None, gt=0)
     sale_type: SaleType
     title: str
     product_status: ProductStatus
+    management_status: SalesManagementStatus
     auction_status: AuctionStatus | None = None
     thumbnail_url: str | None = None
     price: int = Field(gt=0)
@@ -97,6 +105,24 @@ class SalesManagementProductResponse(BaseModel):
     starts_at: datetime | None = None
     ends_at: datetime | None = None
     created_at: datetime
+
+    @model_validator(mode="after")
+    def validate_sale_details(self) -> "SalesManagementProductResponse":
+        auction_fields = (
+            self.auction_id,
+            self.auction_status,
+            self.starts_at,
+            self.ends_at,
+        )
+        if self.sale_type == SaleType.AUCTION and any(
+            value is None for value in auction_fields
+        ):
+            raise ValueError("경매 상품 정보가 모두 필요합니다.")
+        if self.sale_type == SaleType.FIXED_PRICE and any(
+            value is not None for value in auction_fields
+        ):
+            raise ValueError("일반 판매 상품에는 경매 정보를 포함할 수 없습니다.")
+        return self
 
 
 class SalesManagementProductListResponse(BaseModel):

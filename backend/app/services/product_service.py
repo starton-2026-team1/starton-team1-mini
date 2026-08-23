@@ -13,7 +13,12 @@ from app.models.product import Product
 from app.repositories.bid_repository import BidRepository
 from app.repositories.product_repository import ProductRepository
 from app.schemas.auction import AuctionCreate
-from app.schemas.product import ProductCreate, ProductUpdate, SalesManagementProductResponse
+from app.schemas.product import (
+    ProductCreate,
+    ProductUpdate,
+    SalesManagementProductResponse,
+    SalesManagementStatus,
+)
 from app.services.image_storage import ImageStorage, image_storage
 
 
@@ -186,6 +191,11 @@ class ProductService:
                 sale_type=product.sale_type,
                 title=product.title,
                 product_status=product.status,
+                management_status=(
+                    SalesManagementStatus.SELLING
+                    if product.status == ProductStatus.ACTIVE
+                    else SalesManagementStatus.COMPLETED
+                ),
                 thumbnail_url=thumbnail_url,
                 price=product.fixed_price.price,
                 favorite_count=favorite_count,
@@ -194,17 +204,22 @@ class ProductService:
 
         bid_count, highest_amount = bid_stat or (0, None)
         auction = product.auction
+        auction_status = ProductService._effective_auction_status(
+            auction.status,
+            auction.starts_at,
+            auction.ends_at,
+        )
         return SalesManagementProductResponse(
             id=product.id,
             auction_id=auction.id,
             sale_type=product.sale_type,
             title=product.title,
             product_status=product.status,
-            auction_status=ProductService._effective_auction_status(
-                auction.status,
-                auction.starts_at,
-                auction.ends_at,
+            management_status=ProductService._sales_management_status(
+                product.status,
+                auction_status,
             ),
+            auction_status=auction_status,
             thumbnail_url=thumbnail_url,
             price=highest_amount or auction.start_price,
             bid_count=bid_count,
@@ -232,3 +247,14 @@ class ProductService:
         if now < ends_at:
             return AuctionStatus.ACTIVE
         return AuctionStatus.COMPLETED
+
+    @staticmethod
+    def _sales_management_status(
+        product_status: ProductStatus,
+        auction_status: AuctionStatus,
+    ) -> SalesManagementStatus:
+        if product_status != ProductStatus.ACTIVE:
+            return SalesManagementStatus.COMPLETED
+        if auction_status in {AuctionStatus.WAITING, AuctionStatus.ACTIVE}:
+            return SalesManagementStatus.AUCTION
+        return SalesManagementStatus.COMPLETED
