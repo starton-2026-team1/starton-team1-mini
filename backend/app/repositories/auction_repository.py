@@ -8,7 +8,7 @@ from app.models.product import Product
 
 
 class AuctionRepository:
-    # 입찰 검증에서 판매자 확인이 필요하므로 상품 관계까지 함께 조회
+    # 동일 경매의 동시 입찰을 직렬화하고 판매자도 확인할 수 있도록 행 잠금과 상품 조회를 함께 적용
     async def get_by_id(
         self,
         session: AsyncSession,
@@ -17,7 +17,8 @@ class AuctionRepository:
         result = await session.execute(
             select(Auction)
             .where(Auction.id == auction_id)
-            .options(selectinload(Auction.product)),
+            .options(selectinload(Auction.product))
+            .with_for_update(),
         )
         return result.scalar_one_or_none()
 

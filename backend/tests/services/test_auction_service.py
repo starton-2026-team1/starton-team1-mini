@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -40,3 +40,15 @@ async def test_seller_cannot_bid_on_own_auction() -> None:
         )
 
     bid_repository.create.assert_not_awaited()
+
+
+async def test_bid_lookup_locks_auction_row() -> None:
+    session = AsyncMock()
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = None
+    session.execute.return_value = result
+
+    await AuctionRepository().get_by_id(session, auction_id=3)
+
+    statement = session.execute.await_args.args[0]
+    assert "FOR UPDATE" in str(statement)
