@@ -64,19 +64,6 @@ class AuctionPreview {
   }
 }
 
-const mockAuctions = [
-  AuctionPreview(
-    id: 1,
-    title: '라이카 M6 클래식 필름 카메라',
-    categoryName: '디지털기기',
-    status: AuctionStatus.active,
-    remainingTime: Duration(hours: 2, minutes: 14, seconds: 36),
-    currentPrice: '현재 1,280,000원',
-    bidCount: 4,
-    favoriteCount: 18,
-  ),
-];
-
 String _formatPrice(int value) {
   final digits = value.toString();
   final buffer = StringBuffer();
