@@ -28,14 +28,21 @@ class ProductService:
         session: AsyncSession,
         seller_id: int,
         data: ProductCreate,
+        images: list[UploadFile],
     ) -> Product:
         if data.sale_type != SaleType.FIXED_PRICE:
             raise ProductStateError("현재는 일반 판매 상품만 등록할 수 있습니다.")
+        
+        if not images:
+            raise ProductStateError("상품 사진을 한 장 이상 등록해 주세요.")
+
+        image_urls = await self.images.save(images)
 
         return await self.repository.create_fixed_price_product(
             session=session,
             seller_id=seller_id,
             data=data,
+            image_urls=image_urls,
         )
 
     # 이미지 저장 -> 상품/경매 레코드 생성 순서로 진행

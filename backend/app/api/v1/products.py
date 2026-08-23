@@ -53,18 +53,39 @@ def product_error(error: Exception) -> HTTPException:
     status_code=status.HTTP_201_CREATED,
 )
 async def create_product(
-    data: ProductCreate,
     session: DatabaseSession,
     current_user: CurrentUserDependency,
+    category_id: Annotated[int, Form(gt=0)],
+    sale_type: Annotated[str, Form()],
+    title: Annotated[str, Form(min_length=1, max_length=100)],
+    description: Annotated[str, Form(min_length=1)],
+    price: Annotated[int, Form(gt=0)],
+    images: Annotated[list[UploadFile], File()],
 ) -> ProductCreateResponse:
+    try:
+        data = ProductCreate(
+            category_id=category_id,
+            sale_type=sale_type,
+            title=title,
+            description=description,
+            price=price,
+        )
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+
     try:
         product = await product_service.create_product(
             session=session,
             seller_id=current_user.id,
             data=data,
+            images=images,
         )
     except ProductStateError as error:
         raise product_error(error) from error
+
     return ProductCreateResponse.model_validate(product)
 
 
