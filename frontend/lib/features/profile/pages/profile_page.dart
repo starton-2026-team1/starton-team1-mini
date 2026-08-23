@@ -3,6 +3,7 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 
 import '../../product/pages/sales_management_page.dart';
+import '../../product/data/sales_management_api.dart';
 import '../data/profile_menu_data.dart';
 import '../data/profile_api.dart';
 import '../models/profile_menu_item.dart';
@@ -20,6 +21,7 @@ class ProfilePage extends StatefulWidget {
     required this.onNameUpdated,
     this.onMenuTap,
     this.onLogout,
+    this.salesManagementGateway,
     super.key,
   });
 
@@ -30,6 +32,7 @@ class ProfilePage extends StatefulWidget {
   final ValueChanged<String> onNameUpdated;
   final ValueChanged<ProfileMenuItem>? onMenuTap;
   final Future<void> Function()? onLogout;
+  final SalesManagementGateway? salesManagementGateway;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -56,7 +59,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (item.routeKey == 'sales') {
       Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => const SalesManagementPage()),
+        MaterialPageRoute(
+          builder: (_) =>
+              SalesManagementPage(gateway: widget.salesManagementGateway),
+        ),
       );
       return;
     }
@@ -73,6 +79,7 @@ class _ProfilePageState extends State<ProfilePage> {
           mannerTemperature: widget.mannerTemperature,
           profileGateway: widget.profileGateway,
           onNameUpdated: widget.onNameUpdated,
+          salesManagementGateway: widget.salesManagementGateway,
         ),
       ),
     );

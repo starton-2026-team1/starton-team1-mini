@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../../product/pages/sales_management_page.dart';
+import '../../product/data/sales_management_api.dart';
+import '../../auth/services/auth_token_storage.dart';
+import '../../../shared/network/api_client.dart';
 import '../data/profile_api.dart';
 import '../widgets/profile_temperature_badge.dart';
 import 'profile_edit_page.dart';
@@ -13,6 +16,7 @@ class ProfileDetailPage extends StatefulWidget {
     required this.mannerTemperature,
     required this.profileGateway,
     required this.onNameUpdated,
+    this.salesManagementGateway,
     super.key,
   });
 
@@ -21,6 +25,7 @@ class ProfileDetailPage extends StatefulWidget {
   final double mannerTemperature;
   final ProfileGateway profileGateway;
   final ValueChanged<String> onNameUpdated;
+  final SalesManagementGateway? salesManagementGateway;
 
   @override
   State<ProfileDetailPage> createState() => _ProfileDetailPageState();
@@ -28,11 +33,26 @@ class ProfileDetailPage extends StatefulWidget {
 
 class _ProfileDetailPageState extends State<ProfileDetailPage> {
   late String _userName;
+  late final SalesManagementGateway _salesManagementGateway;
+  int? _salesCount;
 
   @override
   void initState() {
     super.initState();
     _userName = widget.userName;
+    _salesManagementGateway =
+        widget.salesManagementGateway ??
+        SalesManagementApi(ApiClient(), AuthTokenStorage());
+    _loadSalesCount();
+  }
+
+  Future<void> _loadSalesCount() async {
+    try {
+      final items = await _salesManagementGateway.listMyProducts();
+      if (mounted) setState(() => _salesCount = items.length);
+    } catch (_) {
+      if (mounted) setState(() => _salesCount = 0);
+    }
   }
 
   Future<void> _editProfile() async {
@@ -85,8 +105,12 @@ class _ProfileDetailPageState extends State<ProfileDetailPage> {
           _MannerTemperatureCard(mannerTemperature: widget.mannerTemperature),
           const SizedBox(height: 12),
           _ActivityCard(
+            salesCount: _salesCount,
             onTap: () => Navigator.of(context).push<void>(
-              MaterialPageRoute(builder: (_) => const SalesManagementPage()),
+              MaterialPageRoute(
+                builder: (_) =>
+                    SalesManagementPage(gateway: _salesManagementGateway),
+              ),
             ),
           ),
         ],
@@ -253,8 +277,9 @@ class _MannerTemperatureCard extends StatelessWidget {
 }
 
 class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({required this.onTap});
+  const _ActivityCard({required this.salesCount, required this.onTap});
 
+  final int? salesCount;
   final VoidCallback onTap;
 
   @override
@@ -272,19 +297,22 @@ class _ActivityCard extends StatelessWidget {
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(22),
-              child: const Padding(
-                padding: EdgeInsets.all(20),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '판매물품 0',
-                      style: TextStyle(
+                      '판매물품 ${salesCount ?? '-'}',
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textSecondary,
+                    ),
                   ],
                 ),
               ),
