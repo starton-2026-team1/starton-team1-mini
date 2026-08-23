@@ -26,11 +26,15 @@ class ProductApi {
 
     debugPrint('상품 API 요청 시작');
 
-    final files = <http.MultipartFile>[];
-
-    for (final imagePath in form.imagePaths) {
-      files.add(await http.MultipartFile.fromPath('images', imagePath));
-    }
+    final files = await Future.wait(
+      form.imageFiles.map(
+        (image) async => http.MultipartFile.fromBytes(
+          'images',
+          await image.readAsBytes(),
+          filename: image.name,
+        ),
+      ),
+    );
 
     final response = await _apiClient.postMultipart(
       '/products',
