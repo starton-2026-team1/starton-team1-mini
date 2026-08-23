@@ -71,12 +71,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _remainingTime = auction.remainingTime;
         _isLoading = false;
       });
-      if (auction.status.hasRunningTimer) {
-        _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-          if (!mounted || _remainingTime <= Duration.zero) return;
-          setState(() => _remainingTime -= const Duration(seconds: 1));
-        });
-      }
+      _startStatusTimer(auction);
       _connectSocket();
     } on ApiException catch (error) {
       if (!mounted) return;
@@ -90,6 +85,40 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _loadError = '경매 정보를 불러오지 못했어요.';
         _isLoading = false;
       });
+    }
+  }
+
+  void _startStatusTimer(AuctionDetail auction) {
+    _timer?.cancel();
+    if (!auction.status.hasRunningTimer) return;
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_remainingTime > const Duration(seconds: 1)) {
+        setState(() => _remainingTime -= const Duration(seconds: 1));
+        return;
+      }
+
+      timer.cancel();
+      setState(() => _remainingTime = Duration.zero);
+      unawaited(_reloadStatusAfterDeadline());
+    });
+  }
+
+  Future<void> _reloadStatusAfterDeadline() async {
+    try {
+      // 시작 또는 종료 시각 도달 후 서버에서 계산한 최신 경매 상태 재조회
+      final auction = await _auctionApi.getAuctionDetail(widget.auctionId);
+      if (!mounted) return;
+      setState(() {
+        _auction = auction;
+        _bids = auction.bids;
+        _currentPrice = auction.currentPrice;
+        _remainingTime = auction.remainingTime;
+      });
+      _startStatusTimer(auction);
+    } catch (_) {
+      // 상태 재조회 실패 시 기존 상세 정보 유지
     }
   }
 

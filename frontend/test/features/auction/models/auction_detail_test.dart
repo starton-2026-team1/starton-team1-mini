@@ -91,4 +91,26 @@ void main() {
     expect(auction.imageUrls.single, endsWith('/static/uploads/auction.jpg'));
     expect(auction.imageCount, 1);
   });
+
+  test('종료된 상세 응답은 입찰을 비활성화하고 남은 시간을 0으로 처리한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '종료 경매',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'status': 'NO_BIDS',
+      'start_price': 10000,
+      'current_price': 10000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2020-08-23T10:00:00+09:00',
+      'ends_at': '2020-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': <String>[],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.status, AuctionStatus.noBids);
+    expect(auction.status.canBid, isFalse);
+    expect(auction.remainingTime, Duration.zero);
+  });
 }
