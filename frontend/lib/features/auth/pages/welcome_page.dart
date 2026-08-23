@@ -118,11 +118,20 @@ class _WelcomePageState extends State<WelcomePage> {
                   "이미 계정이 있나요? ",
                   style: TextStyle(color: AppColors.grey700),
                 ),
-                Text(
-                  "로그인",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PhoneAuthPage(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "로그인",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],

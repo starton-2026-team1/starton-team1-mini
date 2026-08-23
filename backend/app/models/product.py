@@ -75,6 +75,7 @@ class Product(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
         single_parent=True,
+        lazy="selectin",
     )
 
     auction: Mapped["Auction | None"] = relationship(

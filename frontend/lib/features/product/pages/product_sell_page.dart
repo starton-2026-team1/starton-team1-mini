@@ -3,6 +3,7 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../data/product_api.dart';
 import '../../auction/widgets/auction_form_section.dart';
 import '../../auction/widgets/auction_draft_dialog.dart';
 import '../../auction/widgets/auction_image_picker.dart';
@@ -23,6 +24,7 @@ class ProductSellPage extends StatefulWidget {
 class _ProductSellPageState extends State<ProductSellPage> {
   final _controller = ProductSellController();
   final _draftStorage = ProductSellDraftStorage();
+  final _productApi = ProductApi();
   bool _canPop = false;
 
   @override
@@ -34,23 +36,42 @@ class _ProductSellPageState extends State<ProductSellPage> {
   @override
   void dispose() {
     _controller.dispose();
+    _productApi.close();
     super.dispose();
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+
     final form = _controller.buildForm();
+
     if (form == null) {
       showAppSnackBar(context, '필수 입력값을 확인해 주세요.');
       return;
     }
 
-    widget.onSubmitted?.call(form);
-    await _draftStorage.clear();
-    if (!mounted) return;
-    _controller.markSaved();
-    setState(() => _canPop = true);
-    Navigator.of(context).pop(form);
+    try {
+      await _productApi.createProduct(form);
+
+      widget.onSubmitted?.call(form);
+
+      await _draftStorage.clear();
+
+      if (!mounted) return;
+
+      _controller.markSaved();
+      setState(() => _canPop = true);
+
+      showAppSnackBar(context, '상품이 등록되었습니다.');
+
+      Navigator.of(context).pop(form);
+    } catch (error) {
+      if (!mounted) return;
+
+      debugPrint('상품 등록 오류: $error');
+
+      showAppSnackBar(context, '상품 등록에 실패했습니다: $error');
+    }
   }
 
   @override
