@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.core.time import to_kst_naive
 from app.models.enums import AuctionStatus, ProductStatus
 from app.schemas.product import ProductDescription, ProductTitle
+from app.schemas.types import KstDateTime
 
 
 # 경매 등록 요청 (POST /products/auctions 의 폼 필드와 매핑됨)
@@ -16,6 +18,12 @@ class AuctionCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     extension_count: int = Field(default=0, ge=0)
+
+    # 클라이언트가 보낸 UTC 또는 지역 오프셋 시간을 DB 저장 기준인 KST naive로 정규화한다.
+    @field_validator("starts_at", "ends_at")
+    @classmethod
+    def normalize_auction_time(cls, value: datetime) -> datetime:
+        return to_kst_naive(value)
 
     @model_validator(mode="after")
     def ends_after_starts(self) -> "AuctionCreate":
@@ -33,8 +41,8 @@ class AuctionResponse(BaseModel):
     start_price: int = Field(gt=0)
     minimum_bid_unit: int = Field(gt=0)
     extension_count: int | None
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: KstDateTime
+    ends_at: KstDateTime
     status: AuctionStatus
 
 
@@ -73,8 +81,8 @@ class AuctionPreviewResponse(BaseModel):
     current_price: int
     minimum_bid_unit: int
     bid_count: int = Field(ge=0)
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: KstDateTime
+    ends_at: KstDateTime
 
 
 class AuctionPreviewListResponse(BaseModel):
@@ -88,7 +96,7 @@ class AuctionPreviewListResponse(BaseModel):
 class AuctionBidHistoryResponse(BaseModel):
     bidder_name: str
     amount: int
-    created_at: datetime
+    created_at: KstDateTime
 
 
 # 경매 상세 화면 응답
@@ -103,6 +111,6 @@ class AuctionDetailResponse(BaseModel):
     start_price: int
     current_price: int
     minimum_bid_unit: int
-    starts_at: datetime
-    ends_at: datetime
+    starts_at: KstDateTime
+    ends_at: KstDateTime
     bids: list[AuctionBidHistoryResponse]

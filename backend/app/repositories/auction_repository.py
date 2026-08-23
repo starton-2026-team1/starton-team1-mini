@@ -4,6 +4,7 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.time import now_kst_naive
 from app.models.auction import Auction
 from app.models.bid import Bid
 from app.models.enums import AuctionStatus
@@ -54,7 +55,7 @@ class AuctionRepository:
     ) -> tuple[list[Auction], int]:
         filters = []
         if status is not None:
-            filters.append(_status_filter(status, now or datetime.now()))
+            filters.append(_status_filter(status, now or now_kst_naive()))
 
         result = await session.execute(
             select(Auction)

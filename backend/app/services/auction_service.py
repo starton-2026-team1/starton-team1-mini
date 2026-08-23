@@ -8,6 +8,7 @@ from app.core.exceptions import (
     AuctionStateError,
     BidAmountError,
 )
+from app.core.time import now_kst_naive
 from app.models.auction import Auction
 from app.models.enums import AuctionStatus
 from app.models.user import User
@@ -51,7 +52,7 @@ class AuctionService:
 
         # DB status 컬럼은 시작/종료 시각이 지나도 자동으로 안 바뀌므로
         # 저장된 값 대신 현재 시각 기준으로 계산한 상태를 써야 함
-        now = datetime.now()
+        now = now_kst_naive()
         if _effective_status(auction, now) != AuctionStatus.ACTIVE:
             raise AuctionStateError("진행 중인 경매가 아닙니다.")
 
@@ -105,7 +106,7 @@ class AuctionService:
         offset: int = 0,
         limit: int = 20,
     ) -> tuple[list[AuctionPreviewResponse], int]:
-        now = datetime.now()
+        now = now_kst_naive()
         auctions, total = await self.auction_repository.list_auctions(
             session,
             status=status,
@@ -140,7 +141,7 @@ class AuctionService:
         )
         highest_amount = recent_bids[0][0].amount if recent_bids else None
         product = auction.product
-        now = datetime.now()
+        now = now_kst_naive()
 
         return AuctionDetailResponse(
             id=auction.id,

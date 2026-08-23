@@ -79,8 +79,9 @@ class AuctionApi implements AuctionGateway {
         'description': form.description,
         'start_price': '${form.startingPrice}',
         'minimum_bid_unit': '${form.bidIncrement}',
-        'starts_at': form.startsAt.toIso8601String(),
-        'ends_at': form.endsAt.toIso8601String(),
+        // 서버가 실행 지역과 무관하게 같은 순간을 해석하도록 UTC ISO 문자열로 전송한다.
+        'starts_at': form.startsAt.toUtc().toIso8601String(),
+        'ends_at': form.endsAt.toUtc().toIso8601String(),
         'extension_count': '${form.extensionCount}',
       },
       files: files,
