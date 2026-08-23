@@ -71,6 +71,7 @@ def make_detail() -> AuctionDetailResponse:
         description="상품 설명",
         category_name=preview.category_name,
         seller_name="판매자",
+        seller_id=9,
         status=preview.status,
         image_urls=[preview.thumbnail_url or ""],
         start_price=preview.start_price,
@@ -186,4 +187,25 @@ async def test_create_bid_returns_broadcast_message(
         auction_id=3,
         bidder_id=7,
         amount=13000,
+    )
+
+
+async def test_cancel_auction_returns_cancelled_status(
+    client: AsyncClient,
+    auction_service: AsyncMock,
+    auction_dependencies: object,
+) -> None:
+    auction_service.cancel_auction.return_value = {
+        "id": 3,
+        "status": AuctionStatus.CANCELLED,
+    }
+
+    response = await client.patch("/api/v1/auctions/3/cancel")
+
+    assert response.status_code == 200
+    assert response.json() == {"id": 3, "status": "CANCELLED"}
+    auction_service.cancel_auction.assert_awaited_once_with(
+        auction_dependencies,
+        auction_id=3,
+        seller_id=7,
     )

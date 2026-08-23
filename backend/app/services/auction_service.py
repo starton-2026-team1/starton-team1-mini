@@ -18,6 +18,7 @@ from app.schemas.auction import (
     AuctionBidHistoryResponse,
     AuctionDetailResponse,
     AuctionPreviewResponse,
+    AuctionStatusResponse,
 )
 from app.schemas.bid import AuctionBroadcastMessage, BidResponse
 from app.services.connection_manager import ConnectionManager, connection_manager
@@ -97,6 +98,29 @@ class AuctionService:
         user = await session.get(User, bidder_id)
         return user.name if user is not None else "알 수 없음"
 
+    async def cancel_auction(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 경매를 취소할 수 있습니다.")
+
+        current_status = _effective_status(auction, now_kst_naive())
+        if current_status not in {AuctionStatus.WAITING, AuctionStatus.ACTIVE}:
+            raise AuctionStateError("취소할 수 있는 경매가 아닙니다.")
+        if await self.bid_repository.get_highest_amount(session, auction_id) is not None:
+            raise AuctionStateError("입찰이 있는 경매는 취소할 수 없습니다.")
+
+        # 취소 조건 검증 후 경매 상태 변경
+        auction.status = AuctionStatus.CANCELLED
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
     # 경매 목록 응답 조립 (경매별 입찰수/최고가는 한 번에 집계해서 N+1 방지)
     async def list_auctions(
         self,
@@ -149,6 +173,7 @@ class AuctionService:
             description=product.description,
             category_name=product.category.name,
             seller_name=product.seller.name,
+            seller_id=product.seller_id,
             status=_effective_status(auction, now, bid_count=len(recent_bids)),
             image_urls=[image.image_url for image in product.images],
             start_price=auction.start_price,

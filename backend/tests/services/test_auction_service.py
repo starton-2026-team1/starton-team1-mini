@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.core.exceptions import AuctionPermissionError
+from app.core.exceptions import AuctionPermissionError, AuctionStateError
 from app.models.enums import AuctionStatus
 from app.repositories.auction_repository import AuctionRepository
 from app.repositories.bid_repository import BidRepository
@@ -52,6 +52,50 @@ async def test_bid_lookup_locks_auction_row() -> None:
 
     statement = session.execute.await_args.args[0]
     assert "FOR UPDATE" in str(statement)
+
+
+async def test_seller_can_cancel_auction_without_bids() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    now = datetime.now()
+    auction = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=7),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=1),
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_amount.return_value = None
+    session = AsyncMock()
+    service = AuctionService(auction_repository, bid_repository)
+
+    response = await service.cancel_auction(session, auction_id=3, seller_id=7)
+
+    assert response.status == AuctionStatus.CANCELLED
+    assert auction.status == AuctionStatus.CANCELLED
+    session.flush.assert_awaited_once()
+
+
+async def test_auction_with_bid_cannot_be_cancelled() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    now = datetime.now()
+    auction_repository.get_by_id.return_value = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=7),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=1),
+    )
+    bid_repository.get_highest_amount.return_value = 12000
+    session = AsyncMock()
+    service = AuctionService(auction_repository, bid_repository)
+
+    with pytest.raises(AuctionStateError, match="입찰이 있는 경매"):
+        await service.cancel_auction(session, auction_id=3, seller_id=7)
+
+    session.flush.assert_not_awaited()
 
 
 @pytest.mark.parametrize(

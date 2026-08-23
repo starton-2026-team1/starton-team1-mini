@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/features/auth/services/auth_token_storage.dart';
+import 'package:frontend/features/auth/data/auth_api.dart';
 import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_config.dart';
 import 'package:frontend/shared/network/api_exception.dart';
@@ -27,6 +28,7 @@ class AuctionDetailPage extends StatefulWidget {
 
 class _AuctionDetailPageState extends State<AuctionDetailPage> {
   final _auctionApi = AuctionApi(ApiClient(), AuthTokenStorage());
+  final _authApi = AuthApi(ApiClient(), AuthTokenStorage());
 
   AuctionDetail? _auction;
   bool _isLoading = true;
@@ -38,6 +40,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   Timer? _timer;
   bool _isFavorite = false;
   bool _isBidding = false;
+  int? _currentUserId;
 
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSubscription;
@@ -47,6 +50,16 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   void initState() {
     super.initState();
     _loadAuction();
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final user = await _authApi.getSession();
+      if (mounted) setState(() => _currentUserId = user.id);
+    } catch (_) {
+      // 비로그인 상태에서는 판매자 전용 메뉴 숨김
+    }
   }
 
   @override
@@ -245,16 +258,64 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 
   void _showMoreMenu() {
+    final canCancel =
+        _currentUserId == _auction?.sellerId &&
+        (_auction?.status == AuctionStatus.waiting ||
+            _auction?.status == AuctionStatus.active);
     showModalBottomSheet<void>(
       context: context,
       builder: (context) => SafeArea(
-        child: ListTile(
-          leading: const Icon(Icons.flag_outlined),
-          title: const Text('게시글 신고하기'),
-          onTap: () => Navigator.pop(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (canCancel)
+              ListTile(
+                leading: const Icon(Icons.cancel_outlined),
+                title: const Text('경매 취소하기'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmCancelAuction();
+                },
+              ),
+            if (!canCancel)
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('게시글 신고하기'),
+                onTap: () => Navigator.pop(context),
+              ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCancelAuction() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('경매를 취소할까요?'),
+        content: const Text('입찰이 있는 경매는 취소할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('아니요'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('취소하기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _auctionApi.cancelAuction(widget.auctionId);
+      await _loadAuction();
+      if (mounted) showAppSnackBar(context, '경매가 취소됐어요.');
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    }
   }
 
   void _showBidSheet() {

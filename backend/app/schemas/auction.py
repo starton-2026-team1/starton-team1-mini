@@ -106,6 +106,7 @@ class AuctionDetailResponse(BaseModel):
     description: str
     category_name: str
     seller_name: str
+    seller_id: int = Field(gt=0)
     status: AuctionStatus
     image_urls: list[str]
     start_price: int
@@ -114,3 +115,8 @@ class AuctionDetailResponse(BaseModel):
     starts_at: KstDateTime
     ends_at: KstDateTime
     bids: list[AuctionBidHistoryResponse]
+
+
+class AuctionStatusResponse(BaseModel):
+    id: int = Field(gt=0)
+    status: AuctionStatus

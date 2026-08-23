@@ -21,6 +21,7 @@ class AuctionDetail {
     required this.category,
     required this.location,
     required this.sellerName,
+    this.sellerId = 0,
     required this.mannerTemperature,
     required this.startPrice,
     required this.currentPrice,
@@ -38,6 +39,7 @@ class AuctionDetail {
   final String category;
   final String location;
   final String sellerName;
+  final int sellerId;
   final double mannerTemperature;
   final int startPrice;
   final int currentPrice;
@@ -61,6 +63,7 @@ class AuctionDetail {
       category: category,
       location: location,
       sellerName: sellerName,
+      sellerId: sellerId,
       mannerTemperature: mannerTemperature,
       startPrice: startPrice,
       currentPrice: currentPrice ?? this.currentPrice,
@@ -89,6 +92,7 @@ class AuctionDetail {
       category: json['category_name'] as String,
       location: '',
       sellerName: json['seller_name'] as String,
+      sellerId: json['seller_id'] as int,
       mannerTemperature: 36.5,
       startPrice: json['start_price'] as int,
       currentPrice: json['current_price'] as int,

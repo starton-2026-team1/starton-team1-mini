@@ -10,7 +10,11 @@ from app.core.exceptions import (
     BidAmountError,
 )
 from app.models.enums import AuctionStatus
-from app.schemas.auction import AuctionDetailResponse, AuctionPreviewListResponse
+from app.schemas.auction import (
+    AuctionDetailResponse,
+    AuctionPreviewListResponse,
+    AuctionStatusResponse,
+)
 from app.schemas.bid import AuctionBroadcastMessage, BidCreate
 from app.services.auction_service import AuctionService
 
@@ -85,5 +89,26 @@ async def create_bid(
         AuctionPermissionError,
         AuctionStateError,
         BidAmountError,
+    ) as error:
+        raise bid_error(error) from error
+
+
+# 판매자 경매 취소 (입찰이 없는 시작 전/진행 중 경매만 허용)
+@router.patch("/{auction_id}/cancel", response_model=AuctionStatusResponse)
+async def cancel_auction(
+    auction_id: int,
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+) -> AuctionStatusResponse:
+    try:
+        return await auction_service.cancel_auction(
+            session,
+            auction_id=auction_id,
+            seller_id=current_user.id,
+        )
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
     ) as error:
         raise bid_error(error) from error
