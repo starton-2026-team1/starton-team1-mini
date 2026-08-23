@@ -37,12 +37,38 @@ class AuctionApi implements AuctionGateway {
 
   @override
   Future<int> createAuction(AuctionCreateForm form) async {
-    final accessToken = await _requireAccessToken();
-    final files = await Future.wait(
-      form.imagePaths.map(
-        (path) => http.MultipartFile.fromPath('images', path),
-      ),
-    );
+    final String accessToken;
+    try {
+      accessToken = await _requireAccessToken();
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw const ApiException(
+        statusCode: 0,
+        code: 'TOKEN_READ_FAILED',
+        message: '로그인 정보를 읽지 못했어요. 다시 로그인해 주세요.',
+      );
+    }
+
+    // 모든 플랫폼에서 XFile의 바이트를 읽어 동일한 multipart 요청으로 전송한다.
+    final List<http.MultipartFile> files;
+    try {
+      files = await Future.wait(
+        form.imageFiles.map(
+          (image) async => http.MultipartFile.fromBytes(
+            'images',
+            await image.readAsBytes(),
+            filename: image.name,
+          ),
+        ),
+      );
+    } catch (_) {
+      throw const ApiException(
+        statusCode: 0,
+        code: 'IMAGE_READ_FAILED',
+        message: '선택한 사진을 읽지 못했어요. 사진을 다시 선택해 주세요.',
+      );
+    }
 
     final json = await _client.postMultipart(
       '/products/auctions',

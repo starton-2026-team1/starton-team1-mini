@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/product_sell_form.dart';
 
@@ -20,7 +21,7 @@ class ProductSellController extends ChangeNotifier {
   final placeController = TextEditingController();
   final Map<ProductSellField, String> errors = {};
 
-  List<String> imagePaths = [];
+  List<XFile> imageFiles = [];
   bool isDirty = false;
   List<TextEditingController> get _textControllers => [
     titleController,
@@ -29,8 +30,8 @@ class ProductSellController extends ChangeNotifier {
     placeController,
   ];
 
-  void setImages(List<String> paths) {
-    imagePaths = paths;
+  void setImages(List<XFile> files) {
+    imageFiles = List.unmodifiable(files);
     clearError(ProductSellField.images);
     isDirty = true;
     notifyListeners();
@@ -53,7 +54,7 @@ class ProductSellController extends ChangeNotifier {
   ProductSellForm? buildForm() {
     errors.clear();
 
-    if (imagePaths.isEmpty) {
+    if (imageFiles.isEmpty) {
       errors[ProductSellField.images] = '사진을 1장 이상 추가해 주세요.';
     }
     if (titleController.text.trim().isEmpty) {
@@ -76,7 +77,7 @@ class ProductSellController extends ChangeNotifier {
     }
 
     return ProductSellForm(
-      imagePaths: List.unmodifiable(imagePaths),
+      imageFiles: imageFiles,
       title: titleController.text.trim(),
       description: descriptionController.text.trim(),
       price: price!,

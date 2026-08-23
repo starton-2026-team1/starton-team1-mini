@@ -1,13 +1,13 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../shared/theme/app_colors.dart';
 import '../pages/auction_image_gallery_page.dart';
 
 class AuctionImagePicker extends StatefulWidget {
   const AuctionImagePicker({
-    required this.imagePaths,
+    required this.imageFiles,
     required this.onChanged,
     required this.onMessage,
     this.errorText,
@@ -15,8 +15,8 @@ class AuctionImagePicker extends StatefulWidget {
     super.key,
   });
 
-  final List<String> imagePaths;
-  final ValueChanged<List<String>> onChanged;
+  final List<XFile> imageFiles;
+  final ValueChanged<List<XFile>> onChanged;
   final ValueChanged<String> onMessage;
   final String? errorText;
   final int maxCount;
@@ -26,26 +26,31 @@ class AuctionImagePicker extends StatefulWidget {
 }
 
 class _AuctionImagePickerState extends State<AuctionImagePicker> {
+  final _imagePicker = ImagePicker();
+
   Future<void> _openGallery() async {
-    if (widget.imagePaths.length >= widget.maxCount) {
+    if (widget.imageFiles.length >= widget.maxCount) {
       widget.onMessage('사진은 최대 ${widget.maxCount}장까지 등록할 수 있어요.');
       return;
     }
-    final selected = await Navigator.push<List<String>>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AuctionImageGalleryPage(
-          remainingCount: widget.maxCount - widget.imagePaths.length,
-        ),
-      ),
-    );
+    final remainingCount = widget.maxCount - widget.imageFiles.length;
+    // 웹은 사진 보관함 권한이 없으므로 브라우저 파일 선택창을 사용한다.
+    final selected = kIsWeb
+        ? await _imagePicker.pickMultiImage(limit: remainingCount)
+        : await Navigator.push<List<XFile>>(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  AuctionImageGalleryPage(remainingCount: remainingCount),
+            ),
+          );
     if (!mounted || selected == null || selected.isEmpty) return;
-    widget.onChanged([...widget.imagePaths, ...selected]);
+    widget.onChanged([...widget.imageFiles, ...selected]);
   }
 
   void _removeImage(int index) {
-    final paths = [...widget.imagePaths]..removeAt(index);
-    widget.onChanged(paths);
+    final files = [...widget.imageFiles]..removeAt(index);
+    widget.onChanged(files);
   }
 
   @override
@@ -57,7 +62,7 @@ class _AuctionImagePickerState extends State<AuctionImagePicker> {
           height: 88,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: widget.imagePaths.length + 1,
+            itemCount: widget.imageFiles.length + 1,
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               if (index == 0) return _buildAddButton();
@@ -100,7 +105,7 @@ class _AuctionImagePickerState extends State<AuctionImagePicker> {
             ),
             const SizedBox(height: 3),
             Text(
-              '${widget.imagePaths.length}/${widget.maxCount}',
+              '${widget.imageFiles.length}/${widget.maxCount}',
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -121,16 +126,26 @@ class _AuctionImagePickerState extends State<AuctionImagePicker> {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.file(
-                File(widget.imagePaths[index]),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const ColoredBox(
-                  color: AppColors.surfaceMuted,
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+              child: FutureBuilder<Uint8List>(
+                future: widget.imageFiles[index].readAsBytes(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Image.memory(snapshot.data!, fit: BoxFit.cover);
+                  }
+                  if (snapshot.hasError) {
+                    return const ColoredBox(
+                      color: AppColors.surfaceMuted,
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: AppColors.textSecondary,
+                      ),
+                    );
+                  }
+                  return const ColoredBox(
+                    color: AppColors.surfaceMuted,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                },
               ),
             ),
           ),

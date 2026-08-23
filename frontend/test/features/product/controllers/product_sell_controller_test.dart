@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/product/controllers/product_sell_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   test('입력값이 변경될 때만 임시저장 상태가 활성화된다', () {
@@ -30,7 +31,7 @@ void main() {
   test('유효한 판매 입력값을 등록 모델로 변환한다', () {
     final controller = ProductSellController();
     addTearDown(controller.dispose);
-    controller.setImages(['/tmp/product.jpg']);
+    controller.setImages([XFile('/tmp/product.jpg')]);
     controller.titleController.text = '의자 팔아요';
     controller.descriptionController.text = '상태 좋은 의자입니다.';
     controller.priceController.text = '30000';

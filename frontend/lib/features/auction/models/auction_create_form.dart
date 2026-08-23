@@ -1,3 +1,5 @@
+import 'package:image_picker/image_picker.dart';
+
 class AuctionCreateForm {
   const AuctionCreateForm({
     required this.categoryId,
@@ -8,7 +10,7 @@ class AuctionCreateForm {
     required this.startsAt,
     required this.endsAt,
     required this.extensionCount,
-    required this.imagePaths,
+    required this.imageFiles,
   });
 
   final int categoryId;
@@ -19,5 +21,5 @@ class AuctionCreateForm {
   final DateTime startsAt;
   final DateTime endsAt;
   final int extensionCount;
-  final List<String> imagePaths;
+  final List<XFile> imageFiles;
 }

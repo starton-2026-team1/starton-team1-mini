@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../models/auction_create_form.dart';
 
@@ -33,7 +34,7 @@ class AuctionCreateController extends ChangeNotifier {
   int categoryId = 1;
   bool isDirty = false;
   final Map<AuctionCreateField, String> errors = {};
-  List<String> imagePaths = const [];
+  List<XFile> imageFiles = const [];
 
   List<TextEditingController> get _textControllers => [
     titleController,
@@ -68,8 +69,8 @@ class AuctionCreateController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setImagePaths(List<String> value) {
-    imagePaths = List.unmodifiable(value);
+  void setImageFiles(List<XFile> value) {
+    imageFiles = List.unmodifiable(value);
     errors.remove(AuctionCreateField.images);
     isDirty = true;
     notifyListeners();
@@ -117,7 +118,7 @@ class AuctionCreateController extends ChangeNotifier {
     } else if (startsAt != null && !endsAt!.isAfter(startsAt!)) {
       errors[AuctionCreateField.endsAt] = '종료 시간은 시작 시간보다 늦어야 해요.';
     }
-    if (imagePaths.isEmpty) {
+    if (imageFiles.isEmpty) {
       errors[AuctionCreateField.images] = '상품 사진을 한 장 이상 등록해 주세요.';
     }
     notifyListeners();
@@ -134,7 +135,7 @@ class AuctionCreateController extends ChangeNotifier {
       startsAt: startsAt!,
       endsAt: endsAt!,
       extensionCount: extensionCount,
-      imagePaths: imagePaths,
+      imageFiles: imageFiles,
     );
   }
 

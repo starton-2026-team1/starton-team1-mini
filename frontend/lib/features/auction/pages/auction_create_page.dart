@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:frontend/features/auth/services/auth_token_storage.dart';
 import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_exception.dart';
@@ -30,7 +32,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
   final _controller = AuctionCreateController();
   final _draftStorage = AuctionDraftStorage();
   final _auctionApi = AuctionApi(ApiClient(), AuthTokenStorage());
-  List<String> _imagePaths = [];
+  List<XFile> _imageFiles = [];
   bool _canPop = false;
   bool _isSubmitting = false;
 
@@ -94,10 +96,10 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
                     children: [
                       AuctionImagePicker(
-                        imagePaths: _imagePaths,
+                        imageFiles: _imageFiles,
                         errorText:
                             _controller.errors[AuctionCreateField.images],
-                        onChanged: _setImagePaths,
+                        onChanged: _setImageFiles,
                         onMessage: _showMessage,
                       ),
                       const SizedBox(height: 30),
@@ -136,9 +138,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
                   ),
                 ),
               ),
-              _SubmitButton(
-                onPressed: _isSubmitting ? null : _submit,
-              ),
+              _SubmitButton(onPressed: _isSubmitting ? null : _submit),
             ],
           ),
         ),
@@ -359,7 +359,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
       startsAt: _controller.startsAt,
       endsAt: _controller.endsAt,
       extensionCount: _controller.extensionCount,
-      imagePaths: _imagePaths,
+      imagePaths: _imageFiles.map((image) => image.path).toList(),
     );
   }
 
@@ -381,14 +381,17 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     if (draft.startsAt != null) _controller.setStartsAt(draft.startsAt!);
     if (draft.endsAt != null) _controller.setEndsAt(draft.endsAt!);
     _controller.setExtensionCount(draft.extensionCount);
-    _imagePaths = draft.imagePaths.take(10).toList();
-    _controller.setImagePaths(_imagePaths);
+    // 웹의 파일 접근 권한은 현재 탭에서만 유효하므로 저장된 blob 경로를 복원하지 않는다.
+    _imageFiles = kIsWeb
+        ? []
+        : draft.imagePaths.take(10).map(XFile.new).toList();
+    _controller.setImageFiles(_imageFiles);
     _controller.markSaved();
   }
 
-  void _setImagePaths(List<String> paths) {
-    setState(() => _imagePaths = paths);
-    _controller.setImagePaths(paths);
+  void _setImageFiles(List<XFile> files) {
+    setState(() => _imageFiles = files);
+    _controller.setImageFiles(files);
   }
 
   void _showMessage(String message) {
