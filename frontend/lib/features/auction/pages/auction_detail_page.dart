@@ -151,7 +151,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
               child: ListView(
                 children: [
                   _ProductImage(
-                    imageCount: auction.imageCount,
+                    imageUrls: auction.imageUrls,
                     onBack: () => Navigator.maybePop(context),
                     onShare: () => showAppSnackBar(context, '공유 기능을 준비 중이에요.'),
                     onMore: _showMoreMenu,
@@ -233,7 +233,10 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                   children: [
                     const Text(
                       '입찰하기',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text('${_formatPrice(minPrice)}부터 입찰할 수 있어요.'),
@@ -314,17 +317,24 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 }
 
-class _ProductImage extends StatelessWidget {
+class _ProductImage extends StatefulWidget {
   const _ProductImage({
-    required this.imageCount,
+    required this.imageUrls,
     required this.onBack,
     required this.onShare,
     required this.onMore,
   });
-  final int imageCount;
+  final List<String> imageUrls;
   final VoidCallback onBack;
   final VoidCallback onShare;
   final VoidCallback onMore;
+
+  @override
+  State<_ProductImage> createState() => _ProductImageState();
+}
+
+class _ProductImageState extends State<_ProductImage> {
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -335,17 +345,18 @@ class _ProductImage extends StatelessWidget {
           height: 330,
           width: double.infinity,
           color: const Color(0xFFE8E8E8),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.image_outlined, size: 50, color: Color(0xFF8C8C8C)),
-              SizedBox(height: 8),
-              Text(
-                '상품 사진',
-                style: TextStyle(color: Color(0xFF666666), fontSize: 13),
-              ),
-            ],
-          ),
+          child: widget.imageUrls.isEmpty
+              ? const _ImageFallback()
+              : PageView.builder(
+                  itemCount: widget.imageUrls.length,
+                  onPageChanged: (index) =>
+                      setState(() => _currentIndex = index),
+                  itemBuilder: (context, index) => Image.network(
+                    widget.imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const _ImageFallback(),
+                  ),
+                ),
         ),
         Positioned(
           bottom: 10,
@@ -356,7 +367,7 @@ class _ProductImage extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
-              '1 / $imageCount',
+              '${_currentIndex + 1} / ${widget.imageUrls.isEmpty ? 1 : widget.imageUrls.length}',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
@@ -369,7 +380,7 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           left: 8,
           child: IconButton(
-            onPressed: onBack,
+            onPressed: widget.onBack,
             icon: const Icon(Icons.arrow_back_ios_new, size: 22),
           ),
         ),
@@ -377,7 +388,7 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           right: 48,
           child: IconButton(
-            onPressed: onShare,
+            onPressed: widget.onShare,
             icon: const Icon(Icons.share_outlined, size: 23),
           ),
         ),
@@ -385,11 +396,33 @@ class _ProductImage extends StatelessWidget {
           top: 8,
           right: 8,
           child: IconButton(
-            onPressed: onMore,
+            onPressed: widget.onMore,
             icon: const Icon(Icons.more_vert, size: 24),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Color(0xFFE8E8E8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image_outlined, size: 50, color: Color(0xFF8C8C8C)),
+          SizedBox(height: 8),
+          Text(
+            '상품 사진',
+            style: TextStyle(color: Color(0xFF666666), fontSize: 13),
+          ),
+        ],
+      ),
     );
   }
 }

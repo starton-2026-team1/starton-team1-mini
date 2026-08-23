@@ -1,3 +1,5 @@
+import 'package:frontend/shared/network/api_config.dart';
+
 import 'auction_status.dart';
 
 class AuctionBidPreview {
@@ -28,7 +30,7 @@ class AuctionDetail {
     required this.favoriteCount,
     required this.bids,
     this.status = AuctionStatus.active,
-    this.imageCount = 1,
+    this.imageUrls = const [],
   });
 
   final int id;
@@ -45,15 +47,14 @@ class AuctionDetail {
   final int favoriteCount;
   final List<AuctionBidPreview> bids;
   final AuctionStatus status;
-  final int imageCount;
+  final List<String> imageUrls;
+
+  int get imageCount => imageUrls.isEmpty ? 1 : imageUrls.length;
 
   int get nextBidPrice =>
       bids.isEmpty ? startPrice : currentPrice + minimumBidUnit;
 
-  AuctionDetail copyWith({
-    List<AuctionBidPreview>? bids,
-    int? currentPrice,
-  }) {
+  AuctionDetail copyWith({List<AuctionBidPreview>? bids, int? currentPrice}) {
     return AuctionDetail(
       id: id,
       title: title,
@@ -69,7 +70,7 @@ class AuctionDetail {
       favoriteCount: favoriteCount,
       bids: bids ?? this.bids,
       status: status,
-      imageCount: imageCount,
+      imageUrls: imageUrls,
     );
   }
 
@@ -107,7 +108,9 @@ class AuctionDetail {
           )
           .toList(),
       status: status,
-      imageCount: images.isEmpty ? 1 : images.length,
+      imageUrls: images
+          .map((image) => _absoluteImageUrl(image as String))
+          .toList(),
     );
   }
 }
@@ -135,7 +138,12 @@ const mockAuctionDetail = AuctionDetail(
       '필름 한 롤 테스트 촬영까지 완료했습니다. 노출계와 셔터 모두 정상 작동하며 '
       '생활 사용감 외에 큰 흠집은 없습니다. 본체, 스트랩, 바디캡, 정품 박스를 함께 드립니다.',
   favoriteCount: 18,
-  imageCount: 4,
+  imageUrls: [
+    'https://example.com/auction-1.jpg',
+    'https://example.com/auction-2.jpg',
+    'https://example.com/auction-3.jpg',
+    'https://example.com/auction-4.jpg',
+  ],
   bids: [
     AuctionBidPreview(bidderName: 'kim***', amount: 1280000, timeLabel: '방금 전'),
     AuctionBidPreview(bidderName: 'par***', amount: 1260000, timeLabel: '3분 전'),
@@ -147,3 +155,9 @@ const mockAuctionDetail = AuctionDetail(
     ),
   ],
 );
+
+String _absoluteImageUrl(String path) {
+  final uri = Uri.tryParse(path);
+  if (uri != null && uri.hasScheme) return path;
+  return '${ApiConfig.mediaBaseUrl}$path';
+}

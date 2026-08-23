@@ -69,4 +69,26 @@ void main() {
       expect(status.canBid, isFalse, reason: status.apiValue);
     }
   });
+
+  test('상세 API 이미지 상대 경로를 서버 주소와 결합한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '테스트 상품',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'status': 'ACTIVE',
+      'start_price': 10000,
+      'current_price': 10000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2026-08-23T10:00:00+09:00',
+      'ends_at': '2099-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': ['/static/uploads/auction.jpg'],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.imageUrls, hasLength(1));
+    expect(auction.imageUrls.single, endsWith('/static/uploads/auction.jpg'));
+    expect(auction.imageCount, 1);
+  });
 }
