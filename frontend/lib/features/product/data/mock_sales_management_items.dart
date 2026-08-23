@@ -4,6 +4,7 @@ import '../models/sales_management_item.dart';
 const mockSalesManagementItems = [
   SalesManagementItem(
     id: 3,
+    auctionId: 3,
     filter: SalesManagementFilter.auction,
     auction: true,
     title: '아이패드 프로 11인치',
@@ -15,6 +16,7 @@ const mockSalesManagementItems = [
   ),
   SalesManagementItem(
     id: 4,
+    auctionId: 4,
     filter: SalesManagementFilter.completed,
     auction: true,
     title: '맥북 에어 M2',

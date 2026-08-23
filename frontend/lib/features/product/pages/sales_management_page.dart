@@ -4,15 +4,27 @@ import 'package:frontend/shared/widgets/app_filter_chip_bar.dart';
 
 import '../../auth/services/auth_token_storage.dart';
 import '../../../shared/network/api_client.dart';
+import '../../auction/pages/auction_detail_page.dart';
 import '../controllers/sales_management_controller.dart';
 import '../data/sales_management_api.dart';
+import '../models/product_category.dart';
+import '../models/product_preview.dart';
 import '../models/sales_management_filter.dart';
+import '../models/sales_management_item.dart';
 import '../widgets/sales_management_item_card.dart';
+import 'product_detail_page.dart';
 
 class SalesManagementPage extends StatefulWidget {
-  const SalesManagementPage({this.gateway, super.key});
+  const SalesManagementPage({
+    this.gateway,
+    this.auctionDetailBuilder,
+    this.productDetailBuilder,
+    super.key,
+  });
 
   final SalesManagementGateway? gateway;
+  final Widget Function(int auctionId)? auctionDetailBuilder;
+  final Widget Function(SalesManagementItem item)? productDetailBuilder;
 
   @override
   State<SalesManagementPage> createState() => _SalesManagementPageState();
@@ -107,9 +119,52 @@ class _SalesManagementPageState extends State<SalesManagementPage> {
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
-          return SalesManagementItemCard(item: items[index]);
+          final item = items[index];
+          return SalesManagementItemCard(
+            item: item,
+            onTap: () => _openDetail(item),
+          );
         },
       ),
+    );
+  }
+
+  Future<void> _openDetail(SalesManagementItem item) async {
+    Widget page;
+    if (item.isAuction) {
+      final auctionId = item.auctionId;
+      if (auctionId == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('경매 정보를 확인할 수 없어요.')));
+        return;
+      }
+      page =
+          widget.auctionDetailBuilder?.call(auctionId) ??
+          AuctionDetailPage(auctionId: auctionId);
+    } else {
+      page =
+          widget.productDetailBuilder?.call(item) ??
+          ProductDetailPage(product: _toProductPreview(item));
+    }
+    await Navigator.of(context)
+        .push<void>(MaterialPageRoute(builder: (_) => page));
+    if (mounted) await _controller.load();
+  }
+
+  ProductPreview _toProductPreview(SalesManagementItem item) {
+    return ProductPreview(
+      category: ProductCategory.used,
+      title: item.title,
+      location: item.location,
+      time: item.timeLabel,
+      price: '${_formatPrice(item.price)}원',
+    );
+  }
+
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => ',',
     );
   }
 }

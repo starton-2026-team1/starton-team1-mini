@@ -13,17 +13,27 @@ class FakeSalesManagementGateway implements SalesManagementGateway {
 
   final List<SalesManagementItem> items;
   final Object? error;
+  int callCount = 0;
 
   @override
   Future<List<SalesManagementItem>> listMyProducts() async {
+    callCount++;
     if (error != null) throw error!;
     return items;
   }
 }
 
-Widget buildPage({SalesManagementGateway? gateway}) {
+Widget buildPage({
+  SalesManagementGateway? gateway,
+  Widget Function(int)? auctionDetailBuilder,
+  Widget Function(SalesManagementItem)? productDetailBuilder,
+}) {
   return MaterialApp(
-    home: SalesManagementPage(gateway: gateway ?? FakeSalesManagementGateway()),
+    home: SalesManagementPage(
+      gateway: gateway ?? FakeSalesManagementGateway(),
+      auctionDetailBuilder: auctionDetailBuilder,
+      productDetailBuilder: productDetailBuilder,
+    ),
   );
 }
 
@@ -93,5 +103,52 @@ void main() {
 
     expect(find.text('판매 상품을 불러오지 못했어요.'), findsOneWidget);
     expect(find.text('다시 시도'), findsOneWidget);
+  });
+
+  testWidgets('경매 카드는 auctionId로 경매 상세를 연다', (tester) async {
+    int? selectedAuctionId;
+    await tester.pumpWidget(
+      buildPage(
+        auctionDetailBuilder: (auctionId) {
+          selectedAuctionId = auctionId;
+          return const Scaffold(body: Text('경매 상세 테스트'));
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('아이패드 프로 11인치'));
+    await tester.pumpAndSettle();
+
+    expect(selectedAuctionId, 3);
+    expect(find.text('경매 상세 테스트'), findsOneWidget);
+  });
+
+  testWidgets('일반 판매 카드는 상품 상세를 열고 복귀 시 다시 조회한다', (tester) async {
+    final gateway = FakeSalesManagementGateway();
+    int? selectedProductId;
+    await tester.pumpWidget(
+      buildPage(
+        gateway: gateway,
+        productDetailBuilder: (item) {
+          selectedProductId = item.id;
+          return const Scaffold(body: Text('상품 상세 테스트'));
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('판매중 1'));
+    await tester.pump();
+
+    await tester.tap(find.text('아디다스 집업'));
+    await tester.pumpAndSettle();
+
+    expect(selectedProductId, 1);
+    expect(find.text('상품 상세 테스트'), findsOneWidget);
+
+    Navigator.of(tester.element(find.text('상품 상세 테스트'))).pop();
+    await tester.pumpAndSettle();
+
+    expect(gateway.callCount, 2);
   });
 }
