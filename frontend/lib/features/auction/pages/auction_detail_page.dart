@@ -262,6 +262,9 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         _currentUserId == _auction?.sellerId &&
         (_auction?.status == AuctionStatus.waiting ||
             _auction?.status == AuctionStatus.active);
+    final canCompleteTrade =
+        _currentUserId == _auction?.sellerId &&
+        _auction?.status == AuctionStatus.completed;
     showModalBottomSheet<void>(
       context: context,
       builder: (context) => SafeArea(
@@ -277,7 +280,16 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                   _confirmCancelAuction();
                 },
               ),
-            if (!canCancel)
+            if (canCompleteTrade)
+              ListTile(
+                leading: const Icon(Icons.handshake_outlined),
+                title: const Text('거래 완료 처리'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _confirmCompleteTrade();
+                },
+              ),
+            if (!canCancel && !canCompleteTrade)
               ListTile(
                 leading: const Icon(Icons.flag_outlined),
                 title: const Text('게시글 신고하기'),
@@ -287,6 +299,35 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmCompleteTrade() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('거래를 완료할까요?'),
+        content: const Text('낙찰자와 거래를 마친 뒤 완료해 주세요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('아니요'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('완료하기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _auctionApi.completeTrade(widget.auctionId);
+      await _loadAuction();
+      if (mounted) showAppSnackBar(context, '거래가 완료됐어요.');
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    }
   }
 
   Future<void> _confirmCancelAuction() async {
@@ -783,6 +824,19 @@ class _AuctionStatusSection extends StatelessWidget {
             _statusDescription(auction.status),
             style: const TextStyle(color: Color(0xFF808080), fontSize: 11),
           ),
+          if (auction.winnerName != null &&
+              (auction.status == AuctionStatus.completed ||
+                  auction.status == AuctionStatus.tradeCompleted)) ...[
+            const SizedBox(height: 8),
+            Text(
+              '낙찰자 ${auction.winnerName}',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ],
       ),
     );

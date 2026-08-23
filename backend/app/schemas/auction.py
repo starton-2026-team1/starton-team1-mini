@@ -107,6 +107,7 @@ class AuctionDetailResponse(BaseModel):
     category_name: str
     seller_name: str
     seller_id: int = Field(gt=0)
+    winner_name: str | None
     status: AuctionStatus
     image_urls: list[str]
     start_price: int

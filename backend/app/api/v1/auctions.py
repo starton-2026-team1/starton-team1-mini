@@ -112,3 +112,24 @@ async def cancel_auction(
         AuctionStateError,
     ) as error:
         raise bid_error(error) from error
+
+
+# 낙찰 경매 거래 완료 처리 (판매자만 허용)
+@router.patch("/{auction_id}/trade-complete", response_model=AuctionStatusResponse)
+async def complete_auction_trade(
+    auction_id: int,
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+) -> AuctionStatusResponse:
+    try:
+        return await auction_service.complete_trade(
+            session,
+            auction_id=auction_id,
+            seller_id=current_user.id,
+        )
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
+    ) as error:
+        raise bid_error(error) from error

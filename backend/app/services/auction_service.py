@@ -121,6 +121,32 @@ class AuctionService:
         await session.flush()
         return AuctionStatusResponse(id=auction.id, status=auction.status)
 
+    async def complete_trade(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 거래를 완료할 수 있습니다.")
+
+        highest_amount = await self.bid_repository.get_highest_amount(session, auction_id)
+        current_status = _effective_status(
+            auction,
+            now_kst_naive(),
+            bid_count=0 if highest_amount is None else 1,
+        )
+        if current_status != AuctionStatus.COMPLETED:
+            raise AuctionStateError("낙찰 완료된 경매만 거래 완료 처리할 수 있습니다.")
+
+        # 낙찰 완료 상태 검증 후 거래 완료 상태 변경
+        auction.status = AuctionStatus.TRADE_COMPLETED
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
     # 경매 목록 응답 조립 (경매별 입찰수/최고가는 한 번에 집계해서 N+1 방지)
     async def list_auctions(
         self,
@@ -174,6 +200,7 @@ class AuctionService:
             category_name=product.category.name,
             seller_name=product.seller.name,
             seller_id=product.seller_id,
+            winner_name=_mask_name(recent_bids[0][1]) if recent_bids else None,
             status=_effective_status(auction, now, bid_count=len(recent_bids)),
             image_urls=[image.image_url for image in product.images],
             start_price=auction.start_price,

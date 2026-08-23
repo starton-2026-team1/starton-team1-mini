@@ -77,6 +77,7 @@ void main() {
       'category_name': '기타',
       'seller_name': '판매자',
       'seller_id': 7,
+      'winner_name': null,
       'status': 'ACTIVE',
       'start_price': 10000,
       'current_price': 10000,
@@ -100,6 +101,7 @@ void main() {
       'category_name': '기타',
       'seller_name': '판매자',
       'seller_id': 7,
+      'winner_name': null,
       'status': 'NO_BIDS',
       'start_price': 10000,
       'current_price': 10000,
@@ -114,5 +116,28 @@ void main() {
     expect(auction.status, AuctionStatus.noBids);
     expect(auction.status.canBid, isFalse);
     expect(auction.remainingTime, Duration.zero);
+  });
+
+  test('낙찰 완료 상세 응답에서 낙찰자 정보를 보관한다', () {
+    final auction = AuctionDetail.fromJson({
+      'id': 1,
+      'title': '낙찰 경매',
+      'category_name': '기타',
+      'seller_name': '판매자',
+      'seller_id': 7,
+      'winner_name': '입***',
+      'status': 'COMPLETED',
+      'start_price': 10000,
+      'current_price': 12000,
+      'minimum_bid_unit': 1000,
+      'starts_at': '2020-08-23T10:00:00+09:00',
+      'ends_at': '2020-08-24T10:00:00+09:00',
+      'description': '상품 설명',
+      'image_urls': <String>[],
+      'bids': <Map<String, dynamic>>[],
+    });
+
+    expect(auction.winnerName, '입***');
+    expect(auction.status, AuctionStatus.completed);
   });
 }

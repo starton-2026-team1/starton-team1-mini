@@ -72,6 +72,7 @@ def make_detail() -> AuctionDetailResponse:
         category_name=preview.category_name,
         seller_name="판매자",
         seller_id=9,
+        winner_name=None,
         status=preview.status,
         image_urls=[preview.thumbnail_url or ""],
         start_price=preview.start_price,
@@ -209,3 +210,19 @@ async def test_cancel_auction_returns_cancelled_status(
         auction_id=3,
         seller_id=7,
     )
+
+
+async def test_complete_trade_returns_trade_completed_status(
+    client: AsyncClient,
+    auction_service: AsyncMock,
+    auction_dependencies: object,
+) -> None:
+    auction_service.complete_trade.return_value = {
+        "id": 3,
+        "status": AuctionStatus.TRADE_COMPLETED,
+    }
+
+    response = await client.patch("/api/v1/auctions/3/trade-complete")
+
+    assert response.status_code == 200
+    assert response.json() == {"id": 3, "status": "TRADE_COMPLETED"}

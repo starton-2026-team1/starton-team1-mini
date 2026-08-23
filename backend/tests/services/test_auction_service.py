@@ -98,6 +98,29 @@ async def test_auction_with_bid_cannot_be_cancelled() -> None:
     session.flush.assert_not_awaited()
 
 
+async def test_seller_completes_trade_after_auction_end() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    now = datetime.now()
+    auction = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=7),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=2),
+        ends_at=now - timedelta(hours=1),
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_amount.return_value = 12000
+    session = AsyncMock()
+    service = AuctionService(auction_repository, bid_repository)
+
+    response = await service.complete_trade(session, auction_id=3, seller_id=7)
+
+    assert response.status == AuctionStatus.TRADE_COMPLETED
+    assert auction.status == AuctionStatus.TRADE_COMPLETED
+    session.flush.assert_awaited_once()
+
+
 @pytest.mark.parametrize(
     ("bid_count", "expected"),
     [

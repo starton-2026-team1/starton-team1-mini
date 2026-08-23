@@ -17,6 +17,8 @@ abstract interface class AuctionGateway {
   Future<AuctionDetail> getAuctionDetail(int auctionId);
 
   Future<void> cancelAuction(int auctionId);
+
+  Future<void> completeTrade(int auctionId);
 }
 
 class AuctionApi implements AuctionGateway {
@@ -111,6 +113,15 @@ class AuctionApi implements AuctionGateway {
     final accessToken = await _requireAccessToken();
     await _client.patch(
       '/auctions/$auctionId/cancel',
+      headers: {'Authorization': 'Bearer $accessToken'},
+    );
+  }
+
+  @override
+  Future<void> completeTrade(int auctionId) async {
+    final accessToken = await _requireAccessToken();
+    await _client.patch(
+      '/auctions/$auctionId/trade-complete',
       headers: {'Authorization': 'Bearer $accessToken'},
     );
   }
