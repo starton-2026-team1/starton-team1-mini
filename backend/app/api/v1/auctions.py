@@ -3,7 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUserDependency, DatabaseSession
-from app.core.exceptions import AuctionNotFoundError, AuctionStateError, BidAmountError
+from app.core.exceptions import (
+    AuctionNotFoundError,
+    AuctionPermissionError,
+    AuctionStateError,
+    BidAmountError,
+)
 from app.models.enums import AuctionStatus
 from app.schemas.auction import AuctionDetailResponse, AuctionPreviewListResponse
 from app.schemas.bid import AuctionBroadcastMessage, BidCreate
@@ -13,10 +18,12 @@ router = APIRouter()
 auction_service = AuctionService()
 
 
-# 경매 도메인 예외를 HTTP 에러로 변환 (경매 없음 -> 404, 그 외 상태/금액 문제 -> 409)
+# 경매 도메인 예외를 HTTP 에러로 변환 (경매 없음 404, 본인 입찰 403, 상태/금액 409)
 def bid_error(error: Exception) -> HTTPException:
     if isinstance(error, AuctionNotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error))
+    if isinstance(error, AuctionPermissionError):
+        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error))
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error))
 
 
@@ -73,5 +80,10 @@ async def create_bid(
             bidder_id=current_user.id,
             amount=data.amount,
         )
-    except (AuctionNotFoundError, AuctionStateError, BidAmountError) as error:
+    except (
+        AuctionNotFoundError,
+        AuctionPermissionError,
+        AuctionStateError,
+        BidAmountError,
+    ) as error:
         raise bid_error(error) from error

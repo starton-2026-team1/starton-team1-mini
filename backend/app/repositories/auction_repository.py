@@ -8,13 +8,18 @@ from app.models.product import Product
 
 
 class AuctionRepository:
-    # 입찰 검증용 (상품/카테고리 등은 필요 없어서 가볍게 조회)
+    # 입찰 검증에서 판매자 확인이 필요하므로 상품 관계까지 함께 조회
     async def get_by_id(
         self,
         session: AsyncSession,
         auction_id: int,
     ) -> Auction | None:
-        return await session.get(Auction, auction_id)
+        result = await session.execute(
+            select(Auction)
+            .where(Auction.id == auction_id)
+            .options(selectinload(Auction.product)),
+        )
+        return result.scalar_one_or_none()
 
     # 상세 화면용 - 상품/카테고리/판매자/이미지까지 한 번에 eager load
     async def get_detail(

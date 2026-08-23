@@ -23,6 +23,11 @@ class AuctionNotFoundError(AppError):
     pass
 
 
+# 판매자가 자신의 경매에 입찰하려고 할 때
+class AuctionPermissionError(AppError):
+    pass
+
+
 # 진행 중이 아닌 경매에 입찰하려고 할 때
 class AuctionStateError(AppError):
     pass

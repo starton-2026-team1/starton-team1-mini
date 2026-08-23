@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     AuctionNotFoundError,
+    AuctionPermissionError,
     AuctionStateError,
     BidAmountError,
 )
@@ -43,6 +44,10 @@ class AuctionService:
         auction = await self.auction_repository.get_by_id(session, auction_id)
         if auction is None:
             raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+
+        # 판매자가 가격을 인위적으로 올리지 못하도록 자신의 경매 입찰을 차단한다.
+        if auction.product.seller_id == bidder_id:
+            raise AuctionPermissionError("판매자는 자신의 경매에 입찰할 수 없습니다.")
 
         # DB status 컬럼은 시작/종료 시각이 지나도 자동으로 안 바뀌므로
         # 저장된 값 대신 현재 시각 기준으로 계산한 상태를 써야 함
