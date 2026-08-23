@@ -12,7 +12,6 @@ const mockSalesManagementItems = [
     price: 420000,
     auctionRemainingTime: Duration(minutes: 12, seconds: 34),
     bidCount: 8,
-    favoriteCount: 14,
   ),
   SalesManagementItem(
     id: 4,
@@ -23,7 +22,6 @@ const mockSalesManagementItems = [
     timeLabel: '낙찰 완료',
     price: 980000,
     bidCount: 16,
-    favoriteCount: 21,
   ),
   SalesManagementItem(
     id: 1,
@@ -34,7 +32,6 @@ const mockSalesManagementItems = [
     price: 30000,
     viewCount: 100,
     chatCount: 3,
-    favoriteCount: 8,
   ),
   SalesManagementItem(
     id: 2,
@@ -45,6 +42,5 @@ const mockSalesManagementItems = [
     price: 250000,
     viewCount: 77,
     chatCount: 3,
-    favoriteCount: 1,
   ),
 ];

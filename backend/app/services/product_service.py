@@ -110,15 +110,10 @@ class ProductService:
             if product.auction is not None
         ]
         bid_stats = await self.bid_repository.get_stats(session, auction_ids)
-        favorite_counts = await self.repository.get_favorite_counts(
-            session,
-            [product.id for product in products],
-        )
         items = [
             self._to_sales_management_product(
                 product,
                 bid_stats.get(product.auction.id) if product.auction is not None else None,
-                favorite_counts.get(product.id, 0),
             )
             for product in products
         ]
@@ -180,7 +175,6 @@ class ProductService:
     def _to_sales_management_product(
         product: Product,
         bid_stat: tuple[int, int] | None,
-        favorite_count: int,
     ) -> SalesManagementProductResponse:
         thumbnail_url = product.images[0].image_url if product.images else None
         if product.auction is None:
@@ -198,7 +192,6 @@ class ProductService:
                 ),
                 thumbnail_url=thumbnail_url,
                 price=product.fixed_price.price,
-                favorite_count=favorite_count,
                 created_at=product.created_at,
             )
 
@@ -223,7 +216,6 @@ class ProductService:
             thumbnail_url=thumbnail_url,
             price=highest_amount or auction.start_price,
             bid_count=bid_count,
-            favorite_count=favorite_count,
             starts_at=auction.starts_at,
             ends_at=auction.ends_at,
             created_at=product.created_at,

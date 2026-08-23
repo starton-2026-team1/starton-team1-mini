@@ -160,7 +160,6 @@ async def test_sales_management_products_include_fixed_price_and_auction(
         [auction_product, fixed_price_product],
         2,
     )
-    repository.get_favorite_counts.return_value = {10: 2, 20: 5}
     bid_repository = AsyncMock(spec=BidRepository)
     bid_repository.get_stats.return_value = {7: (3, 140_000)}
     service = ProductService(repository, bid_repository=bid_repository)
@@ -176,12 +175,10 @@ async def test_sales_management_products_include_fixed_price_and_auction(
     assert items[0].management_status == "AUCTION"
     assert items[0].price == 140_000
     assert items[0].bid_count == 3
-    assert items[0].favorite_count == 5
     assert items[0].thumbnail_url == "/uploads/ipad.jpg"
     assert items[1].auction_id is None
     assert items[1].management_status == "SELLING"
     assert items[1].price == 30_000
-    assert items[1].favorite_count == 2
 
 
 @pytest.mark.parametrize(

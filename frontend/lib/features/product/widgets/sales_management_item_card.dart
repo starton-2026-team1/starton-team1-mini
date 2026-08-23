@@ -226,9 +226,6 @@ class _ItemMetrics extends StatelessWidget {
         const SizedBox(width: 7),
         const Icon(Icons.chat_bubble, size: 15, color: AppColors.textDisabled),
         Text(' ${item.chatCount}', style: style),
-        const SizedBox(width: 7),
-        const Icon(Icons.favorite, size: 15, color: AppColors.textDisabled),
-        Text(' ${item.favoriteCount}', style: style),
       ],
     );
   }
@@ -261,12 +258,6 @@ class _AuctionSummary extends StatelessWidget {
           ),
         ] else
           const Spacer(),
-        const Icon(Icons.favorite, size: 15, color: AppColors.textDisabled),
-        Text(
-          ' ${item.favoriteCount}',
-          style: const TextStyle(color: AppColors.textDisabled, fontSize: 13),
-        ),
-        const SizedBox(width: 7),
         const Icon(Icons.gavel, size: 15, color: AppColors.textDisabled),
         Text(
           ' ${item.bidCount}',

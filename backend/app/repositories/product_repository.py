@@ -4,7 +4,6 @@ from sqlalchemy.orm import selectinload
 
 from app.models.auction import Auction
 from app.models.enums import ProductStatus, SaleType
-from app.models.favorite import Favorite
 from app.models.fixed_price import FixedPrice
 from app.models.product import Product
 from app.models.product_image import ProductImage
@@ -134,20 +133,6 @@ class ProductRepository:
             select(func.count(Product.id)).where(*filters),
         )
         return list(products_result.scalars().all()), int(total_result.scalar_one())
-
-    async def get_favorite_counts(
-        self,
-        session: AsyncSession,
-        product_ids: list[int],
-    ) -> dict[int, int]:
-        if not product_ids:
-            return {}
-        result = await session.execute(
-            select(Favorite.product_id, func.count(Favorite.user_id))
-            .where(Favorite.product_id.in_(product_ids))
-            .group_by(Favorite.product_id),
-        )
-        return {product_id: count for product_id, count in result.all()}
 
     async def get_by_id(
         self,

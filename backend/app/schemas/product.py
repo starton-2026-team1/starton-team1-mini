@@ -101,7 +101,6 @@ class SalesManagementProductResponse(BaseModel):
     thumbnail_url: str | None = None
     price: int = Field(gt=0)
     bid_count: int = Field(default=0, ge=0)
-    favorite_count: int = Field(default=0, ge=0)
     starts_at: datetime | None = None
     ends_at: datetime | None = None
     created_at: datetime
