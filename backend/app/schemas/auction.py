@@ -19,7 +19,7 @@ class AuctionCreate(BaseModel):
     ends_at: datetime
     extension_count: int = Field(default=0, ge=0)
 
-    # 클라이언트가 보낸 UTC 또는 지역 오프셋 시간을 DB 저장 기준인 KST naive로 정규화한다.
+    # 클라이언트가 보낸 UTC 또는 지역 오프셋 시간을 DB 저장 기준인 KST naive로 정규화
     @field_validator("starts_at", "ends_at")
     @classmethod
     def normalize_auction_time(cls, value: datetime) -> datetime:

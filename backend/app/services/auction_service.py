@@ -46,7 +46,7 @@ class AuctionService:
         if auction is None:
             raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
 
-        # 판매자가 가격을 인위적으로 올리지 못하도록 자신의 경매 입찰을 차단한다.
+        # 판매자가 가격을 인위적으로 올리지 못하도록 자신의 경매 입찰 차단
         if auction.product.seller_id == bidder_id:
             raise AuctionPermissionError("판매자는 자신의 경매에 입찰할 수 없습니다.")
 
@@ -211,7 +211,7 @@ def _effective_status(
         return AuctionStatus.WAITING
     if now < auction.ends_at:
         return AuctionStatus.ACTIVE
-    # 종료 시점에는 입찰 존재 여부에 따라 낙찰 완료와 유찰을 구분한다.
+    # 종료 시점에는 입찰 존재 여부에 따라 낙찰 완료와 유찰 구분
     if bid_count == 0:
         return AuctionStatus.NO_BIDS
     return AuctionStatus.COMPLETED

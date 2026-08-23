@@ -78,7 +78,7 @@ class AuctionRepository:
         return auctions, total
 
 
-# DB 저장 상태와 현재 시각, 입찰 존재 여부를 함께 사용해 화면의 상태 필터와 맞춘다.
+# DB 저장 상태와 현재 시각, 입찰 존재 여부를 함께 사용해 화면의 상태 필터와 맞춤
 def _status_filter(status: AuctionStatus, now: datetime):
     has_bid = select(Bid.id).where(Bid.auction_id == Auction.id).exists()
     calculated_status = Auction.status.not_in(
