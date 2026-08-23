@@ -1,8 +1,11 @@
-from sqlalchemy import func, select
+from datetime import datetime
+
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.auction import Auction
+from app.models.bid import Bid
 from app.models.enums import AuctionStatus
 from app.models.product import Product
 
@@ -45,12 +48,13 @@ class AuctionRepository:
         session: AsyncSession,
         *,
         status: AuctionStatus | None = None,
+        now: datetime | None = None,
         offset: int = 0,
         limit: int = 20,
     ) -> tuple[list[Auction], int]:
         filters = []
         if status is not None:
-            filters.append(Auction.status == status)
+            filters.append(_status_filter(status, now or datetime.now()))
 
         result = await session.execute(
             select(Auction)
@@ -71,3 +75,31 @@ class AuctionRepository:
         total = total_result.scalar_one()
 
         return auctions, total
+
+
+# DB 저장 상태와 현재 시각, 입찰 존재 여부를 함께 사용해 화면의 상태 필터와 맞춘다.
+def _status_filter(status: AuctionStatus, now: datetime):
+    has_bid = select(Bid.id).where(Bid.auction_id == Auction.id).exists()
+    calculated_status = Auction.status.not_in(
+        (
+            AuctionStatus.CANCELLED,
+            AuctionStatus.NO_BIDS,
+            AuctionStatus.TRADE_COMPLETED,
+        ),
+    )
+    if status == AuctionStatus.WAITING:
+        return and_(calculated_status, Auction.starts_at > now)
+    if status == AuctionStatus.ACTIVE:
+        return and_(
+            calculated_status,
+            Auction.starts_at <= now,
+            Auction.ends_at > now,
+        )
+    if status == AuctionStatus.COMPLETED:
+        return and_(calculated_status, Auction.ends_at <= now, has_bid)
+    if status == AuctionStatus.NO_BIDS:
+        return or_(
+            Auction.status == AuctionStatus.NO_BIDS,
+            and_(calculated_status, Auction.ends_at <= now, ~has_bid),
+        )
+    return Auction.status == status

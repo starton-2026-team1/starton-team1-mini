@@ -8,7 +8,7 @@ from app.core.exceptions import AuctionPermissionError
 from app.models.enums import AuctionStatus
 from app.repositories.auction_repository import AuctionRepository
 from app.repositories.bid_repository import BidRepository
-from app.services.auction_service import AuctionService
+from app.services.auction_service import AuctionService, _effective_status
 from app.services.connection_manager import ConnectionManager
 
 
@@ -52,3 +52,43 @@ async def test_bid_lookup_locks_auction_row() -> None:
 
     statement = session.execute.await_args.args[0]
     assert "FOR UPDATE" in str(statement)
+
+
+@pytest.mark.parametrize(
+    ("bid_count", "expected"),
+    [
+        (0, AuctionStatus.NO_BIDS),
+        (1, AuctionStatus.COMPLETED),
+    ],
+)
+def test_finished_auction_status_depends_on_bid_count(
+    bid_count: int,
+    expected: AuctionStatus,
+) -> None:
+    now = datetime.now()
+    auction = SimpleNamespace(
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=2),
+        ends_at=now - timedelta(hours=1),
+    )
+
+    assert _effective_status(auction, now, bid_count=bid_count) == expected
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        AuctionStatus.CANCELLED,
+        AuctionStatus.NO_BIDS,
+        AuctionStatus.TRADE_COMPLETED,
+    ],
+)
+def test_terminal_status_is_not_overwritten(status: AuctionStatus) -> None:
+    now = datetime.now()
+    auction = SimpleNamespace(
+        status=status,
+        starts_at=now - timedelta(hours=2),
+        ends_at=now - timedelta(hours=1),
+    )
+
+    assert _effective_status(auction, now, bid_count=0) == status

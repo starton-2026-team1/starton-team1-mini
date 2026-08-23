@@ -105,9 +105,11 @@ class AuctionService:
         offset: int = 0,
         limit: int = 20,
     ) -> tuple[list[AuctionPreviewResponse], int]:
+        now = datetime.now()
         auctions, total = await self.auction_repository.list_auctions(
             session,
             status=status,
+            now=now,
             offset=offset,
             limit=limit,
         )
@@ -116,7 +118,7 @@ class AuctionService:
             [auction.id for auction in auctions],
         )
         items = [
-            self._to_preview(auction, stats.get(auction.id))
+            self._to_preview(auction, stats.get(auction.id), now)
             for auction in auctions
         ]
         return items, total
@@ -146,7 +148,7 @@ class AuctionService:
             description=product.description,
             category_name=product.category.name,
             seller_name=product.seller.name,
-            status=_effective_status(auction, now),
+            status=_effective_status(auction, now, bid_count=len(recent_bids)),
             image_urls=[image.image_url for image in product.images],
             start_price=auction.start_price,
             current_price=highest_amount or auction.start_price,
@@ -167,16 +169,16 @@ class AuctionService:
         self,
         auction: Auction,
         stat: tuple[int, int] | None,
+        now: datetime,
     ) -> AuctionPreviewResponse:
         bid_count, highest_amount = stat or (0, None)
         product = auction.product
         thumbnail_url = product.images[0].image_url if product.images else None
-        now = datetime.now()
         return AuctionPreviewResponse(
             id=auction.id,
             title=product.title,
             category_name=product.category.name,
-            status=_effective_status(auction, now),
+            status=_effective_status(auction, now, bid_count=bid_count),
             thumbnail_url=thumbnail_url,
             start_price=auction.start_price,
             current_price=highest_amount or auction.start_price,
@@ -197,13 +199,20 @@ _TERMINAL_STATUSES = {
 
 # 별도 스케줄러 없이, 조회 시점의 starts_at/ends_at과 현재 시각을 비교해 상태를 계산
 # (서버 KST 로컬시각 기준 naive datetime - UTC로 계산하면 9시간 어긋남)
-def _effective_status(auction: Auction, now: datetime) -> AuctionStatus:
+def _effective_status(
+    auction: Auction,
+    now: datetime,
+    bid_count: int | None = None,
+) -> AuctionStatus:
     if auction.status in _TERMINAL_STATUSES:
         return auction.status
     if now < auction.starts_at:
         return AuctionStatus.WAITING
     if now < auction.ends_at:
         return AuctionStatus.ACTIVE
+    # 종료 시점에는 입찰 존재 여부에 따라 낙찰 완료와 유찰을 구분한다.
+    if bid_count == 0:
+        return AuctionStatus.NO_BIDS
     return AuctionStatus.COMPLETED
 
 
