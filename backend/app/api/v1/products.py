@@ -28,6 +28,7 @@ from app.schemas.product import (
     ProductListResponse,
     ProductStatusUpdate,
     ProductUpdate,
+    SalesManagementProductListResponse,
 )
 from app.services.product_service import ProductService
 
@@ -142,23 +143,23 @@ async def list_products(
     )
 
 
-@router.get("/me", response_model=ProductListResponse)
+@router.get("/me", response_model=SalesManagementProductListResponse)
 async def list_my_products(
     session: DatabaseSession,
     current_user: CurrentUserDependency,
     product_status: ProductStatusQuery = None,
     offset: OffsetQuery = 0,
     limit: LimitQuery = 20,
-) -> ProductListResponse:
-    products, total = await product_service.list_products(
+) -> SalesManagementProductListResponse:
+    products, total = await product_service.list_sales_management_products(
         session,
         seller_id=current_user.id,
         status=product_status,
         offset=offset,
         limit=limit,
     )
-    return ProductListResponse(
-        items=[ProductDetailResponse.model_validate(product) for product in products],
+    return SalesManagementProductListResponse(
+        items=products,
         total=total,
         offset=offset,
         limit=limit,

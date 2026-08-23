@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from app.models.enums import ProductStatus, SaleType
+from app.models.enums import AuctionStatus, ProductStatus, SaleType
 
 ProductTitle = Annotated[
     str,
@@ -78,6 +78,29 @@ class ProductCreateResponse(ProductDetailResponse):
 
 class ProductListResponse(BaseModel):
     items: list[ProductDetailResponse]
+    total: int = Field(ge=0)
+    offset: int = Field(ge=0)
+    limit: int = Field(ge=1, le=100)
+
+
+class SalesManagementProductResponse(BaseModel):
+    id: int = Field(gt=0)
+    auction_id: int | None = Field(default=None, gt=0)
+    sale_type: SaleType
+    title: str
+    product_status: ProductStatus
+    auction_status: AuctionStatus | None = None
+    thumbnail_url: str | None = None
+    price: int = Field(gt=0)
+    bid_count: int = Field(default=0, ge=0)
+    favorite_count: int = Field(default=0, ge=0)
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    created_at: datetime
+
+
+class SalesManagementProductListResponse(BaseModel):
+    items: list[SalesManagementProductResponse]
     total: int = Field(ge=0)
     offset: int = Field(ge=0)
     limit: int = Field(ge=1, le=100)

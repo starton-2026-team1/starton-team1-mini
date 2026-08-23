@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,11 +8,12 @@ from app.core.exceptions import (
     ProductPermissionError,
     ProductStateError,
 )
-from app.models.enums import ProductStatus, SaleType
+from app.models.enums import AuctionStatus, ProductStatus, SaleType
 from app.models.product import Product
+from app.repositories.bid_repository import BidRepository
 from app.repositories.product_repository import ProductRepository
 from app.schemas.auction import AuctionCreate
-from app.schemas.product import ProductCreate, ProductUpdate
+from app.schemas.product import ProductCreate, ProductUpdate, SalesManagementProductResponse
 from app.services.image_storage import ImageStorage, image_storage
 
 
@@ -19,9 +22,11 @@ class ProductService:
         self,
         repository: ProductRepository | None = None,
         images: ImageStorage | None = None,
+        bid_repository: BidRepository | None = None,
     ) -> None:
         self.repository = repository or ProductRepository()
         self.images = images or image_storage
+        self.bid_repository = bid_repository or BidRepository()
 
     async def create_product(
         self,
@@ -78,6 +83,42 @@ class ProductService:
             limit=limit,
         )
 
+    async def list_sales_management_products(
+        self,
+        session: AsyncSession,
+        *,
+        seller_id: int,
+        status: ProductStatus | None = None,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[SalesManagementProductResponse], int]:
+        products, total = await self.repository.list_sales_management_products(
+            session,
+            seller_id=seller_id,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+        auction_ids = [
+            product.auction.id
+            for product in products
+            if product.auction is not None
+        ]
+        bid_stats = await self.bid_repository.get_stats(session, auction_ids)
+        favorite_counts = await self.repository.get_favorite_counts(
+            session,
+            [product.id for product in products],
+        )
+        items = [
+            self._to_sales_management_product(
+                product,
+                bid_stats.get(product.auction.id) if product.auction is not None else None,
+                favorite_counts.get(product.id, 0),
+            )
+            for product in products
+        ]
+        return items, total
+
     async def get_product(self, session: AsyncSession, product_id: int) -> Product:
         product = await self.repository.get_by_id(session, product_id)
         if product is None or product.sale_type != SaleType.FIXED_PRICE:
@@ -129,3 +170,65 @@ class ProductService:
     def _validate_editable(product: Product) -> None:
         if product.status == ProductStatus.SOLD:
             raise ProductStateError("거래 완료된 상품은 수정하거나 삭제할 수 없습니다.")
+
+    @staticmethod
+    def _to_sales_management_product(
+        product: Product,
+        bid_stat: tuple[int, int] | None,
+        favorite_count: int,
+    ) -> SalesManagementProductResponse:
+        thumbnail_url = product.images[0].image_url if product.images else None
+        if product.auction is None:
+            if product.fixed_price is None:
+                raise ProductStateError("상품의 판매 가격 정보가 없습니다.")
+            return SalesManagementProductResponse(
+                id=product.id,
+                sale_type=product.sale_type,
+                title=product.title,
+                product_status=product.status,
+                thumbnail_url=thumbnail_url,
+                price=product.fixed_price.price,
+                favorite_count=favorite_count,
+                created_at=product.created_at,
+            )
+
+        bid_count, highest_amount = bid_stat or (0, None)
+        auction = product.auction
+        return SalesManagementProductResponse(
+            id=product.id,
+            auction_id=auction.id,
+            sale_type=product.sale_type,
+            title=product.title,
+            product_status=product.status,
+            auction_status=ProductService._effective_auction_status(
+                auction.status,
+                auction.starts_at,
+                auction.ends_at,
+            ),
+            thumbnail_url=thumbnail_url,
+            price=highest_amount or auction.start_price,
+            bid_count=bid_count,
+            favorite_count=favorite_count,
+            starts_at=auction.starts_at,
+            ends_at=auction.ends_at,
+            created_at=product.created_at,
+        )
+
+    @staticmethod
+    def _effective_auction_status(
+        status: AuctionStatus,
+        starts_at: datetime,
+        ends_at: datetime,
+    ) -> AuctionStatus:
+        if status in {
+            AuctionStatus.CANCELLED,
+            AuctionStatus.NO_BIDS,
+            AuctionStatus.TRADE_COMPLETED,
+        }:
+            return status
+        now = datetime.now()
+        if now < starts_at:
+            return AuctionStatus.WAITING
+        if now < ends_at:
+            return AuctionStatus.ACTIVE
+        return AuctionStatus.COMPLETED
