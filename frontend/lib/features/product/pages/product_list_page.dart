@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
+import 'package:frontend/shared/network/api_client.dart';
+import 'package:frontend/shared/network/api_exception.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
@@ -8,7 +10,6 @@ import '../../auction/services/auction_draft_storage.dart';
 import '../../auction/widgets/auction_draft_dialog.dart';
 import '../data/combined_product_feed.dart';
 import '../models/product_category.dart';
-import '../models/product_preview.dart';
 import '../services/product_sell_draft_storage.dart';
 import 'product_sell_page.dart';
 import '../widgets/combined_product_list.dart';
@@ -25,9 +26,17 @@ class ProductListPage extends StatefulWidget {
 }
 
 class _ProductListPageState extends State<ProductListPage> {
+  final _feedApi = CombinedProductFeedApi(ApiClient());
+  late Future<CombinedProductFeedData> _feedFuture;
   ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _feedFuture = _feedApi.load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +157,7 @@ class _ProductListPageState extends State<ProductListPage> {
       await Navigator.of(
         context,
       ).push<void>(MaterialPageRoute(builder: (_) => const ProductSellPage()));
+      await _refreshFeed();
       return;
     }
 
@@ -174,31 +184,68 @@ class _ProductListPageState extends State<ProductListPage> {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => const AuctionCreatePage()),
       );
+      await _refreshFeed();
     }
   }
 
   Widget _buildSelectedCategory() {
-    if (_selectedCategory == ProductCategory.all) {
-      return CombinedProductList(items: buildCombinedProductFeed());
-    }
-
     if (_selectedCategory == ProductCategory.auction) {
       return const AuctionListPage();
     }
 
-    final products = mockProducts
-        .where((product) => product.category == _selectedCategory)
-        .toList();
+    return FutureBuilder<CombinedProductFeedData>(
+      future: _feedFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          final message = error is ApiException
+              ? error.message
+              : '상품 목록을 불러오지 못했어요.';
+          return _ProductListError(message: message, onRetry: _refreshFeed);
+        }
 
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: products.length,
-      separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: AppColors.borderSubtle),
-      itemBuilder: (context, index) {
-        return ProductListItem(product: products[index]);
+        final data = snapshot.data!;
+        if (_selectedCategory == ProductCategory.all) {
+          if (data.items.isEmpty) {
+            return const Center(child: Text('등록된 상품이 없어요.'));
+          }
+          return CombinedProductList(
+            items: data.items,
+            onRefresh: _refreshFeed,
+          );
+        }
+
+        final products = data.products
+            .where((product) => product.category == _selectedCategory)
+            .toList();
+        if (products.isEmpty) {
+          return const Center(child: Text('등록된 상품이 없어요.'));
+        }
+
+        return RefreshIndicator(
+          onRefresh: _refreshFeed,
+          child: ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: products.length,
+            separatorBuilder: (_, _) =>
+                const Divider(height: 1, color: AppColors.borderSubtle),
+            itemBuilder: (context, index) {
+              return ProductListItem(product: products[index]);
+            },
+          ),
+        );
       },
     );
+  }
+
+  Future<void> _refreshFeed() async {
+    final future = _feedApi.load();
+    setState(() => _feedFuture = future);
+    await future;
   }
 
   bool _handleScrollDirection(UserScrollNotification notification) {
@@ -211,5 +258,26 @@ class _ProductListPageState extends State<ProductListPage> {
     }
 
     return false;
+  }
+}
+
+class _ProductListError extends StatelessWidget {
+  const _ProductListError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(message, style: const TextStyle(color: AppColors.textSecondary)),
+          const SizedBox(height: 12),
+          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+        ],
+      ),
+    );
   }
 }

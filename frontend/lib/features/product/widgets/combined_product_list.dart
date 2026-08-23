@@ -4,35 +4,53 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import '../../auction/widgets/auction_list_item.dart';
 import '../../auction/pages/auction_detail_page.dart';
 import '../models/product_feed_item.dart';
+import '../pages/product_detail_page.dart';
 import 'product_list_item.dart';
 
 class CombinedProductList extends StatelessWidget {
-  const CombinedProductList({required this.items, super.key});
+  const CombinedProductList({
+    required this.items,
+    required this.onRefresh,
+    super.key,
+  });
 
   final List<ProductFeedItem> items;
+  final RefreshCallback onRefresh;
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: items.length,
-      separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: AppColors.borderSubtle),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        if (item.isAuction) {
-          return AuctionListItem(
-            auction: item.auction!,
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: items.length,
+        separatorBuilder: (_, _) =>
+            const Divider(height: 1, color: AppColors.borderSubtle),
+        itemBuilder: (context, index) {
+          final item = items[index];
+          if (item.isAuction) {
+            return AuctionListItem(
+              auction: item.auction!,
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) =>
+                      AuctionDetailPage(auctionId: item.auction!.id),
+                ),
+              ),
+            );
+          }
+
+          return InkWell(
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => AuctionDetailPage(auctionId: item.auction!.id),
+                builder: (_) => ProductDetailPage(product: item.product!),
               ),
             ),
+            child: ProductListItem(product: item.product!),
           );
-        }
-
-        return ProductListItem(product: item.product!);
-      },
+        },
+      ),
     );
   }
 }
