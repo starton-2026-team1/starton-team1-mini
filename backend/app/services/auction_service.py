@@ -10,7 +10,7 @@ from app.core.exceptions import (
 )
 from app.core.time import now_kst_naive
 from app.models.auction import Auction
-from app.models.enums import AuctionStatus
+from app.models.enums import AuctionStatus, ProductStatus
 from app.models.user import User
 from app.repositories.auction_repository import AuctionRepository
 from app.repositories.bid_repository import BidRepository
@@ -188,17 +188,13 @@ class AuctionService:
         if auction.product.seller_id != seller_id:
             raise AuctionPermissionError("판매자만 거래를 완료할 수 있습니다.")
 
-        highest_amount = await self.bid_repository.get_highest_amount(session, auction_id)
-        current_status = _effective_status(
-            auction,
-            now_kst_naive(),
-            bid_count=0 if highest_amount is None else 1,
-        )
-        if current_status != AuctionStatus.COMPLETED:
+        if auction.status != AuctionStatus.COMPLETED:
             raise AuctionStateError("낙찰 완료된 경매만 거래 완료 처리할 수 있습니다.")
+        if auction.winner_id is None:
+            raise AuctionStateError("낙찰자가 없는 경매는 거래 완료 처리할 수 없습니다.")
 
-        # 낙찰 완료 상태 검증 후 거래 완료 상태 변경
         auction.status = AuctionStatus.TRADE_COMPLETED
+        auction.product.status = ProductStatus.SOLD
         await session.flush()
         return AuctionStatusResponse(id=auction.id, status=auction.status)
 

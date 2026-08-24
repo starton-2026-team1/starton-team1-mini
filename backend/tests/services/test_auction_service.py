@@ -10,7 +10,7 @@ from app.core.exceptions import (
     AuctionStateError,
     BidAmountError,
 )
-from app.models.enums import AuctionStatus
+from app.models.enums import AuctionStatus, ProductStatus
 from app.repositories.auction_repository import AuctionRepository
 from app.repositories.bid_repository import BidRepository
 from app.services.auction_service import AuctionService, _effective_status
@@ -421,19 +421,17 @@ async def test_get_detail_finalizes_winner_and_uses_stored_winner_id() -> None:
     assert detail.winner_name == "낙***"
 
 
-async def test_seller_completes_trade_after_auction_end() -> None:
+async def test_seller_completes_finalized_trade_and_marks_product_sold() -> None:
     auction_repository = AsyncMock(spec=AuctionRepository)
     bid_repository = AsyncMock(spec=BidRepository)
-    now = datetime.now()
+    product = SimpleNamespace(seller_id=7, status=ProductStatus.ACTIVE)
     auction = SimpleNamespace(
         id=3,
-        product=SimpleNamespace(seller_id=7),
-        status=AuctionStatus.ACTIVE,
-        starts_at=now - timedelta(hours=2),
-        ends_at=now - timedelta(hours=1),
+        product=product,
+        status=AuctionStatus.COMPLETED,
+        winner_id=8,
     )
     auction_repository.get_by_id.return_value = auction
-    bid_repository.get_highest_amount.return_value = 12000
     session = AsyncMock()
     service = AuctionService(auction_repository, bid_repository)
 
@@ -441,7 +439,93 @@ async def test_seller_completes_trade_after_auction_end() -> None:
 
     assert response.status == AuctionStatus.TRADE_COMPLETED
     assert auction.status == AuctionStatus.TRADE_COMPLETED
+    assert product.status == ProductStatus.SOLD
+    bid_repository.get_highest_amount.assert_not_awaited()
     session.flush.assert_awaited_once()
+
+
+async def test_trade_completion_requires_winner() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    product = SimpleNamespace(seller_id=7, status=ProductStatus.ACTIVE)
+    auction = SimpleNamespace(
+        id=3,
+        product=product,
+        status=AuctionStatus.COMPLETED,
+        winner_id=None,
+    )
+    auction_repository.get_by_id.return_value = auction
+    session = AsyncMock()
+
+    with pytest.raises(AuctionStateError, match="낙찰자가 없는 경매"):
+        await AuctionService(
+            auction_repository,
+            bid_repository,
+        ).complete_trade(session, auction_id=3, seller_id=7)
+
+    assert auction.status == AuctionStatus.COMPLETED
+    assert product.status == ProductStatus.ACTIVE
+    session.flush.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        AuctionStatus.WAITING,
+        AuctionStatus.ACTIVE,
+        AuctionStatus.NO_BIDS,
+        AuctionStatus.CANCELLED,
+        AuctionStatus.TRADE_COMPLETED,
+    ],
+)
+async def test_trade_completion_requires_persisted_completed_status(
+    status: AuctionStatus,
+) -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    product = SimpleNamespace(seller_id=7, status=ProductStatus.ACTIVE)
+    auction = SimpleNamespace(
+        id=3,
+        product=product,
+        status=status,
+        winner_id=8,
+    )
+    auction_repository.get_by_id.return_value = auction
+    session = AsyncMock()
+
+    with pytest.raises(AuctionStateError, match="낙찰 완료된 경매만"):
+        await AuctionService(
+            auction_repository,
+            bid_repository,
+        ).complete_trade(session, auction_id=3, seller_id=7)
+
+    assert auction.status == status
+    assert product.status == ProductStatus.ACTIVE
+    session.flush.assert_not_awaited()
+
+
+async def test_only_seller_can_complete_trade() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    product = SimpleNamespace(seller_id=7, status=ProductStatus.ACTIVE)
+    auction = SimpleNamespace(
+        id=3,
+        product=product,
+        status=AuctionStatus.COMPLETED,
+        winner_id=8,
+    )
+    auction_repository.get_by_id.return_value = auction
+    session = AsyncMock()
+
+    with pytest.raises(AuctionPermissionError, match="판매자만"):
+        await AuctionService(
+            auction_repository,
+            bid_repository,
+        ).complete_trade(session, auction_id=3, seller_id=9)
+
+    assert auction.status == AuctionStatus.COMPLETED
+    assert product.status == ProductStatus.ACTIVE
+    session.flush.assert_not_awaited()
 
 
 @pytest.mark.parametrize(
