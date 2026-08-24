@@ -43,6 +43,23 @@ class AuctionRepository:
         )
         return result.scalar_one_or_none()
 
+    async def list_expired_unfinalized_ids(
+        self,
+        session: AsyncSession,
+        now: datetime,
+        limit: int = 100,
+    ) -> list[int]:
+        result = await session.execute(
+            select(Auction.id)
+            .where(
+                Auction.ends_at <= now,
+                Auction.status.in_((AuctionStatus.WAITING, AuctionStatus.ACTIVE)),
+            )
+            .order_by(Auction.ends_at.asc(), Auction.id.asc())
+            .limit(limit),
+        )
+        return list(result.scalars().all())
+
     # 목록 화면용 - 페이지네이션 + 총 개수까지 같이 반환
     async def list_auctions(
         self,

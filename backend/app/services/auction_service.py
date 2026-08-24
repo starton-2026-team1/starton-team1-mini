@@ -23,7 +23,6 @@ from app.schemas.auction import (
 from app.schemas.bid import AuctionBroadcastMessage, BidResponse
 from app.services.connection_manager import ConnectionManager, connection_manager
 
-
 AUTO_EXTENSION_THRESHOLD = timedelta(minutes=5)
 AUTO_EXTENSION_DURATION = timedelta(minutes=5)
 
@@ -162,6 +161,21 @@ class AuctionService:
         await session.flush()
         return AuctionStatusResponse(id=auction.id, status=auction.status)
 
+    async def finalize_expired_auctions(
+        self,
+        session: AsyncSession,
+        limit: int = 100,
+    ) -> list[AuctionStatusResponse]:
+        auction_ids = await self.auction_repository.list_expired_unfinalized_ids(
+            session,
+            now=now_kst_naive(),
+            limit=limit,
+        )
+        return [
+            await self.finalize_auction(session, auction_id)
+            for auction_id in auction_ids
+        ]
+
     async def complete_trade(
         self,
         session: AsyncSession,
@@ -197,6 +211,7 @@ class AuctionService:
         offset: int = 0,
         limit: int = 20,
     ) -> tuple[list[AuctionPreviewResponse], int]:
+        await self.finalize_expired_auctions(session)
         now = now_kst_naive()
         auctions, total = await self.auction_repository.list_auctions(
             session,
@@ -221,6 +236,7 @@ class AuctionService:
         session: AsyncSession,
         auction_id: int,
     ) -> AuctionDetailResponse:
+        await self.finalize_expired_auctions(session)
         auction = await self.auction_repository.get_detail(session, auction_id)
         if auction is None:
             raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
@@ -233,6 +249,11 @@ class AuctionService:
         highest_amount = recent_bids[0][0].amount if recent_bids else None
         product = auction.product
         now = now_kst_naive()
+        winner_name = None
+        if auction.winner_id is not None:
+            winner_name = _mask_name(
+                await self._bidder_name(session, auction.winner_id),
+            )
 
         return AuctionDetailResponse(
             id=auction.id,
@@ -241,7 +262,7 @@ class AuctionService:
             category_name=product.category.name,
             seller_name=product.seller.name,
             seller_id=product.seller_id,
-            winner_name=_mask_name(recent_bids[0][1]) if recent_bids else None,
+            winner_name=winner_name,
             status=_effective_status(auction, now, bid_count=len(recent_bids)),
             image_urls=[image.image_url for image in product.images],
             start_price=auction.start_price,

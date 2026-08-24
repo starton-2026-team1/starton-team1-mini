@@ -314,6 +314,113 @@ async def test_finalize_auction_raises_when_auction_does_not_exist() -> None:
         ).finalize_auction(AsyncMock(), auction_id=99)
 
 
+async def test_finalize_expired_auctions_processes_each_target() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction_repository.list_expired_unfinalized_ids.return_value = [3, 4]
+    now = datetime.now()
+    auctions = {
+        3: SimpleNamespace(
+            id=3,
+            status=AuctionStatus.ACTIVE,
+            ends_at=now - timedelta(minutes=2),
+            winner_id=None,
+        ),
+        4: SimpleNamespace(
+            id=4,
+            status=AuctionStatus.WAITING,
+            ends_at=now - timedelta(minutes=1),
+            winner_id=None,
+        ),
+    }
+    auction_repository.get_by_id.side_effect = (
+        lambda _session, auction_id: auctions.get(auction_id)
+    )
+    bid_repository.get_highest_bid.side_effect = [
+        SimpleNamespace(bidder_id=8),
+        None,
+    ]
+    session = AsyncMock()
+
+    results = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).finalize_expired_auctions(session)
+
+    assert [result.status for result in results] == [
+        AuctionStatus.COMPLETED,
+        AuctionStatus.NO_BIDS,
+    ]
+    assert auctions[3].winner_id == 8
+    assert auctions[4].winner_id is None
+    assert session.flush.await_count == 2
+
+
+async def test_list_auctions_finalizes_expired_before_query() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction_repository.list_expired_unfinalized_ids.return_value = []
+    auction_repository.list_auctions.return_value = ([], 0)
+    bid_repository.get_stats.return_value = {}
+    session = AsyncMock()
+
+    items, total = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).list_auctions(session)
+
+    assert items == []
+    assert total == 0
+    auction_repository.list_expired_unfinalized_ids.assert_awaited_once()
+    auction_repository.list_auctions.assert_awaited_once()
+
+
+async def test_get_detail_finalizes_winner_and_uses_stored_winner_id() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    session = AsyncMock()
+    now = datetime.now()
+    product = SimpleNamespace(
+        title="아이패드",
+        description="상태가 좋아요.",
+        category=SimpleNamespace(name="디지털기기"),
+        seller=SimpleNamespace(name="판매자"),
+        seller_id=7,
+        images=[],
+    )
+    auction = SimpleNamespace(
+        id=3,
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=2),
+        ends_at=now - timedelta(minutes=1),
+        winner_id=None,
+        start_price=10_000,
+        minimum_bid_unit=1_000,
+        product=product,
+    )
+    highest_bid = SimpleNamespace(
+        bidder_id=8,
+        amount=15_000,
+        created_at=now - timedelta(minutes=2),
+    )
+    auction_repository.list_expired_unfinalized_ids.return_value = [3]
+    auction_repository.get_by_id.return_value = auction
+    auction_repository.get_detail.return_value = auction
+    bid_repository.get_highest_bid.return_value = highest_bid
+    bid_repository.list_recent.return_value = [(highest_bid, "낙찰자")]
+    session.get.return_value = SimpleNamespace(name="낙찰자")
+
+    detail = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).get_detail(session, auction_id=3)
+
+    assert auction.status == AuctionStatus.COMPLETED
+    assert auction.winner_id == 8
+    assert detail.status == AuctionStatus.COMPLETED
+    assert detail.winner_name == "낙***"
+
+
 async def test_seller_completes_trade_after_auction_end() -> None:
     auction_repository = AsyncMock(spec=AuctionRepository)
     bid_repository = AsyncMock(spec=BidRepository)
