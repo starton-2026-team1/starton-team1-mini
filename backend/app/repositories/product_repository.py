@@ -75,15 +75,23 @@ class ProductRepository:
         # (관계 필드까지 통째로 refresh하면 images/auction이 다시 만료돼서 컬럼만 지정)
         await session.refresh(product, attribute_names=["created_at", "updated_at"])
 
-        # 생성된 상품을 fixed_price와 함께 다시 조회
+        # 경매 등록 응답에 필요한 경매 정보와 이미지 관계를 함께 재조회
         result = await session.execute(
             select(Product)
             .where(Product.id == product.id)
-            .options(selectinload(Product.fixed_price))
+            .options(
+                selectinload(Product.auction),
+                selectinload(Product.images),
+            )
             .execution_options(populate_existing=True)
         )
 
         created_product = result.scalar_one()
+        # 비동기 응답 변환 중 lazy load가 발생하지 않도록 관계 로드 상태 보장
+        await session.refresh(
+            created_product,
+            attribute_names=["auction", "images"],
+        )
 
         return created_product
 
