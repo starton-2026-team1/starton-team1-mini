@@ -32,6 +32,7 @@ class CombinedProductList extends StatelessWidget {
           if (item.isAuction) {
             return AuctionListItem(
               auction: item.auction!,
+              onEnded: onRefresh,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) =>

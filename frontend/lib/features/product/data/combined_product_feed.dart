@@ -12,10 +12,16 @@ class CombinedProductFeedData {
   final List<ProductPreview> products;
   final List<AuctionPreview> auctions;
 
-  List<ProductFeedItem> get items => [
-    ...auctions.map(ProductFeedItem.auction),
-    ...products.map(ProductFeedItem.product),
-  ];
+  List<ProductFeedItem> get items {
+    final runningAuctions = auctions.where((auction) => !auction.isEnded);
+    final endedAuctions = auctions.where((auction) => auction.isEnded);
+    return [
+      ...runningAuctions.map(ProductFeedItem.auction),
+      ...products.map(ProductFeedItem.product),
+      // 종료·유찰·취소·거래 완료 경매를 메인 통합 목록 최하단에 배치
+      ...endedAuctions.map(ProductFeedItem.auction),
+    ];
+  }
 }
 
 class CombinedProductFeedApi {

@@ -9,10 +9,11 @@ void main() {
     final feed = await api.load();
 
     expect(feed.products.single.id, 41);
-    expect(feed.auctions.single.id, 12);
-    expect(feed.items, hasLength(2));
+    expect(feed.auctions, hasLength(2));
+    expect(feed.items, hasLength(3));
     expect(feed.items.first.auction?.id, 12);
-    expect(feed.items.last.product?.id, 41);
+    expect(feed.items[1].product?.id, 41);
+    expect(feed.items.last.auction?.id, 13);
   });
 }
 
@@ -51,6 +52,21 @@ class _FakeApiClient extends ApiClient {
                 .toIso8601String(),
             'ends_at': DateTime.now()
                 .add(const Duration(hours: 1))
+                .toIso8601String(),
+          },
+          {
+            'id': 13,
+            'title': '종료 경매',
+            'category_name': '기타',
+            'status': 'NO_BIDS',
+            'thumbnail_url': null,
+            'current_price': 10000,
+            'bid_count': 0,
+            'starts_at': DateTime.now()
+                .subtract(const Duration(hours: 2))
+                .toIso8601String(),
+            'ends_at': DateTime.now()
+                .subtract(const Duration(hours: 1))
                 .toIso8601String(),
           },
         ],

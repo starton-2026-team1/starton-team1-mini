@@ -25,6 +25,8 @@ class AuctionPreview {
   final int favoriteCount;
   final String? thumbnailUrl;
 
+  bool get isEnded => !status.hasRunningTimer || remainingTime <= Duration.zero;
+
   String get remainingTimeLabel {
     if (status == AuctionStatus.completed || remainingTime <= Duration.zero) {
       return '0분 0초 남음';

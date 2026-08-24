@@ -69,6 +69,7 @@ class _AuctionListPageState extends State<AuctionListPage> {
               final auction = auctions[index];
               return AuctionListItem(
                 auction: auction,
+                onEnded: _refresh,
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => AuctionDetailPage(auctionId: auction.id),
