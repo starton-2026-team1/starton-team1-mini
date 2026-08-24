@@ -11,6 +11,24 @@ class AuctionPage {
   final int total;
   final int nextOffset;
 
+  factory AuctionPage.fromJson(
+    Map<String, dynamic> json, {
+    int fallbackOffset = 0,
+  }) {
+    final rawItems = json['items'] as List<dynamic>;
+    return AuctionPage(
+      items: auctionsWithEndedLast(
+        rawItems.map(
+          (item) => AuctionPreview.fromJson(item as Map<String, dynamic>),
+        ),
+      ),
+      total: (json['total'] as num?)?.toInt() ?? rawItems.length,
+      nextOffset:
+          ((json['offset'] as num?)?.toInt() ?? fallbackOffset) +
+          rawItems.length,
+    );
+  }
+
   bool get hasMore => nextOffset < total;
 
   AuctionPage append(AuctionPage page) {

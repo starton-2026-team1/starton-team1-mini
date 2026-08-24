@@ -1,4 +1,5 @@
 import '../../auction/models/auction_preview.dart';
+import '../../auction/models/auction_page.dart';
 import '../../../shared/network/api_client.dart';
 import '../models/product_feed_item.dart';
 import '../models/product_preview.dart';
@@ -9,14 +10,19 @@ class CombinedProductFeedData {
     required this.auctions,
     required this.productTotal,
     required this.nextProductOffset,
+    required this.auctionTotal,
+    required this.nextAuctionOffset,
   });
 
   final List<ProductPreview> products;
   final List<AuctionPreview> auctions;
   final int productTotal;
   final int nextProductOffset;
+  final int auctionTotal;
+  final int nextAuctionOffset;
 
   bool get hasMoreProducts => nextProductOffset < productTotal;
+  bool get hasMoreAuctions => nextAuctionOffset < auctionTotal;
 
   CombinedProductFeedData appendProducts(ProductPageData page) {
     final productsById = {
@@ -28,6 +34,23 @@ class CombinedProductFeedData {
       auctions: auctions,
       productTotal: page.total,
       nextProductOffset: page.nextOffset,
+      auctionTotal: auctionTotal,
+      nextAuctionOffset: nextAuctionOffset,
+    );
+  }
+
+  CombinedProductFeedData appendAuctions(AuctionPage page) {
+    final auctionsById = {
+      for (final auction in auctions) auction.id: auction,
+      for (final auction in page.items) auction.id: auction,
+    };
+    return CombinedProductFeedData(
+      products: products,
+      auctions: auctionsWithEndedLast(auctionsById.values),
+      productTotal: productTotal,
+      nextProductOffset: nextProductOffset,
+      auctionTotal: page.total,
+      nextAuctionOffset: page.nextOffset,
     );
   }
 
@@ -61,21 +84,32 @@ class CombinedProductFeedApi {
   final ApiClient _client;
 
   // 일반 상품과 경매를 동시에 조회해 메인 통합 목록을 구성한다.
-  Future<CombinedProductFeedData> load({int productLimit = 20}) async {
+  Future<CombinedProductFeedData> load({
+    int productLimit = 20,
+    int auctionLimit = 20,
+  }) async {
     final responses = await Future.wait([
       _client.get('/products?offset=0&limit=$productLimit'),
-      _client.get('/auctions'),
+      _client.get('/auctions?offset=0&limit=$auctionLimit'),
     ]);
     final productPage = _parseProductPage(responses[0]);
-    final auctionItems = responses[1]['items'] as List<dynamic>;
+    final auctionPage = AuctionPage.fromJson(responses[1]);
     return CombinedProductFeedData(
       products: productPage.items,
-      auctions: auctionItems
-          .map((item) => AuctionPreview.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      auctions: auctionPage.items,
       productTotal: productPage.total,
       nextProductOffset: productPage.nextOffset,
+      auctionTotal: auctionPage.total,
+      nextAuctionOffset: auctionPage.nextOffset,
     );
+  }
+
+  Future<AuctionPage> loadAuctions({
+    required int offset,
+    int limit = 20,
+  }) async {
+    final response = await _client.get('/auctions?offset=$offset&limit=$limit');
+    return AuctionPage.fromJson(response, fallbackOffset: offset);
   }
 
   Future<ProductPageData> loadProducts({

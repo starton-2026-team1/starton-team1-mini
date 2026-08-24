@@ -32,6 +32,7 @@ class _ProductListPageState extends State<ProductListPage> {
   late Future<CombinedProductFeedData> _feedFuture;
   CombinedProductFeedData? _feedData;
   bool _isLoadingMoreProducts = false;
+  bool _isLoadingMoreAuctions = false;
   bool _isRefreshing = false;
   int _requestGeneration = 0;
   ProductCategory _selectedCategory = ProductCategory.all;
@@ -228,7 +229,7 @@ class _ProductListPageState extends State<ProductListPage> {
           return CombinedProductList(
             items: data.items,
             onRefresh: _refreshFeed,
-            isLoadingMore: _isLoadingMoreProducts,
+            isLoadingMore: _isLoadingMoreProducts || _isLoadingMoreAuctions,
           );
         }
 
@@ -268,6 +269,7 @@ class _ProductListPageState extends State<ProductListPage> {
   Future<void> _refreshFeed() async {
     final generation = ++_requestGeneration;
     _isLoadingMoreProducts = false;
+    _isLoadingMoreAuctions = false;
     _isRefreshing = true;
     try {
       final data = await _feedApi.load();
@@ -312,12 +314,10 @@ class _ProductListPageState extends State<ProductListPage> {
       final page = await _feedApi.loadProducts(
         offset: currentData.nextProductOffset,
       );
-      if (!mounted ||
-          generation != _requestGeneration ||
-          _feedData != currentData) {
-        return;
-      }
-      final updatedData = currentData.appendProducts(page);
+      if (!mounted || generation != _requestGeneration) return;
+      final latestData = _feedData;
+      if (latestData == null) return;
+      final updatedData = latestData.appendProducts(page);
       setState(() {
         _feedData = updatedData;
         _feedFuture = Future.value(updatedData);
@@ -331,12 +331,45 @@ class _ProductListPageState extends State<ProductListPage> {
     }
   }
 
+  Future<void> _loadMoreAuctions() async {
+    final currentData = _feedData;
+    if (currentData == null ||
+        !currentData.hasMoreAuctions ||
+        _isLoadingMoreAuctions ||
+        _isRefreshing) {
+      return;
+    }
+
+    setState(() => _isLoadingMoreAuctions = true);
+    final generation = _requestGeneration;
+    try {
+      final page = await _feedApi.loadAuctions(
+        offset: currentData.nextAuctionOffset,
+      );
+      if (!mounted || generation != _requestGeneration) return;
+      final latestData = _feedData;
+      if (latestData == null) return;
+      final updatedData = latestData.appendAuctions(page);
+      setState(() {
+        _feedData = updatedData;
+        _feedFuture = Future.value(updatedData);
+      });
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    } catch (_) {
+      if (mounted) showAppSnackBar(context, '다음 경매를 불러오지 못했어요.');
+    } finally {
+      if (mounted) setState(() => _isLoadingMoreAuctions = false);
+    }
+  }
+
   bool _handleProductPagination(ScrollNotification notification) {
     if (_selectedCategory == ProductCategory.auction ||
         notification.metrics.extentAfter > 300) {
       return false;
     }
     _loadMoreProducts();
+    if (_selectedCategory == ProductCategory.all) _loadMoreAuctions();
     return false;
   }
 
