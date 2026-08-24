@@ -4,7 +4,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.core.exceptions import AuctionPermissionError, AuctionStateError
+from app.core.exceptions import (
+    AuctionPermissionError,
+    AuctionStateError,
+    BidAmountError,
+)
 from app.models.enums import AuctionStatus
 from app.repositories.auction_repository import AuctionRepository
 from app.repositories.bid_repository import BidRepository
@@ -37,6 +41,34 @@ async def test_seller_cannot_bid_on_own_auction() -> None:
             auction_id=3,
             bidder_id=7,
             amount=10000,
+        )
+
+    bid_repository.create.assert_not_awaited()
+
+
+async def test_duplicate_bid_amount_is_rejected() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    manager = AsyncMock(spec=ConnectionManager)
+    now = datetime.now()
+    auction_repository.get_by_id.return_value = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=9),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(hours=1),
+        start_price=10000,
+        minimum_bid_unit=1000,
+    )
+    bid_repository.get_highest_amount.return_value = 12000
+    service = AuctionService(auction_repository, bid_repository, manager)
+
+    with pytest.raises(BidAmountError, match="13000원 이상"):
+        await service.place_bid(
+            AsyncMock(),
+            auction_id=3,
+            bidder_id=7,
+            amount=12000,
         )
 
     bid_repository.create.assert_not_awaited()

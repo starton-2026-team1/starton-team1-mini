@@ -246,6 +246,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
             _BidBar(
               price: auction.nextBidPrice,
               status: auction.status,
+              isBidding: _isBidding,
               favoriteCount: auction.favoriteCount + (_isFavorite ? 1 : 0),
               isFavorite: _isFavorite,
               onFavorite: () => setState(() => _isFavorite = !_isFavorite),
@@ -361,7 +362,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
 
   void _showBidSheet() {
     final auction = _liveAuction;
-    if (!auction.status.canBid) return;
+    if (!auction.status.canBid || _isBidding) return;
     final minPrice = auction.nextBidPrice;
     final amountController = TextEditingController(text: '$minPrice');
 
@@ -464,6 +465,8 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   }
 
   Future<void> _placeBid(int amount) async {
+    // 진행 중인 입찰 요청이 있을 때 동일 화면의 추가 요청 차단
+    if (_isBidding) return;
     setState(() => _isBidding = true);
     try {
       await _auctionApi.placeBid(widget.auctionId, amount);
@@ -945,6 +948,7 @@ class _BidBar extends StatelessWidget {
   const _BidBar({
     required this.price,
     required this.status,
+    required this.isBidding,
     required this.favoriteCount,
     required this.isFavorite,
     required this.onFavorite,
@@ -952,6 +956,7 @@ class _BidBar extends StatelessWidget {
   });
   final int price;
   final AuctionStatus status;
+  final bool isBidding;
   final int favoriteCount;
   final bool isFavorite;
   final VoidCallback onFavorite;
@@ -999,7 +1004,7 @@ class _BidBar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: FilledButton(
-              onPressed: status.canBid ? onBid : null,
+              onPressed: status.canBid && !isBidding ? onBid : null,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 disabledBackgroundColor: const Color(0xFFE5E5E5),
@@ -1013,7 +1018,9 @@ class _BidBar extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      status.canBid
+                      isBidding
+                          ? '입찰 처리 중이에요'
+                          : status.canBid
                           ? '${_formatPrice(price)}부터 입찰하기'
                           : _bidButtonLabel(status),
                       style: const TextStyle(
