@@ -191,6 +191,7 @@ class ProductService:
                 id=product.id,
                 sale_type=product.sale_type,
                 title=product.title,
+                description=product.description,
                 product_status=product.status,
                 management_status=(
                     SalesManagementStatus.SELLING
@@ -214,6 +215,7 @@ class ProductService:
             auction_id=auction.id,
             sale_type=product.sale_type,
             title=product.title,
+            description=product.description,
             product_status=product.status,
             management_status=ProductService._sales_management_status(
                 product.status,

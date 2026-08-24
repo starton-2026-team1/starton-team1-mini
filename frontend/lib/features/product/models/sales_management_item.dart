@@ -5,6 +5,7 @@ class SalesManagementItem {
     required this.id,
     required this.filter,
     required this.title,
+    this.description,
     required this.location,
     required this.timeLabel,
     required this.price,
@@ -36,6 +37,7 @@ class SalesManagementItem {
       auctionId: (json['auction_id'] as num?)?.toInt(),
       filter: _filterFromApi(managementStatus),
       title: json['title'] as String,
+      description: json['description'] as String?,
       location: '전국',
       timeLabel: saleType == 'AUCTION'
           ? _auctionStatusLabel(json['auction_status'] as String)
@@ -52,6 +54,7 @@ class SalesManagementItem {
   final int? auctionId;
   final SalesManagementFilter filter;
   final String title;
+  final String? description;
   final String location;
   final String timeLabel;
   final int price;

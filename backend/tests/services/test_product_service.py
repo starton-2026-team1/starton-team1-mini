@@ -176,6 +176,7 @@ async def test_sales_management_products_include_fixed_price_and_auction(
     assert items[0].price == 140_000
     assert items[0].bid_count == 3
     assert items[0].thumbnail_url == "/uploads/ipad.jpg"
+    assert items[0].description == "상태가 좋아요."
     assert items[1].auction_id is None
     assert items[1].management_status == "SELLING"
     assert items[1].price == 30_000

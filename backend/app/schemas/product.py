@@ -116,6 +116,7 @@ class SalesManagementProductResponse(BaseModel):
     auction_id: int | None = Field(default=None, gt=0)
     sale_type: SaleType
     title: str
+    description: str
     product_status: ProductStatus
     management_status: SalesManagementStatus
     auction_status: AuctionStatus | None = None

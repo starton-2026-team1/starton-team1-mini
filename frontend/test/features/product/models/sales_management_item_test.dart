@@ -11,6 +11,7 @@ void main() {
         'auction_id': 7,
         'sale_type': 'AUCTION',
         'title': '아이패드',
+        'description': '깨끗하게 사용했습니다.',
         'product_status': 'ACTIVE',
         'management_status': 'AUCTION',
         'auction_status': 'ACTIVE',
@@ -28,6 +29,7 @@ void main() {
     expect(item.filter, SalesManagementFilter.auction);
     expect(item.auctionId, 7);
     expect(item.price, 140000);
+    expect(item.description, '깨끗하게 사용했습니다.');
     expect(item.bidCount, 3);
     expect(item.auctionRemainingTime, const Duration(hours: 1));
     expect(item.imageUrl, 'http://127.0.0.1:8000/uploads/ipad.jpg');
@@ -40,6 +42,7 @@ void main() {
         'auction_id': null,
         'sale_type': 'FIXED_PRICE',
         'title': '자전거',
+        'description': '상태가 좋아요.',
         'product_status': 'SOLD',
         'management_status': 'COMPLETED',
         'auction_status': null,

@@ -155,6 +155,7 @@ class _SalesManagementPageState extends State<SalesManagementPage> {
     return ProductPreview(
       category: ProductCategory.used,
       title: item.title,
+      description: item.description,
       location: item.location,
       time: item.timeLabel,
       price: '${_formatPrice(item.price)}원',

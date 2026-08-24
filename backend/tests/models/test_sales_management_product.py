@@ -21,6 +21,7 @@ def response_values() -> dict[str, object]:
         "id": 1,
         "sale_type": SaleType.FIXED_PRICE,
         "title": "자전거",
+        "description": "상태가 좋아요.",
         "product_status": ProductStatus.ACTIVE,
         "management_status": SalesManagementStatus.SELLING,
         "price": 30_000,
