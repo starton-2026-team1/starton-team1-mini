@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +22,10 @@ from app.schemas.auction import (
 )
 from app.schemas.bid import AuctionBroadcastMessage, BidResponse
 from app.services.connection_manager import ConnectionManager, connection_manager
+
+
+AUTO_EXTENSION_THRESHOLD = timedelta(minutes=5)
+AUTO_EXTENSION_DURATION = timedelta(minutes=5)
 
 
 class AuctionService:
@@ -73,6 +77,15 @@ class AuctionService:
                 f"입찰 금액은 {minimum_next_price}원 이상이어야 합니다.",
             )
 
+        # 종료 5분 이내 입찰 시 남은 자동 연장 횟수를 사용해 종료 시각 연장
+        remaining_extension_count = auction.extension_count or 0
+        if (
+            remaining_extension_count > 0
+            and auction.ends_at - now <= AUTO_EXTENSION_THRESHOLD
+        ):
+            auction.ends_at += AUTO_EXTENSION_DURATION
+            auction.extension_count = remaining_extension_count - 1
+
         bid = await self.bid_repository.create(
             session,
             auction_id=auction_id,
@@ -87,6 +100,8 @@ class AuctionService:
         message = AuctionBroadcastMessage(
             current_price=amount,
             next_bid_price=amount + auction.minimum_bid_unit,
+            ends_at=auction.ends_at,
+            remaining_extension_count=auction.extension_count or 0,
             latest_bid=latest_bid,
         )
 

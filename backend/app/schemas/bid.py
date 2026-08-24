@@ -21,4 +21,6 @@ class AuctionBroadcastMessage(BaseModel):
     type: Literal["bid_update"] = "bid_update"
     current_price: int
     next_bid_price: int
+    ends_at: KstDateTime
+    remaining_extension_count: int = Field(ge=0)
     latest_bid: BidResponse

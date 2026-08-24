@@ -224,7 +224,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              '마감 직전 입찰이 들어오면 종료 시간을 연장해요.',
+              '마감 5분 이내에 입찰이 들어오면 종료 시간을 5분 연장해요.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
           ],

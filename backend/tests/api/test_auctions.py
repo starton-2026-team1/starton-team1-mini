@@ -169,6 +169,8 @@ async def test_create_bid_returns_broadcast_message(
     auction_service.place_bid.return_value = AuctionBroadcastMessage(
         current_price=13000,
         next_bid_price=14000,
+        ends_at=datetime(2026, 8, 24, 10),
+        remaining_extension_count=1,
         latest_bid=BidResponse(
             bidder_name="입*자",
             amount=13000,
@@ -183,6 +185,8 @@ async def test_create_bid_returns_broadcast_message(
 
     assert response.status_code == 201
     assert response.json()["next_bid_price"] == 14000
+    assert response.json()["ends_at"].endswith("+09:00")
+    assert response.json()["remaining_extension_count"] == 1
     auction_service.place_bid.assert_awaited_once_with(
         auction_dependencies,
         auction_id=3,

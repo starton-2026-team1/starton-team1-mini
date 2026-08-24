@@ -174,10 +174,23 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
       final json = jsonDecode(raw as String) as Map<String, dynamic>;
       final update = AuctionUpdateMessage.fromJson(json);
       if (!mounted) return;
+      final updatedRemainingTime = update.endsAt.difference(DateTime.now());
+      final wasExtended =
+          updatedRemainingTime > _remainingTime + const Duration(minutes: 1);
       setState(() {
         _currentPrice = update.currentPrice;
         _bids = [update.latestBid, ..._bids];
+        _remainingTime = updatedRemainingTime.isNegative
+            ? Duration.zero
+            : updatedRemainingTime;
       });
+      if (wasExtended) {
+        showAppSnackBar(
+          context,
+          '마감 시간이 5분 연장됐어요. '
+          '(남은 자동 연장 ${update.remainingExtensionCount}회)',
+        );
+      }
     } catch (_) {
       // 잘못된 실시간 메시지는 화면 상태 변경 없이 무시
     }

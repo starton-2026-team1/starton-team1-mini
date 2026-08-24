@@ -74,6 +74,80 @@ async def test_duplicate_bid_amount_is_rejected() -> None:
     bid_repository.create.assert_not_awaited()
 
 
+async def test_bid_near_deadline_extends_auction_and_decreases_count() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    manager = AsyncMock(spec=ConnectionManager)
+    now = datetime.now()
+    auction = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=9),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(minutes=4),
+        start_price=10000,
+        minimum_bid_unit=1000,
+        extension_count=2,
+    )
+    bid = SimpleNamespace(
+        amount=10000,
+        created_at=now,
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_amount.return_value = None
+    bid_repository.create.return_value = bid
+    service = AuctionService(auction_repository, bid_repository, manager)
+
+    original_ends_at = auction.ends_at
+    response = await service.place_bid(
+        AsyncMock(),
+        auction_id=3,
+        bidder_id=7,
+        amount=10000,
+    )
+
+    assert auction.ends_at == original_ends_at + timedelta(minutes=5)
+    assert auction.extension_count == 1
+    assert response.ends_at == auction.ends_at
+    assert response.remaining_extension_count == 1
+    manager.broadcast.assert_awaited_once_with(3, response)
+
+
+async def test_bid_outside_extension_window_keeps_deadline() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    manager = AsyncMock(spec=ConnectionManager)
+    now = datetime.now()
+    auction = SimpleNamespace(
+        id=3,
+        product=SimpleNamespace(seller_id=9),
+        status=AuctionStatus.ACTIVE,
+        starts_at=now - timedelta(hours=1),
+        ends_at=now + timedelta(minutes=6),
+        start_price=10000,
+        minimum_bid_unit=1000,
+        extension_count=2,
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_amount.return_value = None
+    bid_repository.create.return_value = SimpleNamespace(
+        amount=10000,
+        created_at=now,
+    )
+    service = AuctionService(auction_repository, bid_repository, manager)
+
+    original_ends_at = auction.ends_at
+    await service.place_bid(
+        AsyncMock(),
+        auction_id=3,
+        bidder_id=7,
+        amount=10000,
+    )
+
+    assert auction.ends_at == original_ends_at
+    assert auction.extension_count == 2
+
+
 async def test_bid_lookup_locks_auction_row() -> None:
     session = AsyncMock()
     result = MagicMock()

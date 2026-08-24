@@ -17,6 +17,8 @@ async def test_broadcast_removes_failed_socket_and_continues() -> None:
     message = AuctionBroadcastMessage(
         current_price=12000,
         next_bid_price=13000,
+        ends_at=now_kst_naive(),
+        remaining_extension_count=0,
         latest_bid=BidResponse(
             bidder_name="입*자",
             amount=12000,
