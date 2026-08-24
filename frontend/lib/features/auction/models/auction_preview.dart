@@ -66,6 +66,14 @@ class AuctionPreview {
   }
 }
 
+// 진행 중 경매 순서를 유지하고 종료·유찰·취소·거래 완료 경매를 하단에 배치
+List<AuctionPreview> auctionsWithEndedLast(Iterable<AuctionPreview> auctions) {
+  return [
+    ...auctions.where((auction) => !auction.isEnded),
+    ...auctions.where((auction) => auction.isEnded),
+  ];
+}
+
 String _formatPrice(int value) {
   final digits = value.toString();
   final buffer = StringBuffer();

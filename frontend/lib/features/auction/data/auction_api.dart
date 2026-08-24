@@ -97,9 +97,11 @@ class AuctionApi implements AuctionGateway {
   Future<List<AuctionPreview>> listAuctions() async {
     final json = await _client.get('/auctions');
     final items = json['items'] as List<dynamic>;
-    return items
-        .map((item) => AuctionPreview.fromJson(item as Map<String, dynamic>))
-        .toList();
+    return auctionsWithEndedLast(
+      items.map(
+        (item) => AuctionPreview.fromJson(item as Map<String, dynamic>),
+      ),
+    );
   }
 
   @override
