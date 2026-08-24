@@ -5,6 +5,8 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import '../features/main_navigation/pages/main_navigation_page.dart';
 import '../shared/theme/app_theme.dart';
 
+final appNavigatorKey = GlobalKey<NavigatorState>();
+
 const systemUiStyle = SystemUiOverlayStyle(
   statusBarColor: AppColors.transparent,
   statusBarIconBrightness: Brightness.dark,
@@ -23,6 +25,7 @@ class CarrotMarketApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: '당근마켓',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

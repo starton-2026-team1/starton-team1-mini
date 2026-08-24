@@ -6,12 +6,12 @@ import 'package:frontend/shared/widgets/app_snack_bar.dart';
 import 'package:frontend/shared/widgets/refreshable_empty_state.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
-import '../../auction/pages/auction_list_page.dart';
 import '../../auction/pages/auction_create_page.dart';
 import '../../auction/services/auction_draft_storage.dart';
 import '../../auction/widgets/auction_draft_dialog.dart';
 import '../data/combined_product_feed.dart';
 import '../models/product_category.dart';
+import '../models/product_feed_item.dart';
 import '../services/product_sell_draft_storage.dart';
 import 'product_sell_page.dart';
 import '../widgets/combined_product_list.dart';
@@ -38,7 +38,6 @@ class _ProductListPageState extends State<ProductListPage> {
   ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
-  int _auctionListVersion = 0;
 
   @override
   void initState() {
@@ -200,10 +199,6 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Widget _buildSelectedCategory() {
-    if (_selectedCategory == ProductCategory.auction) {
-      return AuctionListPage(key: ValueKey(_auctionListVersion));
-    }
-
     return FutureBuilder<CombinedProductFeedData>(
       future: _feedFuture,
       builder: (context, snapshot) {
@@ -219,6 +214,20 @@ class _ProductListPageState extends State<ProductListPage> {
         }
 
         final data = snapshot.data!;
+        if (_selectedCategory == ProductCategory.auction) {
+          if (data.auctions.isEmpty) {
+            return RefreshableEmptyState(
+              message: '등록된 경매가 없어요.',
+              onRefresh: _refreshFeed,
+            );
+          }
+          return CombinedProductList(
+            items: data.auctions.map(ProductFeedItem.auction).toList(),
+            onRefresh: _refreshFeed,
+            isLoadingMore: _isLoadingMoreAuctions,
+          );
+        }
+
         if (_selectedCategory == ProductCategory.all) {
           if (data.items.isEmpty) {
             return RefreshableEmptyState(
@@ -277,7 +286,6 @@ class _ProductListPageState extends State<ProductListPage> {
       setState(() {
         _feedData = data;
         _feedFuture = Future.value(data);
-        _auctionListVersion++;
       });
     } on ApiException catch (error) {
       if (mounted && generation == _requestGeneration) {
@@ -364,8 +372,11 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   bool _handleProductPagination(ScrollNotification notification) {
-    if (_selectedCategory == ProductCategory.auction ||
-        notification.metrics.extentAfter > 300) {
+    if (notification.metrics.extentAfter > 300) {
+      return false;
+    }
+    if (_selectedCategory == ProductCategory.auction) {
+      _loadMoreAuctions();
       return false;
     }
     _loadMoreProducts();
