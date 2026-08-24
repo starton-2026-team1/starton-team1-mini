@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app/carrot_market_app.dart';
+import 'features/auth/pages/session_gate_page.dart';
 import 'features/auth/pages/welcome_page.dart';
 import 'shared/network/api_client.dart';
 
@@ -21,5 +22,5 @@ void main() {
       _isHandlingSessionExpiry = false;
     }
   };
-  runApp(const CarrotMarketApp(home: WelcomePage()));
+  runApp(const CarrotMarketApp(home: SessionGatePage()));
 }

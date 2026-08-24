@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="67a4bc09-1a80-4b0d-a48f-eb4cb6276bf0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/lib/features/auth/services/auth_token_storage.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/features/auth/services/auth_token_storage.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/web/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/web/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/web/manifest.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/web/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/lib/main.dart" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
