@@ -1,19 +1,80 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 
 import '../models/auction_preview.dart';
 import '../models/auction_status.dart';
 
-class AuctionListItem extends StatelessWidget {
-  const AuctionListItem({required this.auction, this.onTap, super.key});
+class AuctionListItem extends StatefulWidget {
+  const AuctionListItem({
+    required this.auction,
+    this.onTap,
+    this.onEnded,
+    super.key,
+  });
 
   final AuctionPreview auction;
   final VoidCallback? onTap;
+  final VoidCallback? onEnded;
+
+  @override
+  State<AuctionListItem> createState() => _AuctionListItemState();
+}
+
+class _AuctionListItemState extends State<AuctionListItem> {
+  Timer? _timer;
+  late Duration _remainingTime;
+
+  AuctionPreview get auction => widget.auction;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant AuctionListItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.auction.id != widget.auction.id ||
+        oldWidget.auction.remainingTime != widget.auction.remainingTime ||
+        oldWidget.auction.status != widget.auction.status) {
+      _resetTimer();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _resetTimer() {
+    _timer?.cancel();
+    _remainingTime = auction.remainingTime;
+    if (!auction.status.hasRunningTimer || _remainingTime <= Duration.zero) {
+      return;
+    }
+
+    // 메인 및 경매 목록 카드의 남은 시간 1초 단위 갱신
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_remainingTime > const Duration(seconds: 1)) {
+        setState(() => _remainingTime -= const Duration(seconds: 1));
+        return;
+      }
+
+      timer.cancel();
+      setState(() => _remainingTime = Duration.zero);
+      widget.onEnded?.call();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: SizedBox(
         height: 170,
         child: Padding(
@@ -84,7 +145,7 @@ class AuctionListItem extends StatelessWidget {
                           const SizedBox(width: 3),
                           Flexible(
                             child: Text(
-                              '${_remainingTime(auction)} · 입찰 ${auction.bidCount}',
+                              '${auctionRemainingTimeLabel(auction.status, _remainingTime)} · 입찰 ${auction.bidCount}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -124,27 +185,28 @@ class AuctionListItem extends StatelessWidget {
     return '현재가 $price';
   }
 
-  String _remainingTime(AuctionPreview auction) {
-    if (!auction.status.hasRunningTimer) return auction.status.label;
-    if (auction.remainingTime <= Duration.zero) return '경매 종료';
-
-    final hours = auction.remainingTime.inHours.toString().padLeft(2, '0');
-    final minutes = auction.remainingTime.inMinutes
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    final seconds = auction.remainingTime.inSeconds
-        .remainder(60)
-        .toString()
-        .padLeft(2, '0');
-    return '$hours:$minutes:$seconds';
-  }
-
   Color _accentColor(AuctionStatus status) {
     return !status.hasRunningTimer
         ? AppColors.textSecondary
         : AppColors.auction;
   }
+}
+
+String auctionRemainingTimeLabel(AuctionStatus status, Duration remainingTime) {
+  if (!status.hasRunningTimer) return status.label;
+  if (remainingTime <= Duration.zero) return '경매 종료';
+
+  final days = remainingTime.inDays;
+  final hours = remainingTime.inHours.remainder(24);
+  final minutes = remainingTime.inMinutes.remainder(60);
+  final seconds = remainingTime.inSeconds.remainder(60);
+  if (days > 0) {
+    return '$days일 $hours시간 $minutes분 $seconds초';
+  }
+
+  return '${remainingTime.inHours.toString().padLeft(2, '0')}:'
+      '${minutes.toString().padLeft(2, '0')}:'
+      '${seconds.toString().padLeft(2, '0')}';
 }
 
 class _AuctionImage extends StatelessWidget {
