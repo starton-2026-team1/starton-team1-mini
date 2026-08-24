@@ -35,6 +35,23 @@ class BidRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_highest_bid(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+    ) -> Bid | None:
+        result = await session.execute(
+            select(Bid)
+            .where(Bid.auction_id == auction_id)
+            .order_by(
+                Bid.amount.desc(),
+                Bid.created_at.asc(),
+                Bid.id.asc(),
+            )
+            .limit(1),
+        )
+        return result.scalar_one_or_none()
+
     # 여러 경매의 입찰수/최고가를 한 번의 쿼리로 집계 (목록 화면에서 N+1 방지용)
     async def get_stats(
         self,
