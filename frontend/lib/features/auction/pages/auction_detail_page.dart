@@ -45,6 +45,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   WebSocketChannel? _channel;
   StreamSubscription<dynamic>? _socketSubscription;
   Timer? _socketReconnectTimer;
+  bool _hasConnectedSocketOnce = false;
 
   @override
   void initState() {
@@ -153,8 +154,29 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
         onDone: _scheduleSocketReconnect,
         cancelOnError: true,
       );
+      // 재연결 시 끊긴 동안 놓친 입찰 내역을 REST로 다시 동기화
+      if (_hasConnectedSocketOnce) {
+        unawaited(_resyncAfterReconnect());
+      }
+      _hasConnectedSocketOnce = true;
     } catch (_) {
       _scheduleSocketReconnect();
+    }
+  }
+
+  Future<void> _resyncAfterReconnect() async {
+    try {
+      final auction = await _auctionApi.getAuctionDetail(widget.auctionId);
+      if (!mounted) return;
+      setState(() {
+        _auction = auction;
+        _bids = auction.bids;
+        _currentPrice = auction.currentPrice;
+        _remainingTime = auction.remainingTime;
+      });
+      _startStatusTimer(auction);
+    } catch (_) {
+      // 재동기화 실패 시 기존 상태를 유지하고 다음 실시간 메시지를 기다림
     }
   }
 
@@ -174,25 +196,32 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
       final json = jsonDecode(raw as String) as Map<String, dynamic>;
       final update = AuctionUpdateMessage.fromJson(json);
       if (!mounted) return;
-      final updatedRemainingTime = update.endsAt.difference(DateTime.now());
-      final wasExtended =
-          updatedRemainingTime > _remainingTime + const Duration(minutes: 1);
-      setState(() {
-        _currentPrice = update.currentPrice;
-        _bids = [update.latestBid, ..._bids];
-        _remainingTime = updatedRemainingTime.isNegative
-            ? Duration.zero
-            : updatedRemainingTime;
-      });
-      if (wasExtended) {
-        showAppSnackBar(
-          context,
-          '마감 시간이 5분 연장됐어요. '
-          '(남은 자동 연장 ${update.remainingExtensionCount}회)',
-        );
-      }
+      _applyUpdate(update);
     } catch (_) {
       // 잘못된 실시간 메시지는 화면 상태 변경 없이 무시
+    }
+  }
+
+  // REST 응답과 웹소켓 메시지가 같은 갱신을 함께 처리하는 공통 반영 로직.
+  // 이미 반영된 최고가와 동일하면(자신이 REST로 먼저 반영한 입찰) 내역을 중복 추가하지 않는다.
+  void _applyUpdate(AuctionUpdateMessage update) {
+    final updatedRemainingTime = update.endsAt.difference(DateTime.now());
+    final wasExtended =
+        updatedRemainingTime > _remainingTime + const Duration(minutes: 1);
+    final alreadyApplied = update.currentPrice == _currentPrice;
+    setState(() {
+      _currentPrice = update.currentPrice;
+      if (!alreadyApplied) _bids = [update.latestBid, ..._bids];
+      _remainingTime = updatedRemainingTime.isNegative
+          ? Duration.zero
+          : updatedRemainingTime;
+    });
+    if (wasExtended) {
+      showAppSnackBar(
+        context,
+        '마감 시간이 5분 연장됐어요. '
+        '(남은 자동 연장 ${update.remainingExtensionCount}회)',
+      );
     }
   }
 
@@ -482,7 +511,9 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     if (_isBidding) return;
     setState(() => _isBidding = true);
     try {
-      await _auctionApi.placeBid(widget.auctionId, amount);
+      final update = await _auctionApi.placeBid(widget.auctionId, amount);
+      // 웹소켓 메시지를 기다리지 않고 REST 응답으로 즉시 화면에 반영
+      if (mounted) _applyUpdate(update);
     } on ApiException catch (error) {
       if (mounted) showAppSnackBar(context, error.message);
     } finally {
