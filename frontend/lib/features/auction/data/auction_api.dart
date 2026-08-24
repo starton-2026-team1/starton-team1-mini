@@ -1,5 +1,6 @@
 import 'package:frontend/features/auction/models/auction_create_form.dart';
 import 'package:frontend/features/auction/models/auction_detail.dart';
+import 'package:frontend/features/auction/models/auction_page.dart';
 import 'package:frontend/features/auction/models/auction_preview.dart';
 import 'package:frontend/features/auction/models/auction_update_message.dart';
 import 'package:frontend/features/auth/services/auth_token_storage.dart';
@@ -12,7 +13,7 @@ abstract interface class AuctionGateway {
 
   Future<int> createAuction(AuctionCreateForm form);
 
-  Future<List<AuctionPreview>> listAuctions();
+  Future<AuctionPage> listAuctions({int offset = 0, int limit = 20});
 
   Future<AuctionDetail> getAuctionDetail(int auctionId);
 
@@ -94,13 +95,18 @@ class AuctionApi implements AuctionGateway {
   }
 
   @override
-  Future<List<AuctionPreview>> listAuctions() async {
-    final json = await _client.get('/auctions');
-    final items = json['items'] as List<dynamic>;
-    return auctionsWithEndedLast(
-      items.map(
-        (item) => AuctionPreview.fromJson(item as Map<String, dynamic>),
+  Future<AuctionPage> listAuctions({int offset = 0, int limit = 20}) async {
+    final json = await _client.get('/auctions?offset=$offset&limit=$limit');
+    final rawItems = json['items'] as List<dynamic>;
+    return AuctionPage(
+      items: auctionsWithEndedLast(
+        rawItems.map(
+          (item) => AuctionPreview.fromJson(item as Map<String, dynamic>),
+        ),
       ),
+      total: (json['total'] as num?)?.toInt() ?? rawItems.length,
+      nextOffset:
+          ((json['offset'] as num?)?.toInt() ?? offset) + rawItems.length,
     );
   }
 
