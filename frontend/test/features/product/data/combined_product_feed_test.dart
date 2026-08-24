@@ -9,11 +9,26 @@ void main() {
     final feed = await api.load();
 
     expect(feed.products.single.id, 41);
+    expect(feed.productTotal, 2);
+    expect(feed.nextProductOffset, 1);
+    expect(feed.hasMoreProducts, isTrue);
     expect(feed.auctions, hasLength(2));
     expect(feed.items, hasLength(3));
     expect(feed.items.first.auction?.id, 12);
     expect(feed.items[1].product?.id, 41);
     expect(feed.items.last.auction?.id, 13);
+  });
+
+  test('다음 일반 상품 페이지를 기존 목록에 중복 없이 추가한다', () async {
+    final api = CombinedProductFeedApi(_FakeApiClient());
+    final feed = await api.load();
+
+    final nextPage = await api.loadProducts(offset: feed.nextProductOffset);
+    final updated = feed.appendProducts(nextPage);
+
+    expect(updated.products.map((product) => product.id), [41, 42]);
+    expect(updated.nextProductOffset, 3);
+    expect(updated.hasMoreProducts, isFalse);
   });
 }
 
@@ -23,7 +38,7 @@ class _FakeApiClient extends ApiClient {
     String path, {
     Map<String, String>? headers,
   }) async {
-    if (path == '/products') {
+    if (path == '/products?offset=0&limit=20') {
       return {
         'items': [
           {
@@ -34,6 +49,32 @@ class _FakeApiClient extends ApiClient {
             'fixed_price': {'price': 12000},
           },
         ],
+        'total': 2,
+        'offset': 0,
+        'limit': 20,
+      };
+    }
+    if (path == '/products?offset=1&limit=20') {
+      return {
+        'items': [
+          {
+            'id': 41,
+            'title': '중복 상품',
+            'description': '중복 확인용',
+            'created_at': DateTime.now().toIso8601String(),
+            'fixed_price': {'price': 12000},
+          },
+          {
+            'id': 42,
+            'title': '다음 상품',
+            'description': '다음 페이지 상품',
+            'created_at': DateTime.now().toIso8601String(),
+            'fixed_price': {'price': 15000},
+          },
+        ],
+        'total': 3,
+        'offset': 1,
+        'limit': 20,
       };
     }
     if (path == '/auctions') {

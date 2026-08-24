@@ -11,11 +11,13 @@ class CombinedProductList extends StatelessWidget {
   const CombinedProductList({
     required this.items,
     required this.onRefresh,
+    this.isLoadingMore = false,
     super.key,
   });
 
   final List<ProductFeedItem> items;
   final RefreshCallback onRefresh;
+  final bool isLoadingMore;
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +26,16 @@ class CombinedProductList extends StatelessWidget {
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: items.length,
+        itemCount: items.length + (isLoadingMore ? 1 : 0),
         separatorBuilder: (_, _) =>
             const Divider(height: 1, color: AppColors.borderSubtle),
         itemBuilder: (context, index) {
+          if (index == items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(20),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
           final item = items[index];
           if (item.isAuction) {
             return AuctionListItem(

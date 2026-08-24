@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_exception.dart';
+import 'package:frontend/shared/widgets/app_snack_bar.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
@@ -28,6 +29,8 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   final _feedApi = CombinedProductFeedApi(ApiClient());
   late Future<CombinedProductFeedData> _feedFuture;
+  CombinedProductFeedData? _feedData;
+  bool _isLoadingMoreProducts = false;
   ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
@@ -36,7 +39,7 @@ class _ProductListPageState extends State<ProductListPage> {
   @override
   void initState() {
     super.initState();
-    _feedFuture = _feedApi.load();
+    _feedFuture = _loadInitialFeed();
   }
 
   @override
@@ -66,7 +69,10 @@ class _ProductListPageState extends State<ProductListPage> {
               Expanded(
                 child: NotificationListener<UserScrollNotification>(
                   onNotification: _handleScrollDirection,
-                  child: _buildSelectedCategory(),
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: _handleProductPagination,
+                    child: _buildSelectedCategory(),
+                  ),
                 ),
               ),
             ],
@@ -216,6 +222,7 @@ class _ProductListPageState extends State<ProductListPage> {
           return CombinedProductList(
             items: data.items,
             onRefresh: _refreshFeed,
+            isLoadingMore: _isLoadingMoreProducts,
           );
         }
 
@@ -231,10 +238,16 @@ class _ProductListPageState extends State<ProductListPage> {
           child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: products.length,
+            itemCount: products.length + (_isLoadingMoreProducts ? 1 : 0),
             separatorBuilder: (_, _) =>
                 const Divider(height: 1, color: AppColors.borderSubtle),
             itemBuilder: (context, index) {
+              if (index == products.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
               return ProductListItem(product: products[index]);
             },
           ),
@@ -244,12 +257,57 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _refreshFeed() async {
-    final future = _feedApi.load();
+    _feedData = null;
+    _isLoadingMoreProducts = false;
+    final future = _loadInitialFeed();
     setState(() {
       _feedFuture = future;
       _auctionListVersion++;
     });
     await future;
+  }
+
+  Future<CombinedProductFeedData> _loadInitialFeed() async {
+    final data = await _feedApi.load();
+    _feedData = data;
+    return data;
+  }
+
+  Future<void> _loadMoreProducts() async {
+    final currentData = _feedData;
+    if (currentData == null ||
+        !currentData.hasMoreProducts ||
+        _isLoadingMoreProducts) {
+      return;
+    }
+
+    setState(() => _isLoadingMoreProducts = true);
+    try {
+      final page = await _feedApi.loadProducts(
+        offset: currentData.nextProductOffset,
+      );
+      if (!mounted || _feedData != currentData) return;
+      final updatedData = currentData.appendProducts(page);
+      setState(() {
+        _feedData = updatedData;
+        _feedFuture = Future.value(updatedData);
+      });
+    } on ApiException catch (error) {
+      if (mounted) showAppSnackBar(context, error.message);
+    } catch (_) {
+      if (mounted) showAppSnackBar(context, '다음 상품을 불러오지 못했어요.');
+    } finally {
+      if (mounted) setState(() => _isLoadingMoreProducts = false);
+    }
+  }
+
+  bool _handleProductPagination(ScrollNotification notification) {
+    if (_selectedCategory == ProductCategory.auction ||
+        notification.metrics.extentAfter > 300) {
+      return false;
+    }
+    _loadMoreProducts();
+    return false;
   }
 
   bool _handleScrollDirection(UserScrollNotification notification) {
