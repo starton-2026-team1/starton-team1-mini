@@ -316,7 +316,7 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     if (!mounted) return;
     _controller.markSaved();
     _showMessage('경매 글 작성이 완료됐어요.');
-    _popPage();
+    _popPage(created: true);
   }
 
   Future<void> _saveDraft() async {
@@ -363,10 +363,10 @@ class _AuctionCreatePageState extends State<AuctionCreatePage> {
     );
   }
 
-  void _popPage() {
+  void _popPage({bool created = false}) {
     setState(() => _canPop = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, created ? true : null);
     });
   }
 

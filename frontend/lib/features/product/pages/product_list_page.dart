@@ -31,6 +31,7 @@ class _ProductListPageState extends State<ProductListPage> {
   ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
+  int _auctionListVersion = 0;
 
   @override
   void initState() {
@@ -154,10 +155,10 @@ class _ProductListPageState extends State<ProductListPage> {
         }
       }
 
-      await Navigator.of(
-        context,
-      ).push<void>(MaterialPageRoute(builder: (_) => const ProductSellPage()));
-      await _refreshFeed();
+      final createdProduct = await Navigator.of(context).push<Object?>(
+        MaterialPageRoute(builder: (_) => const ProductSellPage()),
+      );
+      if (createdProduct != null) await _refreshFeed();
       return;
     }
 
@@ -181,16 +182,16 @@ class _ProductListPageState extends State<ProductListPage> {
         }
       }
 
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => const AuctionCreatePage()),
+      final createdAuction = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(builder: (_) => const AuctionCreatePage()),
       );
-      await _refreshFeed();
+      if (createdAuction ?? false) await _refreshFeed();
     }
   }
 
   Widget _buildSelectedCategory() {
     if (_selectedCategory == ProductCategory.auction) {
-      return const AuctionListPage();
+      return AuctionListPage(key: ValueKey(_auctionListVersion));
     }
 
     return FutureBuilder<CombinedProductFeedData>(
@@ -244,7 +245,10 @@ class _ProductListPageState extends State<ProductListPage> {
 
   Future<void> _refreshFeed() async {
     final future = _feedApi.load();
-    setState(() => _feedFuture = future);
+    setState(() {
+      _feedFuture = future;
+      _auctionListVersion++;
+    });
     await future;
   }
 
