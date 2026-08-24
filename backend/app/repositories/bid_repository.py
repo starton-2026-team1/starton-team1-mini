@@ -1,6 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.time import now_kst_naive
 from app.models.bid import Bid
 from app.models.user import User
 
@@ -17,11 +18,11 @@ class BidRepository:
             auction_id=auction_id,
             bidder_id=bidder_id,
             amount=amount,
+            # DB 서버 시간대와 무관하게 경매 시간과 동일한 KST naive 값으로 저장
+            created_at=now_kst_naive(),
         )
         session.add(bid)
         await session.flush()
-        # created_at은 서버 기본값이라 flush 직후엔 비어있음 -> 바로 읽으려면 refresh 필요
-        await session.refresh(bid, attribute_names=["created_at"])
         return bid
 
     # 현재가 계산용 (입찰이 없으면 None -> 시작가를 현재가로 사용)

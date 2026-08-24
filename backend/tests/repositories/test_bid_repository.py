@@ -1,4 +1,6 @@
 from collections.abc import AsyncIterator
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import text
@@ -73,3 +75,27 @@ async def test_get_highest_bid_returns_none_without_bids(session: AsyncSession) 
     bid = await BidRepository().get_highest_bid(session, auction_id=99)
 
     assert bid is None
+
+
+async def test_create_uses_application_kst_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    expected_created_at = datetime(2026, 8, 24, 18, 30)
+    monkeypatch.setattr(
+        "app.repositories.bid_repository.now_kst_naive",
+        lambda: expected_created_at,
+    )
+    session = MagicMock(spec=AsyncSession)
+    session.flush = AsyncMock()
+
+    bid = await BidRepository().create(
+        session,
+        auction_id=3,
+        bidder_id=7,
+        amount=15000,
+    )
+
+    assert bid.created_at == expected_created_at
+    session.add.assert_called_once_with(bid)
+    session.flush.assert_awaited_once()
+    session.refresh.assert_not_called()
