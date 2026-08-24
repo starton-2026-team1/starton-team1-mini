@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.time import now_kst_naive
 from app.models.auction import Auction
@@ -78,14 +78,14 @@ class AuctionRepository:
             select(Auction)
             .where(*filters)
             .options(
-                selectinload(Auction.product).selectinload(Product.images),
-                selectinload(Auction.product).selectinload(Product.category),
+                joinedload(Auction.product).joinedload(Product.images),
+                joinedload(Auction.product).joinedload(Product.category),
             )
             .order_by(Auction.ends_at.asc())
             .offset(offset)
             .limit(limit),
         )
-        auctions = list(result.scalars().all())
+        auctions = list(result.unique().scalars().all())
 
         total_result = await session.execute(
             select(func.count(Auction.id)).where(*filters),

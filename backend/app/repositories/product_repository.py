@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models.auction import Auction
 from app.models.enums import ProductStatus, SaleType
@@ -135,9 +135,9 @@ class ProductRepository:
             select(Product)
             .where(*filters)
             .options(
-                selectinload(Product.fixed_price),
-                selectinload(Product.seller),
-                selectinload(Product.images),
+                joinedload(Product.fixed_price),
+                joinedload(Product.seller),
+                joinedload(Product.images),
             )
             .order_by(
                 Product.created_at.desc(),
@@ -153,7 +153,7 @@ class ProductRepository:
         )
 
         return (
-            list(products_result.scalars().all()),
+            list(products_result.unique().scalars().all()),
             int(total_result.scalar_one()),
         )
 
