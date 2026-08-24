@@ -4,6 +4,7 @@ import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_exception.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
+import 'package:frontend/shared/widgets/refreshable_empty_state.dart';
 
 import '../data/auction_api.dart';
 import '../models/auction_preview.dart';
@@ -25,6 +26,8 @@ class _AuctionListPageState extends State<AuctionListPage> {
   late Future<AuctionPage> _auctionsFuture;
   AuctionPage? _auctionPage;
   bool _isLoadingMore = false;
+  bool _isRefreshing = false;
+  int _requestGeneration = 0;
 
   @override
   void initState() {
@@ -35,29 +38,56 @@ class _AuctionListPageState extends State<AuctionListPage> {
   }
 
   Future<void> _refresh() async {
-    _auctionPage = null;
+    final generation = ++_requestGeneration;
     _isLoadingMore = false;
-    final future = _loadInitial();
-    setState(() => _auctionsFuture = future);
-    await future;
+    _isRefreshing = true;
+    try {
+      final page = await _auctionGateway.listAuctions();
+      if (!mounted || generation != _requestGeneration) return;
+      setState(() {
+        _auctionPage = page;
+        _auctionsFuture = Future.value(page);
+      });
+    } on ApiException catch (error) {
+      if (mounted && generation == _requestGeneration) {
+        showAppSnackBar(context, error.message);
+      }
+    } catch (_) {
+      if (mounted && generation == _requestGeneration) {
+        showAppSnackBar(context, '새로고침하지 못했어요.');
+      }
+    } finally {
+      if (generation == _requestGeneration) _isRefreshing = false;
+    }
   }
 
   Future<AuctionPage> _loadInitial() async {
+    final generation = ++_requestGeneration;
     final page = await _auctionGateway.listAuctions();
-    _auctionPage = page;
+    if (generation == _requestGeneration) _auctionPage = page;
     return page;
   }
 
   Future<void> _loadMore() async {
     final currentPage = _auctionPage;
-    if (currentPage == null || !currentPage.hasMore || _isLoadingMore) return;
+    if (currentPage == null ||
+        !currentPage.hasMore ||
+        _isLoadingMore ||
+        _isRefreshing) {
+      return;
+    }
 
     setState(() => _isLoadingMore = true);
+    final generation = _requestGeneration;
     try {
       final nextPage = await _auctionGateway.listAuctions(
         offset: currentPage.nextOffset,
       );
-      if (!mounted || _auctionPage != currentPage) return;
+      if (!mounted ||
+          generation != _requestGeneration ||
+          _auctionPage != currentPage) {
+        return;
+      }
       final updatedPage = currentPage.append(nextPage);
       setState(() {
         _auctionPage = updatedPage;
@@ -95,11 +125,10 @@ class _AuctionListPageState extends State<AuctionListPage> {
 
         final auctions = snapshot.data?.items ?? const <AuctionPreview>[];
         if (auctions.isEmpty) {
-          return const Center(
-            child: Text(
-              '등록된 경매가 없어요.',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+          return RefreshableEmptyState(
+            message: '등록된 경매가 없어요.',
+            onRefresh: _refresh,
+            textStyle: const TextStyle(color: AppColors.textSecondary),
           );
         }
 
@@ -108,6 +137,7 @@ class _AuctionListPageState extends State<AuctionListPage> {
           child: RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: auctions.length + (_isLoadingMore ? 1 : 0),
               separatorBuilder: (_, _) =>

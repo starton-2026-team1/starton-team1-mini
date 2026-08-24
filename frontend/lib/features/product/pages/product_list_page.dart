@@ -3,6 +3,7 @@ import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/network/api_client.dart';
 import 'package:frontend/shared/network/api_exception.dart';
 import 'package:frontend/shared/widgets/app_snack_bar.dart';
+import 'package:frontend/shared/widgets/refreshable_empty_state.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 
 import '../../auction/pages/auction_list_page.dart';
@@ -31,6 +32,8 @@ class _ProductListPageState extends State<ProductListPage> {
   late Future<CombinedProductFeedData> _feedFuture;
   CombinedProductFeedData? _feedData;
   bool _isLoadingMoreProducts = false;
+  bool _isRefreshing = false;
+  int _requestGeneration = 0;
   ProductCategory _selectedCategory = ProductCategory.all;
   bool _isCreateMenuOpen = false;
   bool _isTopMenuVisible = true;
@@ -217,7 +220,10 @@ class _ProductListPageState extends State<ProductListPage> {
         final data = snapshot.data!;
         if (_selectedCategory == ProductCategory.all) {
           if (data.items.isEmpty) {
-            return const Center(child: Text('등록된 상품이 없어요.'));
+            return RefreshableEmptyState(
+              message: '등록된 상품이 없어요.',
+              onRefresh: _refreshFeed,
+            );
           }
           return CombinedProductList(
             items: data.items,
@@ -230,7 +236,10 @@ class _ProductListPageState extends State<ProductListPage> {
             .where((product) => product.category == _selectedCategory)
             .toList();
         if (products.isEmpty) {
-          return const Center(child: Text('등록된 상품이 없어요.'));
+          return RefreshableEmptyState(
+            message: '등록된 상품이 없어요.',
+            onRefresh: _refreshFeed,
+          );
         }
 
         return RefreshIndicator(
@@ -257,19 +266,34 @@ class _ProductListPageState extends State<ProductListPage> {
   }
 
   Future<void> _refreshFeed() async {
-    _feedData = null;
+    final generation = ++_requestGeneration;
     _isLoadingMoreProducts = false;
-    final future = _loadInitialFeed();
-    setState(() {
-      _feedFuture = future;
-      _auctionListVersion++;
-    });
-    await future;
+    _isRefreshing = true;
+    try {
+      final data = await _feedApi.load();
+      if (!mounted || generation != _requestGeneration) return;
+      setState(() {
+        _feedData = data;
+        _feedFuture = Future.value(data);
+        _auctionListVersion++;
+      });
+    } on ApiException catch (error) {
+      if (mounted && generation == _requestGeneration) {
+        showAppSnackBar(context, error.message);
+      }
+    } catch (_) {
+      if (mounted && generation == _requestGeneration) {
+        showAppSnackBar(context, '새로고침하지 못했어요.');
+      }
+    } finally {
+      if (generation == _requestGeneration) _isRefreshing = false;
+    }
   }
 
   Future<CombinedProductFeedData> _loadInitialFeed() async {
+    final generation = ++_requestGeneration;
     final data = await _feedApi.load();
-    _feedData = data;
+    if (generation == _requestGeneration) _feedData = data;
     return data;
   }
 
@@ -277,16 +301,22 @@ class _ProductListPageState extends State<ProductListPage> {
     final currentData = _feedData;
     if (currentData == null ||
         !currentData.hasMoreProducts ||
-        _isLoadingMoreProducts) {
+        _isLoadingMoreProducts ||
+        _isRefreshing) {
       return;
     }
 
     setState(() => _isLoadingMoreProducts = true);
+    final generation = _requestGeneration;
     try {
       final page = await _feedApi.loadProducts(
         offset: currentData.nextProductOffset,
       );
-      if (!mounted || _feedData != currentData) return;
+      if (!mounted ||
+          generation != _requestGeneration ||
+          _feedData != currentData) {
+        return;
+      }
       final updatedData = currentData.appendProducts(page);
       setState(() {
         _feedData = updatedData;
