@@ -37,8 +37,9 @@ class ProductRepository:
         await session.flush()
         # created_at/updated_at은 서버 기본값이라 flush 직후엔 비어있음 -> 응답 조립 전에 채워둠
         await session.refresh(
-            product, 
-            attribute_names=["created_at", "updated_at"])
+            product,
+            attribute_names=["created_at", "updated_at", "seller", "images"],
+        )
 
         return product
 
@@ -134,7 +135,9 @@ class ProductRepository:
             select(Product)
             .where(*filters)
             .options(
-                selectinload(Product.fixed_price)
+                selectinload(Product.fixed_price),
+                selectinload(Product.seller),
+                selectinload(Product.images),
             )
             .order_by(
                 Product.created_at.desc(),
@@ -192,7 +195,9 @@ class ProductRepository:
             select(Product)
             .where(Product.id == product_id)
             .options(
-                selectinload(Product.fixed_price)
+                selectinload(Product.fixed_price),
+                selectinload(Product.seller),
+                selectinload(Product.images),
             ),
         )
 

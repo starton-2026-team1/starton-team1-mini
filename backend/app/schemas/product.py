@@ -2,7 +2,15 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    AliasPath,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    computed_field,
+    model_validator,
+)
 
 from app.models.enums import AuctionStatus, ProductStatus, SaleType
 
@@ -55,6 +63,12 @@ class FixedPriceResponse(BaseModel):
     price: int = Field(gt=0)
 
 
+class ProductImageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    image_url: str
+
+
 class ProductResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -71,6 +85,13 @@ class ProductResponse(BaseModel):
 
 class ProductDetailResponse(ProductResponse):
     fixed_price: FixedPriceResponse
+    seller_name: str = Field(validation_alias=AliasPath("seller", "name"))
+    images: list[ProductImageResponse] = Field(exclude=True)
+
+    @computed_field
+    @property
+    def image_urls(self) -> list[str]:
+        return [image.image_url for image in self.images]
 
 
 class ProductCreateResponse(ProductDetailResponse):
