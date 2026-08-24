@@ -48,7 +48,17 @@ class ProductDetailPage extends StatelessWidget {
                           Container(
                             color: const Color(0xFFF2F3F5),
 
-                            child: product.imageAsset == null
+                            child: product.primaryImageUrl != null
+                                ? Image.network(
+                                    product.primaryImageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 80,
+                                      color: Color(0xFFD2D3D7),
+                                    ),
+                                  )
+                                : product.imageAsset == null
                                 ? const Icon(
                                     Icons.image_outlined,
                                     size: 80,
@@ -144,12 +154,10 @@ class ProductDetailPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
 
                               children: [
-                                // 임시 판매자 이름
-                                // 나중에 DB/API 데이터로 변경
-                                const Text(
-                                  '구름베리',
+                                Text(
+                                  product.sellerName,
 
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),

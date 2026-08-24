@@ -99,7 +99,17 @@ class _ProductImage extends StatelessWidget {
         border: Border.all(color: AppColors.borderLight),
       ),
       clipBehavior: Clip.antiAlias,
-      child: product.imageAsset == null
+      child: product.primaryImageUrl != null
+          ? Image.network(
+              product.primaryImageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const Icon(
+                Icons.broken_image_outlined,
+                color: AppColors.iconDisabled,
+                size: 54,
+              ),
+            )
+          : product.imageAsset == null
           ? Icon(
               product.isPartTimeJob ? Icons.person : Icons.image_search,
               color: AppColors.iconDisabled,

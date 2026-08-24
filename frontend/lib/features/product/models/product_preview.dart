@@ -1,3 +1,5 @@
+import 'package:frontend/shared/network/api_config.dart';
+
 import 'product_category.dart';
 
 class ProductPreview {
@@ -9,6 +11,8 @@ class ProductPreview {
     required this.time,
     required this.price,
     this.description,
+    this.sellerName = '판매자',
+    this.imageUrls = const [],
     this.favoriteCount = 0,
     this.chatCount = 0,
     this.isPartTimeJob = false,
@@ -23,11 +27,15 @@ class ProductPreview {
   final String time;
   final String price;
   final String? description;
+  final String sellerName;
+  final List<String> imageUrls;
   final int favoriteCount;
   final int chatCount;
   final bool isPartTimeJob;
   final bool isNeighborhoodBusiness;
   final String? imageAsset;
+
+  String? get primaryImageUrl => imageUrls.isEmpty ? null : imageUrls.first;
 
   // 일반 상품 목록 API 응답을 기존 카드 표시 모델로 변환한다.
   factory ProductPreview.fromJson(Map<String, dynamic> json, {DateTime? now}) {
@@ -39,11 +47,21 @@ class ProductPreview {
       category: ProductCategory.used,
       title: json['title'] as String,
       description: json['description'] as String?,
+      sellerName: json['seller_name'] as String? ?? '판매자',
+      imageUrls: (json['image_urls'] as List<dynamic>? ?? const [])
+          .map((path) => _resolveImageUrl(path as String))
+          .toList(),
       location: '전국',
       time: _elapsedTimeLabel(createdAt, currentTime),
       price: _formatPrice((fixedPrice['price'] as num).toInt()),
     );
   }
+}
+
+String _resolveImageUrl(String path) {
+  final uri = Uri.tryParse(path);
+  if (uri != null && uri.hasScheme) return path;
+  return '${ApiConfig.mediaBaseUrl}${path.startsWith('/') ? '' : '/'}$path';
 }
 
 String _elapsedTimeLabel(DateTime createdAt, DateTime now) {

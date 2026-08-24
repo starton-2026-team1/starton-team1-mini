@@ -158,6 +158,7 @@ class _SalesManagementPageState extends State<SalesManagementPage> {
       location: item.location,
       time: item.timeLabel,
       price: '${_formatPrice(item.price)}원',
+      imageUrls: item.imageUrl == null ? const [] : [item.imageUrl!],
     );
   }
 
