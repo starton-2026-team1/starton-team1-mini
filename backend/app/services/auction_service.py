@@ -136,6 +136,32 @@ class AuctionService:
         await session.flush()
         return AuctionStatusResponse(id=auction.id, status=auction.status)
 
+    async def finalize_auction(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+
+        if auction.status in _FINALIZED_STATUSES:
+            return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+        if now_kst_naive() < auction.ends_at:
+            raise AuctionStateError("아직 종료되지 않은 경매입니다.")
+
+        highest_bid = await self.bid_repository.get_highest_bid(session, auction_id)
+        if highest_bid is None:
+            auction.status = AuctionStatus.NO_BIDS
+            auction.winner_id = None
+        else:
+            auction.status = AuctionStatus.COMPLETED
+            auction.winner_id = highest_bid.bidder_id
+
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
     async def complete_trade(
         self,
         session: AsyncSession,
@@ -261,6 +287,14 @@ class AuctionService:
 _TERMINAL_STATUSES = {
     AuctionStatus.CANCELLED,
     AuctionStatus.NO_BIDS,
+    AuctionStatus.TRADE_COMPLETED,
+}
+
+
+_FINALIZED_STATUSES = {
+    AuctionStatus.COMPLETED,
+    AuctionStatus.NO_BIDS,
+    AuctionStatus.CANCELLED,
     AuctionStatus.TRADE_COMPLETED,
 }
 

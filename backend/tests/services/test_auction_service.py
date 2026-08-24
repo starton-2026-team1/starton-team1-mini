@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.core.exceptions import (
+    AuctionNotFoundError,
     AuctionPermissionError,
     AuctionStateError,
     BidAmountError,
@@ -202,6 +203,115 @@ async def test_auction_with_bid_cannot_be_cancelled() -> None:
         await service.cancel_auction(session, auction_id=3, seller_id=7)
 
     session.flush.assert_not_awaited()
+
+
+async def test_finalize_auction_stores_highest_bidder_as_winner() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction = SimpleNamespace(
+        id=3,
+        status=AuctionStatus.ACTIVE,
+        ends_at=datetime.now() - timedelta(minutes=1),
+        winner_id=None,
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_bid.return_value = SimpleNamespace(bidder_id=8)
+    session = AsyncMock()
+
+    response = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).finalize_auction(session, auction_id=3)
+
+    assert response.status == AuctionStatus.COMPLETED
+    assert auction.status == AuctionStatus.COMPLETED
+    assert auction.winner_id == 8
+    session.flush.assert_awaited_once()
+
+
+async def test_finalize_auction_without_bids_stores_no_bids() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction = SimpleNamespace(
+        id=3,
+        status=AuctionStatus.ACTIVE,
+        ends_at=datetime.now() - timedelta(minutes=1),
+        winner_id=None,
+    )
+    auction_repository.get_by_id.return_value = auction
+    bid_repository.get_highest_bid.return_value = None
+    session = AsyncMock()
+
+    response = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).finalize_auction(session, auction_id=3)
+
+    assert response.status == AuctionStatus.NO_BIDS
+    assert auction.status == AuctionStatus.NO_BIDS
+    assert auction.winner_id is None
+    session.flush.assert_awaited_once()
+
+
+async def test_finalize_auction_rejects_before_end() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction_repository.get_by_id.return_value = SimpleNamespace(
+        id=3,
+        status=AuctionStatus.ACTIVE,
+        ends_at=datetime.now() + timedelta(minutes=1),
+        winner_id=None,
+    )
+    session = AsyncMock()
+    service = AuctionService(auction_repository, bid_repository)
+
+    with pytest.raises(AuctionStateError, match="아직 종료되지 않은 경매"):
+        await service.finalize_auction(session, auction_id=3)
+
+    bid_repository.get_highest_bid.assert_not_awaited()
+    session.flush.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        AuctionStatus.COMPLETED,
+        AuctionStatus.NO_BIDS,
+        AuctionStatus.CANCELLED,
+        AuctionStatus.TRADE_COMPLETED,
+    ],
+)
+async def test_finalize_auction_keeps_finalized_result(status: AuctionStatus) -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction_repository.get_by_id.return_value = SimpleNamespace(
+        id=3,
+        status=status,
+        ends_at=datetime.now() - timedelta(minutes=1),
+        winner_id=8,
+    )
+    session = AsyncMock()
+
+    response = await AuctionService(
+        auction_repository,
+        bid_repository,
+    ).finalize_auction(session, auction_id=3)
+
+    assert response.status == status
+    bid_repository.get_highest_bid.assert_not_awaited()
+    session.flush.assert_not_awaited()
+
+
+async def test_finalize_auction_raises_when_auction_does_not_exist() -> None:
+    auction_repository = AsyncMock(spec=AuctionRepository)
+    bid_repository = AsyncMock(spec=BidRepository)
+    auction_repository.get_by_id.return_value = None
+
+    with pytest.raises(AuctionNotFoundError):
+        await AuctionService(
+            auction_repository,
+            bid_repository,
+        ).finalize_auction(AsyncMock(), auction_id=99)
 
 
 async def test_seller_completes_trade_after_auction_end() -> None:
