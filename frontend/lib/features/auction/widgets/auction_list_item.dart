@@ -204,9 +204,7 @@ String auctionRemainingTimeLabel(AuctionStatus status, Duration remainingTime) {
     return '$days일 $hours시간 $minutes분 $seconds초';
   }
 
-  return '${remainingTime.inHours.toString().padLeft(2, '0')}:'
-      '${minutes.toString().padLeft(2, '0')}:'
-      '${seconds.toString().padLeft(2, '0')}';
+  return '${remainingTime.inHours}시간 $minutes분 $seconds초';
 }
 
 class _AuctionImage extends StatelessWidget {

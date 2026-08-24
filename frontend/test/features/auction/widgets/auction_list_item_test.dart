@@ -3,13 +3,13 @@ import 'package:frontend/features/auction/models/auction_status.dart';
 import 'package:frontend/features/auction/widgets/auction_list_item.dart';
 
 void main() {
-  test('24시간 미만 남은 시간은 시분초로 표시한다', () {
+  test('24시간 미만 남은 시간은 시간 분 초로 표시한다', () {
     expect(
       auctionRemainingTimeLabel(
         AuctionStatus.active,
         const Duration(hours: 23, minutes: 59, seconds: 59),
       ),
-      '23:59:59',
+      '23시간 59분 59초',
     );
   });
 
