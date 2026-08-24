@@ -107,6 +107,8 @@ class AuctionCreateController extends ChangeNotifier {
     final bidIncrement = int.tryParse(bidIncrementController.text);
     if (bidIncrement == null || bidIncrement <= 0) {
       errors[AuctionCreateField.bidIncrement] = '최소 입찰 단위를 입력해 주세요.';
+    } else if (startingPrice != null && bidIncrement > startingPrice) {
+      errors[AuctionCreateField.bidIncrement] = '최소 입찰 단위는 시작 가격을 넘을 수 없어요.';
     }
     if (startsAt == null) {
       errors[AuctionCreateField.startsAt] = '시작 시간을 선택해 주세요.';

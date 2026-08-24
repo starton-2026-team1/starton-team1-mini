@@ -1,5 +1,8 @@
 from datetime import UTC, datetime, timedelta, timezone
 
+import pytest
+from pydantic import ValidationError
+
 from app.core.time import kst_isoformat, to_kst_naive
 from app.models.enums import AuctionStatus
 from app.schemas.auction import AuctionCreate, AuctionPreviewResponse
@@ -42,6 +45,36 @@ def test_auction_create_normalizes_utc_fields_to_kst_naive() -> None:
 
     assert data.starts_at == datetime(2026, 8, 23, 10)
     assert data.ends_at == datetime(2026, 8, 23, 11)
+
+
+def test_auction_create_rejects_bid_unit_above_start_price() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="최소 입찰 단위는 시작 가격을 넘을 수 없습니다.",
+    ):
+        AuctionCreate(
+            category_id=1,
+            title="테스트 경매",
+            description="가격 검증 테스트",
+            start_price=1000,
+            minimum_bid_unit=1001,
+            starts_at="2026-08-23T01:00:00Z",
+            ends_at="2026-08-23T02:00:00Z",
+        )
+
+
+def test_auction_create_allows_bid_unit_equal_to_start_price() -> None:
+    data = AuctionCreate(
+        category_id=1,
+        title="테스트 경매",
+        description="가격 경계값 테스트",
+        start_price=1000,
+        minimum_bid_unit=1000,
+        starts_at="2026-08-23T01:00:00Z",
+        ends_at="2026-08-23T02:00:00Z",
+    )
+
+    assert data.minimum_bid_unit == data.start_price
 
 
 def test_auction_response_serializes_kst_offset() -> None:

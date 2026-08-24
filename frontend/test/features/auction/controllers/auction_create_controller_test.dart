@@ -40,6 +40,32 @@ void main() {
     expect(controller.validate(), '종료 시간은 시작 시간보다 늦어야 해요.');
   });
 
+  test('최소 입찰 단위가 시작 가격을 넘으면 오류를 반환한다', () {
+    final controller = AuctionCreateController();
+    addTearDown(controller.dispose);
+    controller.titleController.text = '자전거';
+    controller.descriptionController.text = '상태가 좋아요';
+    controller.startingPriceController.text = '10000';
+    controller.bidIncrementController.text = '10001';
+
+    expect(controller.validate(), '최소 입찰 단위는 시작 가격을 넘을 수 없어요.');
+  });
+
+  test('최소 입찰 단위와 시작 가격이 같으면 가격 검증을 통과한다', () {
+    final controller = AuctionCreateController();
+    addTearDown(controller.dispose);
+    controller.titleController.text = '자전거';
+    controller.descriptionController.text = '상태가 좋아요';
+    controller.startingPriceController.text = '10000';
+    controller.bidIncrementController.text = '10000';
+    final startsAt = controller.now.add(const Duration(hours: 1));
+    controller.setStartsAt(startsAt);
+    controller.setEndsAt(startsAt.add(const Duration(hours: 1)));
+    controller.setImageFiles([XFile('/tmp/bicycle.jpg')]);
+
+    expect(controller.validate(), isNull);
+  });
+
   test('유효한 입력값을 경매 등록 모델로 변환한다', () {
     final controller = AuctionCreateController();
     addTearDown(controller.dispose);

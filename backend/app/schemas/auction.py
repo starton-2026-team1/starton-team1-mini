@@ -26,7 +26,9 @@ class AuctionCreate(BaseModel):
         return to_kst_naive(value)
 
     @model_validator(mode="after")
-    def ends_after_starts(self) -> "AuctionCreate":
+    def validate_price_and_period(self) -> "AuctionCreate":
+        if self.minimum_bid_unit > self.start_price:
+            raise ValueError("최소 입찰 단위는 시작 가격을 넘을 수 없습니다.")
         if self.ends_at <= self.starts_at:
             raise ValueError("종료 시간은 시작 시간보다 늦어야 합니다.")
         return self
