@@ -11,6 +11,15 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     # 경매 상품 이미지가 저장되는 로컬 디렉터리 (main.py의 /static/uploads 마운트와 짝)
     upload_dir: str = "uploads"
+    cors_origins: str = "http://localhost,http://127.0.0.1"
+
+    @property
+    def allowed_cors_origins(self) -> list[str]:
+        return [
+            origin.strip().rstrip("/")
+            for origin in self.cors_origins.split(",")
+            if origin.strip()
+        ]
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

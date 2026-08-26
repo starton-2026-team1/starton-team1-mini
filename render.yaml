@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: starton-team1-mini-api
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: develop
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: CORS_ORIGINS
+        value: https://starton-2026-team1.github.io
+      - key: UPLOAD_DIR
+        value: uploads
