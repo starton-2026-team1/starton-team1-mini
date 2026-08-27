@@ -2,6 +2,16 @@
 
 기존 중고거래 흐름에 실시간 경매를 결합한 미니 프로젝트입니다. 일반 판매와 경매 상품을 한 화면에서 탐색하고, 경매 등록부터 실시간 입찰·자동 연장·낙찰 후 거래 완료까지 이어지는 흐름을 구현했습니다.
 
+### 팀원 및 담당 역할
+
+| GitHub | 역할 | 주요 담당 |
+| --- | --- | --- |
+|강동주 [@aghose](https://github.com/soltyspring) | 팀장 / Full Stack | 실시간 경매 UI·API, 입찰 검증, 동시 입찰 처리, 자동 연장, 경매 상태 관리, 테스트, 웹·서버 배포 |
+|최서윤 [@seoyooni](https://github.com/seoyooni) | Full Stack | 일반 상품 CRUD, 사용자·프로필, 판매 관리, 인증 세션, 상품·경매 페이지네이션, 낙찰 결과 처리 |
+|이영민 [@ncs01060](https://github.com/ncs01060) | Full Stack | 초기 Flutter 화면과 휴대폰 인증 UI, 경매 등록·조회, 실시간 입찰과 WebSocket 연동 및 재동기화 |
+|조서빈 [@lime06-20](https://github.com/lime06-20) | Frontend | 일반 상품 등록·상세 화면, 상품 이미지 업로드, Flutter Web 이미지 업로드 호환성 개선 |
+|임지언 [@jiieon-lim](https://github.com/jiieon-lim) | Frontend / UI·UX | 서비스 화면 구성 및 UI 디자인, 프론트엔드 화면 구현 |
+
 ## 실행 링크
 
 - 웹 서비스: https://starton-2026-team1.github.io/starton-team1-mini/
