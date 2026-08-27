@@ -3,7 +3,11 @@ from datetime import UTC, datetime, timedelta, timezone
 import pytest
 from pydantic import ValidationError
 
-from app.core.time import kst_isoformat, to_kst_naive
+from app.core.time import (
+    kst_isoformat,
+    to_kst_naive,
+    utc_naive_to_kst_isoformat,
+)
 from app.models.enums import AuctionStatus
 from app.schemas.auction import AuctionCreate, AuctionPreviewResponse
 
@@ -18,6 +22,12 @@ def test_kst_datetime_is_serialized_with_offset() -> None:
     value = datetime(2026, 8, 23, 10)
 
     assert kst_isoformat(value) == "2026-08-23T10:00:00+09:00"
+
+
+def test_utc_naive_datetime_is_serialized_as_kst() -> None:
+    value = datetime(2026, 8, 23, 1)
+
+    assert utc_naive_to_kst_isoformat(value) == "2026-08-23T10:00:00+09:00"
 
 
 def test_other_timezone_is_converted_to_kst() -> None:

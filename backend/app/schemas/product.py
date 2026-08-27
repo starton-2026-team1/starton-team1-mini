@@ -13,6 +13,7 @@ from pydantic import (
 )
 
 from app.models.enums import AuctionStatus, ProductStatus, SaleType
+from app.schemas.types import UtcDateTime
 
 ProductTitle = Annotated[
     str,
@@ -79,8 +80,8 @@ class ProductResponse(BaseModel):
     title: str
     description: str
     status: ProductStatus
-    created_at: datetime
-    updated_at: datetime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
 
 
 class ProductDetailResponse(ProductResponse):
@@ -125,7 +126,7 @@ class SalesManagementProductResponse(BaseModel):
     bid_count: int = Field(default=0, ge=0)
     starts_at: datetime | None = None
     ends_at: datetime | None = None
-    created_at: datetime
+    created_at: UtcDateTime
 
     @model_validator(mode="after")
     def validate_sale_details(self) -> "SalesManagementProductResponse":

@@ -8,6 +8,7 @@ from app.core.exceptions import (
     ProductPermissionError,
     ProductStateError,
 )
+from app.core.time import now_kst_naive
 from app.models.enums import AuctionStatus, ProductStatus, SaleType
 from app.models.product import Product
 from app.repositories.bid_repository import BidRepository
@@ -242,7 +243,7 @@ class ProductService:
             AuctionStatus.TRADE_COMPLETED,
         }:
             return status
-        now = datetime.now()
+        now = now_kst_naive()
         if now < starts_at:
             return AuctionStatus.WAITING
         if now < ends_at:

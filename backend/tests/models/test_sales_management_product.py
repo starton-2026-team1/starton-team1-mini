@@ -79,3 +79,25 @@ def test_product_detail_response_includes_seller_name_and_image_urls() -> None:
         "/static/uploads/second.jpg",
     ]
     assert "images" not in response.model_dump()
+
+
+def test_product_response_serializes_database_utc_timestamp_as_kst() -> None:
+    product = Product(
+        id=1,
+        seller_id=2,
+        category_id=1,
+        sale_type=SaleType.FIXED_PRICE,
+        title="자전거",
+        description="상태가 좋아요.",
+        status=ProductStatus.ACTIVE,
+        created_at=datetime(2026, 8, 23, 1),
+        updated_at=datetime(2026, 8, 23, 2),
+        seller=User(id=2, phone_number="01012345678", name="당근이"),
+        fixed_price=FixedPrice(price=30_000),
+        images=[],
+    )
+
+    payload = ProductDetailResponse.model_validate(product).model_dump(mode="json")
+
+    assert payload["created_at"] == "2026-08-23T10:00:00+09:00"
+    assert payload["updated_at"] == "2026-08-23T11:00:00+09:00"

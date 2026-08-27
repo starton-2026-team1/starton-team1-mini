@@ -233,6 +233,9 @@ class ProductRepository:
 
         await session.flush()
 
+        # MySQL이 갱신한 updated_at을 응답 직렬화 전에 다시 로드
+        await session.refresh(product, attribute_names=["updated_at"])
+
         return product
 
     async def update_status(
@@ -244,6 +247,9 @@ class ProductRepository:
         product.status = status
 
         await session.flush()
+
+        # MySQL이 갱신한 updated_at을 응답 직렬화 전에 다시 로드
+        await session.refresh(product, attribute_names=["updated_at"])
 
         return product
 

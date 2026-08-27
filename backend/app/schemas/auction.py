@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from app.core.time import to_kst_naive
 from app.models.enums import AuctionStatus, ProductStatus
 from app.schemas.product import ProductDescription, ProductTitle
-from app.schemas.types import KstDateTime
+from app.schemas.types import KstDateTime, UtcDateTime
 
 
 # 경매 등록 요청 (POST /products/auctions 의 폼 필드와 매핑됨)
@@ -66,8 +66,8 @@ class AuctionProductResponse(BaseModel):
     title: str
     description: str
     status: ProductStatus
-    created_at: datetime
-    updated_at: datetime
+    created_at: UtcDateTime
+    updated_at: UtcDateTime
     images: list[ProductImageResponse]
     auction: AuctionResponse
 

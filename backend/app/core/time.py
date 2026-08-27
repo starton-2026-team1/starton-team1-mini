@@ -18,3 +18,10 @@ def to_kst_naive(value: datetime) -> datetime:
 # DB에서 읽은 naive KST 시간을 API에서 명확한 +09:00 ISO 문자열로 직렬화
 def kst_isoformat(value: datetime) -> str:
     return to_kst_naive(value).replace(tzinfo=KST).isoformat()
+
+
+# DB 서버가 생성한 UTC naive 시각을 KST 오프셋이 포함된 문자열로 변환
+def utc_naive_to_kst_isoformat(value: datetime) -> str:
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(KST).isoformat()

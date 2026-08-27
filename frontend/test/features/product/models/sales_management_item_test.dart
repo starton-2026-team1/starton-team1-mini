@@ -61,4 +61,30 @@ void main() {
     expect(item.isAuction, isFalse);
     expect(item.timeLabel, '1일 전');
   });
+
+  test('KST 오프셋이 포함된 상품 등록 시각을 현재 시각과 비교한다', () {
+    final now = DateTime.parse('2026-08-23T12:00:00+09:00').toLocal();
+    final item = SalesManagementItem.fromJson(
+      {
+        'id': 12,
+        'auction_id': null,
+        'sale_type': 'FIXED_PRICE',
+        'title': '시간대 테스트',
+        'description': '상품 설명',
+        'product_status': 'ACTIVE',
+        'management_status': 'SELLING',
+        'auction_status': null,
+        'thumbnail_url': null,
+        'price': 1000,
+        'bid_count': 0,
+        'starts_at': null,
+        'ends_at': null,
+        'created_at': '2026-08-23T11:59:00+09:00',
+      },
+      mediaBaseUrl: 'http://127.0.0.1:8000',
+      now: now,
+    );
+
+    expect(item.timeLabel, '1분 전');
+  });
 }
