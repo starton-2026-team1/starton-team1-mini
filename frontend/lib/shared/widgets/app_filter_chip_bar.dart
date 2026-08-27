@@ -24,14 +24,27 @@ class AppFilterChipBar<T> extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         itemCount: items.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (_, index) {
+        itemBuilder: (context, index) {
           final item = items[index];
           final isSelected = item == selectedItem;
+          final label = labelBuilder(item);
+          final scaledFontSize = MediaQuery.textScalerOf(context).scale(13);
           return ChoiceChip(
             selected: isSelected,
             onSelected: (_) => onSelected(item),
             showCheckmark: false,
-            label: Text(labelBuilder(item)),
+            // Flutter Web에서 한글 폭이 한 글자로 계산되는 경우를 막는 최소 너비
+            label: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: label.runes.length * scaledFontSize,
+              ),
+              child: Text(
+                label,
+                maxLines: 1,
+                softWrap: false,
+                textAlign: TextAlign.center,
+              ),
+            ),
             labelStyle: TextStyle(
               color: isSelected ? AppColors.white : AppColors.categoryText,
               fontSize: 13,
