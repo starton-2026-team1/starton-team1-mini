@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/features/product/data/mock_sales_management_items.dart';
 import 'package:frontend/features/product/data/sales_management_api.dart';
+import 'package:frontend/features/product/models/sales_management_filter.dart';
 import 'package:frontend/features/product/models/sales_management_item.dart';
 import 'package:frontend/features/product/pages/sales_management_page.dart';
 
 class FakeSalesManagementGateway implements SalesManagementGateway {
   FakeSalesManagementGateway({
     this.items = mockSalesManagementItems,
+    this.bidItems = const [],
     this.error,
   });
 
   final List<SalesManagementItem> items;
+  final List<SalesManagementItem> bidItems;
   final Object? error;
   int callCount = 0;
 
@@ -20,6 +23,12 @@ class FakeSalesManagementGateway implements SalesManagementGateway {
     callCount++;
     if (error != null) throw error!;
     return items;
+  }
+
+  @override
+  Future<List<SalesManagementItem>> listMyBids() async {
+    if (error != null) throw error!;
+    return bidItems;
   }
 }
 
@@ -38,7 +47,7 @@ Widget buildPage({
 }
 
 void main() {
-  testWidgets('경매중, 판매중, 완료 필터를 표시한다', (tester) async {
+  testWidgets('경매중, 판매중, 완료, 입찰내역 필터를 표시한다', (tester) async {
     await tester.pumpWidget(buildPage());
     await tester.pumpAndSettle();
 
@@ -46,6 +55,7 @@ void main() {
     expect(find.text('경매중 1'), findsOneWidget);
     expect(find.text('판매중 1'), findsOneWidget);
     expect(find.text('완료 2'), findsOneWidget);
+    expect(find.text('입찰내역 0'), findsOneWidget);
     expect(find.text('아이패드 프로 11인치'), findsOneWidget);
     expect(find.text('현재가 420,000원'), findsOneWidget);
     expect(find.text('00:12:34'), findsOneWidget);
@@ -86,13 +96,41 @@ void main() {
     expect(find.text('후기 보내기'), findsNWidgets(2));
   });
 
+  testWidgets('입찰내역 탭에 내 입찰가와 현재가를 표시한다', (tester) async {
+    const bidItem = SalesManagementItem(
+      id: 7,
+      auctionId: 7,
+      filter: SalesManagementFilter.bidding,
+      title: '입찰한 아이패드',
+      location: '전국',
+      timeLabel: '최고 입찰자',
+      price: 220000,
+      myHighestBid: 210000,
+      bidCount: 4,
+      auctionRemainingTime: Duration(days: 1),
+      auction: true,
+    );
+    await tester.pumpWidget(
+      buildPage(gateway: FakeSalesManagementGateway(bidItems: const [bidItem])),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('입찰내역 1'));
+    await tester.pump();
+
+    expect(find.text('입찰한 아이패드'), findsOneWidget);
+    expect(find.text('최고 입찰자'), findsOneWidget);
+    expect(find.text('현재가 220,000원 · 내 입찰 210,000원'), findsOneWidget);
+    expect(find.text('경매 상세 보기'), findsOneWidget);
+  });
+
   testWidgets('조회 결과가 없으면 빈 상태를 표시한다', (tester) async {
     await tester.pumpWidget(
       buildPage(gateway: FakeSalesManagementGateway(items: const [])),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('해당하는 판매 상품이 없어요.'), findsOneWidget);
+    expect(find.text('해당하는 내역이 없어요.'), findsOneWidget);
   });
 
   testWidgets('조회 실패 시 다시 시도 버튼을 표시한다', (tester) async {
@@ -101,7 +139,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('판매 상품을 불러오지 못했어요.'), findsOneWidget);
+    expect(find.text('판매 및 입찰 내역을 불러오지 못했어요.'), findsOneWidget);
     expect(find.text('다시 시도'), findsOneWidget);
   });
 

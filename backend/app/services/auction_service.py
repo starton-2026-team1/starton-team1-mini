@@ -20,7 +20,11 @@ from app.schemas.auction import (
     AuctionPreviewResponse,
     AuctionStatusResponse,
 )
-from app.schemas.bid import AuctionBroadcastMessage, BidResponse
+from app.schemas.bid import (
+    AuctionBroadcastMessage,
+    BidResponse,
+    MyBidAuctionResponse,
+)
 from app.services.connection_manager import ConnectionManager, connection_manager
 
 AUTO_EXTENSION_THRESHOLD = timedelta(minutes=5)
@@ -224,6 +228,53 @@ class AuctionService:
             self._to_preview(auction, stats.get(auction.id), now)
             for auction in auctions
         ]
+        return items, total
+
+    # 사용자가 한 번 이상 입찰한 경매를 참여 경매 단위로 조회
+    async def list_my_bids(
+        self,
+        session: AsyncSession,
+        bidder_id: int,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[MyBidAuctionResponse], int]:
+        await self.finalize_expired_auctions(session)
+        participations, total = await self.bid_repository.list_by_bidder(
+            session,
+            bidder_id=bidder_id,
+            offset=offset,
+            limit=limit,
+        )
+        now = now_kst_naive()
+        items = []
+        for participation in participations:
+            auction = participation.auction
+            product = auction.product
+            thumbnail_url = product.images[0].image_url if product.images else None
+            effective_status = _effective_status(
+                auction,
+                now,
+                bid_count=participation.bid_count,
+            )
+            items.append(
+                MyBidAuctionResponse(
+                    auction_id=auction.id,
+                    title=product.title,
+                    thumbnail_url=thumbnail_url,
+                    status=effective_status,
+                    my_highest_bid=participation.my_highest_bid,
+                    current_price=participation.current_price,
+                    bid_count=participation.bid_count,
+                    is_highest_bidder=(participation.my_highest_bid == participation.current_price),
+                    is_winner=(
+                        auction.winner_id == bidder_id
+                        and effective_status
+                        in {AuctionStatus.COMPLETED, AuctionStatus.TRADE_COMPLETED}
+                    ),
+                    ends_at=auction.ends_at,
+                    last_bid_at=participation.last_bid_at,
+                ),
+            )
         return items, total
 
     # 경매 상세 + 전체 입찰 내역 조립

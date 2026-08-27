@@ -31,9 +31,13 @@ class SalesManagementController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      _items = await _gateway.listMyProducts();
+      final results = await Future.wait([
+        _gateway.listMyProducts(),
+        _gateway.listMyBids(),
+      ]);
+      _items = [...results[0], ...results[1]];
     } catch (_) {
-      _errorMessage = '판매 상품을 불러오지 못했어요.';
+      _errorMessage = '판매 및 입찰 내역을 불러오지 못했어요.';
     } finally {
       _isLoading = false;
       notifyListeners();

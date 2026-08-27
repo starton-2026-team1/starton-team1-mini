@@ -19,6 +19,9 @@ class SalesManagementItemCard extends StatelessWidget {
   final VoidCallback? onMore;
 
   String get _statusLabel {
+    if (item.filter == SalesManagementFilter.bidding) {
+      return item.timeLabel;
+    }
     if (item.filter == SalesManagementFilter.completed && item.isAuction) {
       return '경매완료';
     }
@@ -26,6 +29,7 @@ class SalesManagementItemCard extends StatelessWidget {
       SalesManagementFilter.auction => '경매중',
       SalesManagementFilter.selling => '판매중',
       SalesManagementFilter.completed => '거래완료',
+      SalesManagementFilter.bidding => item.timeLabel,
     };
   }
 
@@ -33,6 +37,7 @@ class SalesManagementItemCard extends StatelessWidget {
     SalesManagementFilter.auction => '끌어올리기',
     SalesManagementFilter.selling => '끌어올리기',
     SalesManagementFilter.completed => '후기 보내기',
+    SalesManagementFilter.bidding => '경매 상세 보기',
   };
 
   @override
@@ -93,7 +98,9 @@ class SalesManagementItemCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            '${item.location} · ${item.timeLabel}',
+                            item.filter == SalesManagementFilter.bidding
+                                ? '${item.location} · 경매 참여'
+                                : '${item.location} · ${item.timeLabel}',
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 14,
@@ -107,6 +114,9 @@ class SalesManagementItemCard extends StatelessWidget {
                               SalesManagementFilter.completed
                                   when item.isAuction =>
                                 '최종 낙찰가 ${_formatPrice(item.price)}원',
+                              SalesManagementFilter.bidding =>
+                                '현재가 ${_formatPrice(item.price)}원 · '
+                                    '내 입찰 ${_formatPrice(item.myHighestBid ?? 0)}원',
                               _ => '${_formatPrice(item.price)}원',
                             },
                             style: const TextStyle(
@@ -148,6 +158,8 @@ class SalesManagementItemCard extends StatelessWidget {
                 icon: Icon(
                   item.filter == SalesManagementFilter.completed
                       ? Icons.edit
+                      : item.filter == SalesManagementFilter.bidding
+                      ? Icons.arrow_forward
                       : Icons.vertical_align_top,
                   size: 19,
                 ),

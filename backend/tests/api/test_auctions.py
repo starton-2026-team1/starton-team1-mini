@@ -18,7 +18,11 @@ from app.main import app
 from app.models.enums import AuctionStatus
 from app.models.user import User
 from app.schemas.auction import AuctionDetailResponse, AuctionPreviewResponse
-from app.schemas.bid import AuctionBroadcastMessage, BidResponse
+from app.schemas.bid import (
+    AuctionBroadcastMessage,
+    BidResponse,
+    MyBidAuctionResponse,
+)
 
 
 @pytest.fixture
@@ -103,6 +107,42 @@ async def test_list_auctions_passes_filter_and_pagination(
         auction_dependencies,
         status=AuctionStatus.ACTIVE,
         offset=5,
+        limit=10,
+    )
+
+
+async def test_list_my_bids_returns_authenticated_user_participations(
+    client: AsyncClient,
+    auction_service: AsyncMock,
+    auction_dependencies: object,
+) -> None:
+    auction_service.list_my_bids.return_value = (
+        [
+            MyBidAuctionResponse(
+                auction_id=3,
+                title="테스트 경매",
+                thumbnail_url="/static/uploads/test.jpg",
+                status=AuctionStatus.ACTIVE,
+                my_highest_bid=12000,
+                current_price=13000,
+                bid_count=3,
+                is_highest_bidder=False,
+                is_winner=False,
+                ends_at=datetime(2026, 8, 30, 10),
+                last_bid_at=datetime(2026, 8, 27, 10),
+            ),
+        ],
+        1,
+    )
+
+    response = await client.get("/api/v1/auctions/me/bids?offset=0&limit=10")
+
+    assert response.status_code == 200
+    assert response.json()["items"][0]["my_highest_bid"] == 12000
+    auction_service.list_my_bids.assert_awaited_once_with(
+        auction_dependencies,
+        bidder_id=7,
+        offset=0,
         limit=10,
     )
 

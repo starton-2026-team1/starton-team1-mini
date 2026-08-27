@@ -15,7 +15,7 @@ from app.schemas.auction import (
     AuctionPreviewListResponse,
     AuctionStatusResponse,
 )
-from app.schemas.bid import AuctionBroadcastMessage, BidCreate
+from app.schemas.bid import AuctionBroadcastMessage, BidCreate, MyBidAuctionListResponse
 from app.services.auction_service import AuctionService
 
 router = APIRouter()
@@ -46,6 +46,28 @@ async def list_auctions(
         limit=limit,
     )
     return AuctionPreviewListResponse(
+        items=items,
+        total=total,
+        offset=offset,
+        limit=limit,
+    )
+
+
+# 내 입찰 내역 조회 (참여 경매별 내 최고 입찰가 + 현재 입찰 상태)
+@router.get("/me/bids", response_model=MyBidAuctionListResponse)
+async def list_my_bids(
+    session: DatabaseSession,
+    current_user: CurrentUserDependency,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> MyBidAuctionListResponse:
+    items, total = await auction_service.list_my_bids(
+        session,
+        bidder_id=current_user.id,
+        offset=offset,
+        limit=limit,
+    )
+    return MyBidAuctionListResponse(
         items=items,
         total=total,
         offset=offset,

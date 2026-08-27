@@ -16,6 +16,9 @@ class FakeSalesManagementGateway implements SalesManagementGateway {
   Future<List<SalesManagementItem>> listMyProducts() async => [
     mockSalesManagementItems.first,
   ];
+
+  @override
+  Future<List<SalesManagementItem>> listMyBids() async => const [];
 }
 
 void main() {
@@ -44,5 +47,6 @@ void main() {
     expect(find.text('경매중 1'), findsOneWidget);
     expect(find.text('판매중 0'), findsOneWidget);
     expect(find.text('완료 0'), findsOneWidget);
+    expect(find.text('입찰내역 0'), findsOneWidget);
   });
 }

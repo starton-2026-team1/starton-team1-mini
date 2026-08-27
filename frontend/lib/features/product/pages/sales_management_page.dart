@@ -107,7 +107,7 @@ class _SalesManagementPageState extends State<SalesManagementPage> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 180),
-            Center(child: Text('해당하는 판매 상품이 없어요.')),
+            Center(child: Text('해당하는 내역이 없어요.')),
           ],
         ),
       );
@@ -123,6 +123,9 @@ class _SalesManagementPageState extends State<SalesManagementPage> {
           return SalesManagementItemCard(
             item: item,
             onTap: () => _openDetail(item),
+            onAction: item.filter == SalesManagementFilter.bidding
+                ? () => _openDetail(item)
+                : null,
           );
         },
       ),

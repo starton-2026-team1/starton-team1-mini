@@ -3,6 +3,33 @@ import 'package:frontend/features/product/models/sales_management_filter.dart';
 import 'package:frontend/features/product/models/sales_management_item.dart';
 
 void main() {
+  test('내 입찰 응답을 최고 입찰 상태의 관리 카드로 변환한다', () {
+    final item = SalesManagementItem.fromBidJson(
+      {
+        'auction_id': 7,
+        'title': '입찰 상품',
+        'thumbnail_url': '/static/uploads/bid.jpg',
+        'status': 'ACTIVE',
+        'my_highest_bid': 12000,
+        'current_price': 12000,
+        'bid_count': 3,
+        'is_highest_bidder': true,
+        'is_winner': false,
+        'ends_at': '2026-08-31T10:00:00+09:00',
+        'last_bid_at': '2026-08-27T10:00:00+09:00',
+      },
+      mediaBaseUrl: 'https://api.example.com',
+      now: DateTime.parse('2026-08-28T10:00:00+09:00'),
+    );
+
+    expect(item.filter, SalesManagementFilter.bidding);
+    expect(item.auctionId, 7);
+    expect(item.timeLabel, '최고 입찰자');
+    expect(item.myHighestBid, 12000);
+    expect(item.price, 12000);
+    expect(item.isAuction, isTrue);
+  });
+
   test('경매 판매관리 응답을 화면 모델로 변환한다', () {
     final now = DateTime(2026, 8, 23, 12);
     final item = SalesManagementItem.fromJson(

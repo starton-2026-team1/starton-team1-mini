@@ -7,6 +7,8 @@ import '../models/sales_management_item.dart';
 
 abstract interface class SalesManagementGateway {
   Future<List<SalesManagementItem>> listMyProducts();
+
+  Future<List<SalesManagementItem>> listMyBids();
 }
 
 class SalesManagementApi implements SalesManagementGateway {
@@ -17,14 +19,7 @@ class SalesManagementApi implements SalesManagementGateway {
 
   @override
   Future<List<SalesManagementItem>> listMyProducts() async {
-    final accessToken = await _tokenStorage.readAccessToken();
-    if (accessToken == null) {
-      throw const ApiException(
-        statusCode: 401,
-        code: 'ACCESS_TOKEN_NOT_FOUND',
-        message: '로그인이 필요합니다.',
-      );
-    }
+    final accessToken = await _requiredAccessToken();
     final json = await _client.get(
       '/products/me',
       headers: {'Authorization': 'Bearer $accessToken'},
@@ -38,5 +33,35 @@ class SalesManagementApi implements SalesManagementGateway {
           ),
         )
         .toList();
+  }
+
+  @override
+  Future<List<SalesManagementItem>> listMyBids() async {
+    final accessToken = await _requiredAccessToken();
+    final json = await _client.get(
+      '/auctions/me/bids',
+      headers: {'Authorization': 'Bearer $accessToken'},
+    );
+    final items = json['items'] as List<dynamic>;
+    return items
+        .map(
+          (item) => SalesManagementItem.fromBidJson(
+            item as Map<String, dynamic>,
+            mediaBaseUrl: ApiConfig.mediaBaseUrl,
+          ),
+        )
+        .toList();
+  }
+
+  Future<String> _requiredAccessToken() async {
+    final accessToken = await _tokenStorage.readAccessToken();
+    if (accessToken == null) {
+      throw const ApiException(
+        statusCode: 401,
+        code: 'ACCESS_TOKEN_NOT_FOUND',
+        message: '로그인이 필요합니다.',
+      );
+    }
+    return accessToken;
   }
 }

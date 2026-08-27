@@ -1,9 +1,24 @@
+from dataclasses import dataclass
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.time import now_kst_naive
+from app.models.auction import Auction
 from app.models.bid import Bid
+from app.models.product import Product
 from app.models.user import User
+
+
+@dataclass(frozen=True)
+class BidParticipation:
+    auction: Auction
+    my_highest_bid: int
+    current_price: int
+    bid_count: int
+    last_bid_at: datetime
 
 
 class BidRepository:
@@ -87,3 +102,65 @@ class BidRepository:
             .limit(limit),
         )
         return [(bid, name) for bid, name in result.all()]
+
+    # 참여한 경매별 내 최고 입찰가와 전체 입찰 현황 조회
+    async def list_by_bidder(
+        self,
+        session: AsyncSession,
+        bidder_id: int,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[BidParticipation], int]:
+        my_bids = (
+            select(
+                Bid.auction_id.label("auction_id"),
+                func.max(Bid.amount).label("my_highest_bid"),
+                func.max(Bid.created_at).label("last_bid_at"),
+            )
+            .where(Bid.bidder_id == bidder_id)
+            .group_by(Bid.auction_id)
+            .subquery()
+        )
+        bid_stats = (
+            select(
+                Bid.auction_id.label("auction_id"),
+                func.max(Bid.amount).label("current_price"),
+                func.count(Bid.id).label("bid_count"),
+            )
+            .group_by(Bid.auction_id)
+            .subquery()
+        )
+        result = await session.execute(
+            select(
+                Auction,
+                my_bids.c.my_highest_bid,
+                bid_stats.c.current_price,
+                bid_stats.c.bid_count,
+                my_bids.c.last_bid_at,
+            )
+            .join(my_bids, my_bids.c.auction_id == Auction.id)
+            .join(bid_stats, bid_stats.c.auction_id == Auction.id)
+            .options(
+                selectinload(Auction.product).selectinload(Product.images),
+                selectinload(Auction.product).selectinload(Product.category),
+            )
+            .order_by(my_bids.c.last_bid_at.desc(), Auction.id.desc())
+            .offset(offset)
+            .limit(limit),
+        )
+        total_result = await session.execute(
+            select(func.count(func.distinct(Bid.auction_id))).where(
+                Bid.bidder_id == bidder_id,
+            ),
+        )
+        items = [
+            BidParticipation(
+                auction=auction,
+                my_highest_bid=my_highest_bid,
+                current_price=current_price,
+                bid_count=bid_count,
+                last_bid_at=last_bid_at,
+            )
+            for auction, my_highest_bid, current_price, bid_count, last_bid_at in result.all()
+        ]
+        return items, total_result.scalar_one()
