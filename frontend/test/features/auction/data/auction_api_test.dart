@@ -49,6 +49,7 @@ Map<String, dynamic> _auctionJson(int id) => {
   'category_name': '기타',
   'status': 'ACTIVE',
   'thumbnail_url': null,
+  'created_at': DateTime.now().toIso8601String(),
   'current_price': 10000,
   'bid_count': 0,
   'starts_at': DateTime.now()

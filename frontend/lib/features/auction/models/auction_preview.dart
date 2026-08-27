@@ -11,6 +11,7 @@ class AuctionPreview {
     required this.remainingTime,
     required this.currentPrice,
     required this.bidCount,
+    this.createdAt,
     this.favoriteCount = 0,
     this.thumbnailUrl,
   });
@@ -22,6 +23,7 @@ class AuctionPreview {
   final Duration remainingTime;
   final String currentPrice;
   final int bidCount;
+  final DateTime? createdAt;
   final int favoriteCount;
   final String? thumbnailUrl;
 
@@ -59,6 +61,7 @@ class AuctionPreview {
       remainingTime: remaining.isNegative ? Duration.zero : remaining,
       currentPrice: '현재 ${_formatPrice(json['current_price'] as int)}',
       bidCount: json['bid_count'] as int,
+      createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
       thumbnailUrl: thumbnailPath == null
           ? null
           : '${ApiConfig.mediaBaseUrl}$thumbnailPath',

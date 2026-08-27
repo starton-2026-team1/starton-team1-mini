@@ -54,6 +54,7 @@ def make_preview() -> AuctionPreviewResponse:
         category_name="디지털기기",
         status=AuctionStatus.ACTIVE,
         thumbnail_url="/static/uploads/test.jpg",
+        created_at=datetime(2026, 8, 23, 9),
         start_price=10000,
         current_price=12000,
         minimum_bid_unit=1000,

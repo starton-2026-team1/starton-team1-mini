@@ -94,6 +94,7 @@ def test_auction_response_serializes_kst_offset() -> None:
         category_name="기타",
         status=AuctionStatus.ACTIVE,
         thumbnail_url=None,
+        created_at=datetime(2026, 8, 23, 9),
         start_price=1000,
         current_price=1000,
         minimum_bid_unit=100,

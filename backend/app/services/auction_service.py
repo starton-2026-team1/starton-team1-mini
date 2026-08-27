@@ -291,6 +291,7 @@ class AuctionService:
             category_name=product.category.name,
             status=_effective_status(auction, now, bid_count=bid_count),
             thumbnail_url=thumbnail_url,
+            created_at=product.created_at,
             start_price=auction.start_price,
             current_price=highest_amount or auction.start_price,
             minimum_bid_unit=auction.minimum_bid_unit,

@@ -79,6 +79,7 @@ class AuctionPreviewResponse(BaseModel):
     category_name: str
     status: AuctionStatus
     thumbnail_url: str | None
+    created_at: UtcDateTime
     start_price: int
     current_price: int
     minimum_bid_unit: int

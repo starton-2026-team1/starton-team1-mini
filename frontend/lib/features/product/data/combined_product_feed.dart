@@ -57,9 +57,13 @@ class CombinedProductFeedData {
   List<ProductFeedItem> get items {
     final runningAuctions = auctions.where((auction) => !auction.isEnded);
     final endedAuctions = auctions.where((auction) => auction.isEnded);
-    return [
+    final activeItems = [
       ...runningAuctions.map(ProductFeedItem.auction),
       ...products.map(ProductFeedItem.product),
+    ]..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    return [
+      // 진행 중 경매와 일반 상품 통합 최신 등록순
+      ...activeItems,
       // 종료·유찰·취소·거래 완료 경매를 메인 통합 목록 최하단에 배치
       ...endedAuctions.map(ProductFeedItem.auction),
     ];

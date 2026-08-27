@@ -18,6 +18,7 @@ class ProductPreview {
     this.isPartTimeJob = false,
     this.isNeighborhoodBusiness = false,
     this.imageAsset,
+    this.createdAt,
   });
 
   final int id;
@@ -34,6 +35,7 @@ class ProductPreview {
   final bool isPartTimeJob;
   final bool isNeighborhoodBusiness;
   final String? imageAsset;
+  final DateTime? createdAt;
 
   String? get primaryImageUrl => imageUrls.isEmpty ? null : imageUrls.first;
 
@@ -54,6 +56,7 @@ class ProductPreview {
       location: '전국',
       time: _elapsedTimeLabel(createdAt, currentTime),
       price: _formatPrice((fixedPrice['price'] as num).toInt()),
+      createdAt: createdAt,
     );
   }
 }

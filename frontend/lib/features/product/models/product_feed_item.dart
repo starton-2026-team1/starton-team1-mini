@@ -14,4 +14,9 @@ class ProductFeedItem {
   final AuctionPreview? auction;
 
   bool get isAuction => auction != null;
+
+  DateTime get createdAt =>
+      product?.createdAt ??
+      auction?.createdAt ??
+      DateTime.fromMillisecondsSinceEpoch(0);
 }

@@ -101,6 +101,9 @@ class _FakeApiClient extends ApiClient {
             'category_name': '기타',
             'status': 'ACTIVE',
             'thumbnail_url': null,
+            'created_at': DateTime.now()
+                .add(const Duration(minutes: 1))
+                .toIso8601String(),
             'current_price': 10000,
             'bid_count': 0,
             'starts_at': DateTime.now()
@@ -116,6 +119,9 @@ class _FakeApiClient extends ApiClient {
             'category_name': '기타',
             'status': 'NO_BIDS',
             'thumbnail_url': null,
+            'created_at': DateTime.now()
+                .add(const Duration(minutes: 2))
+                .toIso8601String(),
             'current_price': 10000,
             'bid_count': 0,
             'starts_at': DateTime.now()
@@ -140,6 +146,7 @@ class _FakeApiClient extends ApiClient {
             'category_name': '기타',
             'status': 'ACTIVE',
             'thumbnail_url': null,
+            'created_at': DateTime.now().toIso8601String(),
             'current_price': 10000,
             'bid_count': 0,
             'starts_at': DateTime.now()
@@ -155,6 +162,9 @@ class _FakeApiClient extends ApiClient {
             'category_name': '기타',
             'status': 'ACTIVE',
             'thumbnail_url': null,
+            'created_at': DateTime.now()
+                .subtract(const Duration(minutes: 1))
+                .toIso8601String(),
             'current_price': 15000,
             'bid_count': 1,
             'starts_at': DateTime.now()
