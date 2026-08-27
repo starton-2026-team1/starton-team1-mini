@@ -2,7 +2,7 @@
 
 import argparse
 import asyncio
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import delete, text
 
@@ -215,6 +215,7 @@ async def reset_and_seed() -> None:
         await session.flush()
 
         now = now_kst_naive()
+        created_at_base = datetime.now(UTC).replace(tzinfo=None)
         starts_at = now - timedelta(hours=1)
         for index, (
             title,
@@ -233,8 +234,8 @@ async def reset_and_seed() -> None:
                 title=title,
                 description=description,
                 status=ProductStatus.ACTIVE,
-                created_at=now - timedelta(minutes=index * 2),
-                updated_at=now - timedelta(minutes=index * 2),
+                created_at=created_at_base - timedelta(minutes=index * 2),
+                updated_at=created_at_base - timedelta(minutes=index * 2),
             )
             session.add(product)
             await session.flush()
@@ -261,7 +262,7 @@ async def reset_and_seed() -> None:
                 session.add(Bid(auction_id=auction.id, bidder_id=bidder.id, amount=amount))
 
         for index, (title, description, category, image, price) in enumerate(FIXED_PRODUCTS):
-            created_at = now - timedelta(minutes=index * 2 + 1)
+            created_at = created_at_base - timedelta(minutes=index * 2 + 1)
             product = Product(
                 seller_id=seller.id,
                 category_id=categories[category].id,
