@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
 
-import 'views/welcome_page.dart';
+import 'app/carrot_market_app.dart';
+import 'features/auth/pages/session_gate_page.dart';
+import 'features/auth/pages/welcome_page.dart';
+import 'shared/network/api_client.dart';
+
+bool _isHandlingSessionExpiry = false;
 
 void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    // 앱 실행 시 웰컴 페이지 표시
-    return MaterialApp(home: WelcomePage());
-  }
+  ApiClient.onSessionExpired = () async {
+    if (_isHandlingSessionExpiry) return;
+    final navigator = appNavigatorKey.currentState;
+    if (navigator == null) return;
+    _isHandlingSessionExpiry = true;
+    try {
+      await navigator.pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const WelcomePage()),
+        (_) => false,
+      );
+    } finally {
+      _isHandlingSessionExpiry = false;
+    }
+  };
+  runApp(const CarrotMarketApp(home: SessionGatePage()));
 }

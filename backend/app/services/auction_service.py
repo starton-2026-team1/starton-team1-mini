@@ -1,0 +1,342 @@
+from datetime import datetime, timedelta
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.exceptions import (
+    AuctionNotFoundError,
+    AuctionPermissionError,
+    AuctionStateError,
+    BidAmountError,
+)
+from app.core.time import now_kst_naive
+from app.models.auction import Auction
+from app.models.enums import AuctionStatus, ProductStatus
+from app.models.user import User
+from app.repositories.auction_repository import AuctionRepository
+from app.repositories.bid_repository import BidRepository
+from app.schemas.auction import (
+    AuctionBidHistoryResponse,
+    AuctionDetailResponse,
+    AuctionPreviewResponse,
+    AuctionStatusResponse,
+)
+from app.schemas.bid import AuctionBroadcastMessage, BidResponse
+from app.services.connection_manager import ConnectionManager, connection_manager
+
+AUTO_EXTENSION_THRESHOLD = timedelta(minutes=5)
+AUTO_EXTENSION_DURATION = timedelta(minutes=5)
+
+
+class AuctionService:
+    def __init__(
+        self,
+        auction_repository: AuctionRepository | None = None,
+        bid_repository: BidRepository | None = None,
+        manager: ConnectionManager | None = None,
+    ) -> None:
+        self.auction_repository = auction_repository or AuctionRepository()
+        self.bid_repository = bid_repository or BidRepository()
+        self.manager = manager or connection_manager
+
+    # 입찰 검증 -> 저장 -> 웹소켓 브로드캐스트까지 한 번에 처리
+    async def place_bid(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        bidder_id: int,
+        amount: int,
+    ) -> AuctionBroadcastMessage:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+
+        # 판매자가 가격을 인위적으로 올리지 못하도록 자신의 경매 입찰 차단
+        if auction.product.seller_id == bidder_id:
+            raise AuctionPermissionError("판매자는 자신의 경매에 입찰할 수 없습니다.")
+
+        # DB status 컬럼은 시작/종료 시각이 지나도 자동으로 안 바뀌므로
+        # 저장된 값 대신 현재 시각 기준으로 계산한 상태를 써야 함
+        now = now_kst_naive()
+        if _effective_status(auction, now) != AuctionStatus.ACTIVE:
+            raise AuctionStateError("진행 중인 경매가 아닙니다.")
+
+        highest_amount = await self.bid_repository.get_highest_amount(
+            session,
+            auction_id,
+        )
+        current_price = highest_amount or auction.start_price
+        # 아직 입찰이 없으면 시작가부터, 있으면 현재가 + 최소 단위부터 입찰 가능
+        minimum_next_price = (
+            auction.start_price
+            if highest_amount is None
+            else current_price + auction.minimum_bid_unit
+        )
+        if amount < minimum_next_price:
+            raise BidAmountError(
+                f"입찰 금액은 {minimum_next_price}원 이상이어야 합니다.",
+            )
+
+        # 종료 5분 이내 입찰 시 남은 자동 연장 횟수를 사용해 종료 시각 연장
+        remaining_extension_count = auction.extension_count or 0
+        if (
+            remaining_extension_count > 0
+            and auction.ends_at - now <= AUTO_EXTENSION_THRESHOLD
+        ):
+            auction.ends_at += AUTO_EXTENSION_DURATION
+            auction.extension_count = remaining_extension_count - 1
+
+        bid = await self.bid_repository.create(
+            session,
+            auction_id=auction_id,
+            bidder_id=bidder_id,
+            amount=amount,
+        )
+        latest_bid = BidResponse(
+            bidder_name=_mask_name(await self._bidder_name(session, bidder_id)),
+            amount=bid.amount,
+            created_at=bid.created_at,
+        )
+        message = AuctionBroadcastMessage(
+            current_price=amount,
+            next_bid_price=amount + auction.minimum_bid_unit,
+            ends_at=auction.ends_at,
+            remaining_extension_count=auction.extension_count or 0,
+            latest_bid=latest_bid,
+        )
+
+        # 이 경매를 보고 있는 모든 클라이언트(입찰자 본인 포함)에게 실시간 반영
+        await self.manager.broadcast(auction_id, message)
+        return message
+
+    async def _bidder_name(self, session: AsyncSession, bidder_id: int) -> str:
+        user = await session.get(User, bidder_id)
+        return user.name if user is not None else "알 수 없음"
+
+    async def cancel_auction(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 경매를 취소할 수 있습니다.")
+
+        current_status = _effective_status(auction, now_kst_naive())
+        if current_status not in {AuctionStatus.WAITING, AuctionStatus.ACTIVE}:
+            raise AuctionStateError("취소할 수 있는 경매가 아닙니다.")
+        if await self.bid_repository.get_highest_amount(session, auction_id) is not None:
+            raise AuctionStateError("입찰이 있는 경매는 취소할 수 없습니다.")
+
+        # 취소 조건 검증 후 경매 상태 변경
+        auction.status = AuctionStatus.CANCELLED
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+    async def finalize_auction(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+
+        if auction.status in _FINALIZED_STATUSES:
+            return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+        if now_kst_naive() < auction.ends_at:
+            raise AuctionStateError("아직 종료되지 않은 경매입니다.")
+
+        highest_bid = await self.bid_repository.get_highest_bid(session, auction_id)
+        if highest_bid is None:
+            auction.status = AuctionStatus.NO_BIDS
+            auction.winner_id = None
+        else:
+            auction.status = AuctionStatus.COMPLETED
+            auction.winner_id = highest_bid.bidder_id
+
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+    async def finalize_expired_auctions(
+        self,
+        session: AsyncSession,
+        limit: int = 100,
+    ) -> list[AuctionStatusResponse]:
+        auction_ids = await self.auction_repository.list_expired_unfinalized_ids(
+            session,
+            now=now_kst_naive(),
+            limit=limit,
+        )
+        return [
+            await self.finalize_auction(session, auction_id)
+            for auction_id in auction_ids
+        ]
+
+    async def complete_trade(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+        seller_id: int,
+    ) -> AuctionStatusResponse:
+        auction = await self.auction_repository.get_by_id(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+        if auction.product.seller_id != seller_id:
+            raise AuctionPermissionError("판매자만 거래를 완료할 수 있습니다.")
+
+        if auction.status != AuctionStatus.COMPLETED:
+            raise AuctionStateError("낙찰 완료된 경매만 거래 완료 처리할 수 있습니다.")
+        if auction.winner_id is None:
+            raise AuctionStateError("낙찰자가 없는 경매는 거래 완료 처리할 수 없습니다.")
+
+        auction.status = AuctionStatus.TRADE_COMPLETED
+        auction.product.status = ProductStatus.SOLD
+        await session.flush()
+        return AuctionStatusResponse(id=auction.id, status=auction.status)
+
+    # 경매 목록 응답 조립 (경매별 입찰수/최고가는 한 번에 집계해서 N+1 방지)
+    async def list_auctions(
+        self,
+        session: AsyncSession,
+        *,
+        status: AuctionStatus | None = None,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[AuctionPreviewResponse], int]:
+        await self.finalize_expired_auctions(session)
+        now = now_kst_naive()
+        auctions, total = await self.auction_repository.list_auctions(
+            session,
+            status=status,
+            now=now,
+            offset=offset,
+            limit=limit,
+        )
+        stats = await self.bid_repository.get_stats(
+            session,
+            [auction.id for auction in auctions],
+        )
+        items = [
+            self._to_preview(auction, stats.get(auction.id), now)
+            for auction in auctions
+        ]
+        return items, total
+
+    # 경매 상세 + 전체 입찰 내역 조립
+    async def get_detail(
+        self,
+        session: AsyncSession,
+        auction_id: int,
+    ) -> AuctionDetailResponse:
+        await self.finalize_expired_auctions(session)
+        auction = await self.auction_repository.get_detail(session, auction_id)
+        if auction is None:
+            raise AuctionNotFoundError("경매를 찾을 수 없습니다.")
+
+        recent_bids = await self.bid_repository.list_recent(
+            session,
+            auction_id,
+            limit=50,
+        )
+        highest_amount = recent_bids[0][0].amount if recent_bids else None
+        product = auction.product
+        now = now_kst_naive()
+        winner_name = None
+        if auction.winner_id is not None:
+            winner_name = _mask_name(
+                await self._bidder_name(session, auction.winner_id),
+            )
+
+        return AuctionDetailResponse(
+            id=auction.id,
+            title=product.title,
+            description=product.description,
+            category_name=product.category.name,
+            seller_name=product.seller.name,
+            seller_id=product.seller_id,
+            winner_name=winner_name,
+            status=_effective_status(auction, now, bid_count=len(recent_bids)),
+            image_urls=[image.image_url for image in product.images],
+            start_price=auction.start_price,
+            current_price=highest_amount or auction.start_price,
+            minimum_bid_unit=auction.minimum_bid_unit,
+            starts_at=auction.starts_at,
+            ends_at=auction.ends_at,
+            bids=[
+                AuctionBidHistoryResponse(
+                    bidder_name=_mask_name(name),
+                    amount=bid.amount,
+                    created_at=bid.created_at,
+                )
+                for bid, name in recent_bids
+            ],
+        )
+
+    def _to_preview(
+        self,
+        auction: Auction,
+        stat: tuple[int, int] | None,
+        now: datetime,
+    ) -> AuctionPreviewResponse:
+        bid_count, highest_amount = stat or (0, None)
+        product = auction.product
+        thumbnail_url = product.images[0].image_url if product.images else None
+        return AuctionPreviewResponse(
+            id=auction.id,
+            title=product.title,
+            category_name=product.category.name,
+            status=_effective_status(auction, now, bid_count=bid_count),
+            thumbnail_url=thumbnail_url,
+            start_price=auction.start_price,
+            current_price=highest_amount or auction.start_price,
+            minimum_bid_unit=auction.minimum_bid_unit,
+            bid_count=bid_count,
+            starts_at=auction.starts_at,
+            ends_at=auction.ends_at,
+        )
+
+
+# 사람이 직접 정하는 상태(취소/유찰/거래완료)는 시간 계산으로 덮어쓰면 안 되는 값들
+_TERMINAL_STATUSES = {
+    AuctionStatus.CANCELLED,
+    AuctionStatus.NO_BIDS,
+    AuctionStatus.TRADE_COMPLETED,
+}
+
+
+_FINALIZED_STATUSES = {
+    AuctionStatus.COMPLETED,
+    AuctionStatus.NO_BIDS,
+    AuctionStatus.CANCELLED,
+    AuctionStatus.TRADE_COMPLETED,
+}
+
+
+# 별도 스케줄러 없이, 조회 시점의 starts_at/ends_at과 현재 시각을 비교해 상태를 계산
+# (서버 KST 로컬시각 기준 naive datetime - UTC로 계산하면 9시간 어긋남)
+def _effective_status(
+    auction: Auction,
+    now: datetime,
+    bid_count: int | None = None,
+) -> AuctionStatus:
+    if auction.status in _TERMINAL_STATUSES:
+        return auction.status
+    if now < auction.starts_at:
+        return AuctionStatus.WAITING
+    if now < auction.ends_at:
+        return AuctionStatus.ACTIVE
+    # 종료 시점에는 입찰 존재 여부에 따라 낙찰 완료와 유찰 구분
+    if bid_count == 0:
+        return AuctionStatus.NO_BIDS
+    return AuctionStatus.COMPLETED
+
+
+# 입찰자 실명 대신 "김***" 형태로 마스킹해서 내려줌
+def _mask_name(name: str) -> str:
+    if len(name) <= 1:
+        return f"{name}***"
+    return f"{name[:1]}***"

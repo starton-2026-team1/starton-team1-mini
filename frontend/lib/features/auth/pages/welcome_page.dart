@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/shared/theme/app_colors.dart';
+
+import 'phone_auth_page.dart';
 
 class WelcomePage extends StatefulWidget {
-  const new({super.key});
+  const WelcomePage({super.key});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -14,29 +17,25 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+      backgroundColor: AppColors.white,
+      body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 빈 화면 병합
-            Spacer(),
+            Spacer(flex: 3),
             // 당근 이미지 로고
             Image(
-              image: AssetImage('lib/assets/image/logo.png'),
-              width: 100,
-              height: 100,
+              image: AssetImage('assets/image/logo.png'),
+              width: 120,
+              height: 120,
             ),
-            SizedBox(
-              height: 16,
-            ),
+            SizedBox(height: 16),
             Text(
               "당신 근처의 당근",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(
-              height: 16,
-            ),
+            SizedBox(height: 16),
             Text("동네라서 가능한 모든 것"),
             Text("지금 내 동네를 선택하고 시작해보세요!"),
 
@@ -44,14 +43,11 @@ class _WelcomePageState extends State<WelcomePage> {
             DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedCountry,
-                icon: Icon(
-                  Icons.keyboard_arrow_down,
-                  color: Colors.black54,
-                ),
+                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.black54),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.black,
                 ),
                 onChanged: (String? newValue) {
                   setState(() {
@@ -72,9 +68,7 @@ class _WelcomePageState extends State<WelcomePage> {
                               country['flag']!,
                               style: TextStyle(fontSize: 18),
                             ),
-                            SizedBox(
-                              width: 8,
-                            ),
+                            SizedBox(width: 8),
                             Text(
                               country['name']!,
                               style: TextStyle(
@@ -88,29 +82,33 @@ class _WelcomePageState extends State<WelcomePage> {
                     }).toList(),
               ),
             ),
-            const Spacer(),
+            const Spacer(flex: 4),
 
             // 시작하기 버튼
             SizedBox(
               width: double.infinity,
+              height: 56,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const PhoneAuthPage()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xffFF6F0F),
+                  backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadiusGeometry.circular(5),
+                    borderRadius: BorderRadius.zero,
                   ),
                 ),
 
                 child: Text(
                   '시작하기',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.white, fontSize: 16),
                 ),
               ),
             ),
-            SizedBox(
-              height: 16,
-            ),
+            SizedBox(height: 16),
             // 로그인 버튼
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -118,18 +116,27 @@ class _WelcomePageState extends State<WelcomePage> {
               children: [
                 Text(
                   "이미 계정이 있나요? ",
-                  style: TextStyle(color: Colors.grey.shade700),
+                  style: TextStyle(color: AppColors.grey700),
                 ),
-                Text(
-                  "로그인",
-                  style: TextStyle(
-                    color: Color(0xffFF6F0F),
-                    fontWeight: FontWeight.bold,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PhoneAuthPage(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "로그인",
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
-            Spacer(),
+            SizedBox(height: 24),
           ],
         ),
       ),
