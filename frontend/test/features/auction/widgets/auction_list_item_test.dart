@@ -23,6 +23,20 @@ void main() {
     );
   });
 
+  test('시작 전 경매는 시작까지 남은 시간을 표시한다', () {
+    expect(
+      auctionRemainingTimeLabel(
+        AuctionStatus.waiting,
+        const Duration(days: 1, hours: 2, minutes: 3, seconds: 4),
+      ),
+      '시작까지 1일 2시간 3분 4초',
+    );
+    expect(
+      auctionRemainingTimeLabel(AuctionStatus.waiting, Duration.zero),
+      '곧 시작',
+    );
+  });
+
   test('종료 상태 또는 남은 시간 0은 상태 문구를 표시한다', () {
     expect(
       auctionRemainingTimeLabel(AuctionStatus.active, Duration.zero),

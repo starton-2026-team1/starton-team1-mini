@@ -194,17 +194,21 @@ class _AuctionListItemState extends State<AuctionListItem> {
 
 String auctionRemainingTimeLabel(AuctionStatus status, Duration remainingTime) {
   if (!status.hasRunningTimer) return status.label;
-  if (remainingTime <= Duration.zero) return '경매 종료';
+  if (remainingTime <= Duration.zero) {
+    return status == AuctionStatus.waiting ? '곧 시작' : '경매 종료';
+  }
 
   final days = remainingTime.inDays;
   final hours = remainingTime.inHours.remainder(24);
   final minutes = remainingTime.inMinutes.remainder(60);
   final seconds = remainingTime.inSeconds.remainder(60);
-  if (days > 0) {
-    return '$days일 $hours시간 $minutes분 $seconds초';
-  }
+  final durationLabel = days > 0
+      ? '$days일 $hours시간 $minutes분 $seconds초'
+      : '${remainingTime.inHours}시간 $minutes분 $seconds초';
 
-  return '${remainingTime.inHours}시간 $minutes분 $seconds초';
+  return status == AuctionStatus.waiting
+      ? '시작까지 $durationLabel'
+      : durationLabel;
 }
 
 class _AuctionImage extends StatelessWidget {

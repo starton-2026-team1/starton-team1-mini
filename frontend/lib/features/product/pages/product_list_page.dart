@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frontend/shared/theme/app_colors.dart';
 import 'package:frontend/shared/network/api_client.dart';
@@ -62,9 +64,7 @@ class _ProductListPageState extends State<ProductListPage> {
                   child: _isTopMenuVisible
                       ? ProductCategoryBar(
                           selectedCategory: _selectedCategory,
-                          onSelected: (category) {
-                            setState(() => _selectedCategory = category);
-                          },
+                          onSelected: _selectCategory,
                         )
                       : const SizedBox(width: double.infinity),
                 ),
@@ -196,6 +196,14 @@ class _ProductListPageState extends State<ProductListPage> {
       );
       if (createdAuction ?? false) await _refreshFeed();
     }
+  }
+
+  void _selectCategory(ProductCategory category) {
+    if (category == _selectedCategory) return;
+
+    setState(() => _selectedCategory = category);
+    // 다른 탭에서 경매 탭으로 들어갈 때 새로 등록된 경매 목록 갱신
+    if (category == ProductCategory.auction) unawaited(_refreshFeed());
   }
 
   Widget _buildSelectedCategory() {
