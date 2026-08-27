@@ -153,11 +153,16 @@ class _AuctionListPageState extends State<AuctionListPage> {
                 return AuctionListItem(
                   auction: auction,
                   onEnded: _refresh,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => AuctionDetailPage(auctionId: auction.id),
-                    ),
-                  ),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            AuctionDetailPage(auctionId: auction.id),
+                      ),
+                    );
+                    // 상세에서 상태가 변경됐을 수 있으므로 복귀 시 목록 갱신
+                    await _refresh();
+                  },
                 );
               },
             ),

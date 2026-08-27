@@ -41,12 +41,16 @@ class CombinedProductList extends StatelessWidget {
             return AuctionListItem(
               auction: item.auction!,
               onEnded: onRefresh,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      AuctionDetailPage(auctionId: item.auction!.id),
-                ),
-              ),
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        AuctionDetailPage(auctionId: item.auction!.id),
+                  ),
+                );
+                // 상세에서 취소·거래 완료 후 돌아오면 카드 상태와 타이머 갱신
+                await onRefresh();
+              },
             );
           }
 

@@ -202,8 +202,11 @@ class _ProductListPageState extends State<ProductListPage> {
     if (category == _selectedCategory) return;
 
     setState(() => _selectedCategory = category);
-    // 다른 탭에서 경매 탭으로 들어갈 때 새로 등록된 경매 목록 갱신
-    if (category == ProductCategory.auction) unawaited(_refreshFeed());
+    // 전체 또는 경매 탭으로 들어갈 때 최신 등록 및 상태가 반영된 목록 갱신
+    if (category == ProductCategory.all ||
+        category == ProductCategory.auction) {
+      unawaited(_refreshFeed());
+    }
   }
 
   Widget _buildSelectedCategory() {
