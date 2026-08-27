@@ -29,40 +29,44 @@ class AppFilterChipBar<T> extends StatelessWidget {
           final isSelected = item == selectedItem;
           final label = labelBuilder(item);
           final scaledFontSize = MediaQuery.textScalerOf(context).scale(13);
-          return ChoiceChip(
-            selected: isSelected,
-            onSelected: (_) => onSelected(item),
-            showCheckmark: false,
-            // Flutter Web에서 한글 폭이 한 글자로 계산되는 경우를 막는 최소 너비
-            label: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: label.runes.length * scaledFontSize,
+          final chipMinWidth = label.runes.length * scaledFontSize + 32;
+          // Flutter Web에서 ChoiceChip이 한글 폭을 한 글자로 계산하는 경우까지 차단
+          return ConstrainedBox(
+            constraints: BoxConstraints(minWidth: chipMinWidth),
+            child: ChoiceChip(
+              selected: isSelected,
+              onSelected: (_) => onSelected(item),
+              showCheckmark: false,
+              label: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: label.runes.length * scaledFontSize,
+                ),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  textAlign: TextAlign.center,
+                ),
               ),
-              child: Text(
-                label,
-                maxLines: 1,
-                softWrap: false,
-                textAlign: TextAlign.center,
+              labelStyle: TextStyle(
+                color: isSelected ? AppColors.white : AppColors.categoryText,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
+              color: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return AppColors.categorySelected;
+                }
+                return AppColors.surfaceMuted;
+              }),
+              pressElevation: 0,
+              elevation: 0,
+              shadowColor: AppColors.transparent,
+              selectedShadowColor: AppColors.transparent,
+              side: BorderSide.none,
+              shape: const StadiumBorder(),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             ),
-            labelStyle: TextStyle(
-              color: isSelected ? AppColors.white : AppColors.categoryText,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-            color: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return AppColors.categorySelected;
-              }
-              return AppColors.surfaceMuted;
-            }),
-            pressElevation: 0,
-            elevation: 0,
-            shadowColor: AppColors.transparent,
-            selectedShadowColor: AppColors.transparent,
-            side: BorderSide.none,
-            shape: const StadiumBorder(),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           );
         },
       ),
