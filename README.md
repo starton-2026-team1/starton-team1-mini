@@ -4,7 +4,7 @@
 
 ### 팀원 및 담당 역할
 
-| GitHub | 역할 | 주요 담당 |
+| 이름 GitHub | 역할 | 주요 담당 |
 | --- | --- | --- |
 |강동주 [@aghose](https://github.com/soltyspring) | 팀장 / Full Stack | 실시간 경매 UI·API, 입찰 검증, 동시 입찰 처리, 자동 연장, 경매 상태 관리, 테스트, 웹·서버 배포 |
 |최서윤 [@seoyooni](https://github.com/seoyooni) | Full Stack | 일반 상품 CRUD, 사용자·프로필, 판매 관리, 인증 세션, 상품·경매 페이지네이션, 낙찰 결과 처리 |
