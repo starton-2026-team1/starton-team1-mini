@@ -28,6 +28,7 @@ void main() {
           )
           .width;
       expect(chipWidth, greaterThan(textWidth));
+      expect(chipWidth, greaterThanOrEqualTo(label.runes.length * 16 + 32));
     }
   });
 }

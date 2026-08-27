@@ -28,8 +28,9 @@ class AppFilterChipBar<T> extends StatelessWidget {
           final item = items[index];
           final isSelected = item == selectedItem;
           final label = labelBuilder(item);
-          final scaledFontSize = MediaQuery.textScalerOf(context).scale(13);
-          final chipMinWidth = label.runes.length * scaledFontSize + 32;
+          const minimumGlyphWidth = 16.0;
+          final labelMinWidth = label.runes.length * minimumGlyphWidth;
+          final chipMinWidth = labelMinWidth + 32;
           // Flutter Web에서 ChoiceChip이 한글 폭을 한 글자로 계산하는 경우까지 차단
           return ConstrainedBox(
             constraints: BoxConstraints(minWidth: chipMinWidth),
@@ -38,9 +39,7 @@ class AppFilterChipBar<T> extends StatelessWidget {
               onSelected: (_) => onSelected(item),
               showCheckmark: false,
               label: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minWidth: label.runes.length * scaledFontSize,
-                ),
+                constraints: BoxConstraints(minWidth: labelMinWidth),
                 child: Text(
                   label,
                   maxLines: 1,
