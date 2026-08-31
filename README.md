@@ -6,8 +6,8 @@
 
 | 이름 GitHub | 역할 | 주요 담당 |
 | --- | --- | --- |
-|강동주 [@aghose](https://github.com/soltyspring) | 팀장 / Full Stack | 실시간 경매 UI·API, 입찰 검증, 동시 입찰 처리, 자동 연장, 경매 상태 관리, 테스트, 웹·서버 배포 |
-|최서윤 [@seoyooni](https://github.com/seoyooni) | Full Stack | 일반 상품 CRUD, 사용자·프로필, 판매 관리, 인증 세션, 상품·경매 페이지네이션, 낙찰 결과 처리 |
+|강동주 [@soltyspring](https://github.com/soltyspring) | 팀장 / Full Stack | 실시간 경매 UI·API, 입찰 검증, 동시 입찰 처리, 자동 연장, 경매 상태 관리, 테스트, 웹·서버 배포 |
+|최서윤 [@seoyoooooni](https://github.com/seoyoooooni) | Full Stack | 일반 상품 CRUD, 사용자·프로필, 판매 관리, 인증 세션, 상품·경매 페이지네이션, 낙찰 결과 처리 |
 |이영민 [@ncs01060](https://github.com/ncs01060) | Full Stack | 초기 Flutter 화면과 휴대폰 인증 UI, 경매 등록·조회, 실시간 입찰과 WebSocket 연동 및 재동기화 |
 |조서빈 [@lime06-20](https://github.com/lime06-20) | Frontend | 일반 상품 등록·상세 화면, 상품 이미지 업로드, Flutter Web 이미지 업로드 호환성 개선 |
 |임지언 [@jiieon-lim](https://github.com/jiieon-lim) | Frontend / UI·UX | 서비스 화면 구성 및 UI 디자인, 프론트엔드 화면 구현 |
